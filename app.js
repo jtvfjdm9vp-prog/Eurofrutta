@@ -1,21 +1,535 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js';
-import { getFirestore, doc, onSnapshot, setDoc } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js';
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signOut,
+  onAuthStateChanged,
+} from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js';
+import {
+  getFirestore,
+  doc,
+  onSnapshot,
+  setDoc,
+} from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js';
 
-const firebaseConfig={apiKey:'AIzaSyBPjPrPcfSluKKWfWY9qKGgQMKQpJQ_iFM',authDomain:'eurofrutta-d0607.firebaseapp.com',projectId:'eurofrutta-d0607',storageBucket:'eurofrutta-d0607.firebasestorage.app',messagingSenderId:'295810282880',appId:'1:295810282880:web:8bf0cb43d896013e8afd65'};
-const app=initializeApp(firebaseConfig),auth=getAuth(app),store=getFirestore(app),provider=new GoogleAuthProvider();
-let db={clienti:[],prodotti:[],movimenti:[]},current='home',histClient='',unsubscribe;
-const $=s=>document.querySelector(s),id=()=>Date.now()+'-'+Math.random().toString(16).slice(2),today=()=>new Date().toLocaleDateString('en-CA'),stamp=()=>new Date().toLocaleString('it-IT'),eur=n=>'€ '+Number(n||0).toFixed(2),esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const empty=()=>({clienti:[],prodotti:[],movimenti:[]});
-function opts(a,selected=''){return '<option value="">— scegli —</option>'+a.map(x=>`<option value="${x.id}" ${x.id===selected?'selected':''}>${esc(x.nome)}</option>`).join('')}function name(k,i){return db[k].find(x=>x.id===i)?.nome||'—'}
-async function save(){await setDoc(doc(store,'eurofrutta','dati'),db)}
-function login(){document.querySelector('header').style.display='flex';$('#user').textContent='';$('#nav').hidden=true;$('#app').innerHTML=`<section class="card login"><div class="mark">EF</div><p class="eyebrow">EUROFRUTTA ONLINE</p><h2>Il tuo lavoro, sempre disponibile.</h2><p>Accedi con il tuo account Google autorizzato per aprire il gestionale.</p><button id="google"><span class="g">G</span> Accedi con Google</button><p id="login-error" class="message error" hidden></p></section>`;$('#google').onclick=async()=>{try{await signInWithPopup(auth,provider)}catch(e){const x=$('#login-error');x.hidden=false;x.textContent='Accesso non riuscito: '+e.message}}}
-function render(){document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('active',x.dataset.page===current));$('#app').innerHTML=({home,pitazzo,movimento,prodotti,clienti,report})[current]();bind()}
-function home(){const s=db.movimenti.filter(m=>m.tipo==='uscita'),tot=s.reduce((a,m)=>a+Number(m.totale),0),last=db.movimenti.slice().reverse().slice(0,4);return `<section class="hero"><div class="hero-copy"><p class="eyebrow">PANORAMICA OPERATIVA</p><h2>Il lavoro,<br><em>sotto controllo.</em></h2><p>Merce, clienti e vendite sempre aggiornati. Apri il gestionale da qualsiasi dispositivo.</p><button data-go="pitazzo">Apri il pitazzo →</button></div><div class="hero-art"><svg viewBox="0 0 310 220" fill="none"><path d="M60 181h200" stroke="#ffffff66" stroke-width="2"/><path d="M92 146c25 0 46 18 46 40H47c0-22 20-40 45-40Z" fill="#f8b842"/><path d="M138 186H47v12h91v-12Z" fill="#e69226"/><path d="M190 108c24 0 45 18 45 40h-90c0-22 20-40 45-40Z" fill="#ffcf69"/><path d="M235 148h-90v12h90v-12Z" fill="#eb9d28"/><circle cx="90" cy="154" r="8" fill="#fff1a2"/><circle cx="116" cy="165" r="7" fill="#fff1a2"/><circle cx="187" cy="116" r="8" fill="#fff1a2"/><path d="M72 182c4-28 14-48 34-64" stroke="#4e9f63" stroke-width="8" stroke-linecap="round"/><path d="M78 133c-14-13-29-12-35-11 4 16 18 28 35 25" fill="#73c77e"/><path d="M104 123c14-13 29-11 35-9-5 16-18 26-35 24" fill="#73c77e"/></svg></div></section><section class="stats"><article class="stat"><i>◇</i><div><h3>Prodotti</h3><div class="big">${db.prodotti.length}</div><p>In catalogo</p></div></article><article class="stat"><i>♙</i><div><h3>Clienti</h3><div class="big">${db.clienti.length}</div><p>Registrati</p></div></article><article class="stat"><i>€</i><div><h3>Vendite</h3><div class="big">${eur(tot)}</div><p>${s.length} movimenti</p></div></article></section><section class="card"><div class="section-head"><div><p class="eyebrow">ATTIVITÀ</p><h2>Ultimi movimenti</h2></div><button class="ghost" data-go="report">Vedi riepilogo →</button></div>${last.map(m=>`<div class="activity-row"><i>${m.tipo==='uscita'?'↗':'↙'}</i><div><b>${esc(name('prodotti',m.prodotto_id))}</b><small>${esc(m.data)} · ${m.tipo}</small></div><strong>${m.tipo==='uscita'?eur(m.totale):m.colli+' colli'}</strong></div>`).join('')||'<p class="notice">Inizia dal Pitazzo per registrare le prime vendite.</p>'}</section>`}
-function movimento(){return `<section class="card"><p class="eyebrow">MOVIMENTO SINGOLO</p><h2>Registra movimento</h2><form id="mov-form" class="grid"><div><label>Tipo</label><select name="tipo"><option value="uscita">Uscita / vendita</option><option value="entrata">Entrata</option></select></div><div><label>Articolo</label><select name="prodotto_id" required>${opts(db.prodotti)}</select></div><div><label>Cliente</label><select name="cliente_id">${opts(db.clienti)}</select></div><div><label>Colli</label><input name="colli" type="number" step=".01" value="0"></div><div><label>Peso (kg)</label><input name="peso" type="number" step=".01" value="0"></div><div><label>Prezzo unitario</label><input name="prezzo" type="number" step=".01" value="0"></div><div><label>&nbsp;</label><button>Salva movimento</button></div></form></section>`}
-function pitazzo(){const d=today(),daily=db.movimenti.filter(m=>m.tipo==='uscita'&&m.dateKey===d),clients=[...new Set(daily.map(m=>m.cliente_id).filter(Boolean))],lastC=[...new Set(db.movimenti.slice().reverse().map(m=>m.cliente_id).filter(Boolean))].slice(0,5),lastP=[...new Set(db.movimenti.slice().reverse().map(m=>m.prodotto_id).filter(Boolean))].slice(0,6),h=histClient||lastC[0]||'',history=db.movimenti.filter(m=>m.cliente_id===h&&m.tipo==='uscita').slice().reverse().slice(0,8),cell=(c,p)=>{let a=daily.filter(m=>m.cliente_id===c&&m.prodotto_id===p.id);if(!a.length)return '<span class="muted">—</span>';let col=a.reduce((x,m)=>x+Number(m.colli),0),kg=a.reduce((x,m)=>x+Number(m.peso),0),tot=a.reduce((x,m)=>x+Number(m.totale),0);return `<b>${col} c.</b><small>${kg} kg · ${eur(tot)}</small>`};return `<section class="pit-title"><div><p class="eyebrow">PITAZZO GIORNALIERO</p><h2>Foglio merce di oggi</h2><p>Ogni salvataggio aggiorna il pitazzo e lo storico del cliente.</p></div><div class="date"><small>OGGI</small>${d.split('-').reverse().join('.')}</div></section><section class="pit-entry"><div class="quick-head"><div class="quick-icon">▤</div><div><h3>Inserimento rapido</h3><p>Scrivi cliente, articolo, colli, peso e prezzo. Fatto.</p></div></div><form id="pit-form" class="pit-form" novalidate><div><label>Cliente</label><select name="cliente_id">${opts(db.clienti)}</select></div><div><label>Articolo</label><select name="prodotto_id">${opts(db.prodotti)}</select></div><div><label>Colli</label><input name="colli" type="number" min="0" step=".01" value="0"></div><div><label>Peso kg</label><input name="peso" type="number" min="0" step=".01" value="0"></div><div><label>Prezzo unitario</label><input name="prezzo" type="number" min="0" step=".01" value="0"></div><button type="submit" ${!db.clienti.length||!db.prodotti.length?'disabled':''}>Salva sul pitazzo →</button></form><p id="pit-msg"></p>${!db.clienti.length||!db.prodotti.length?'<p class="message error">Aggiungi prima almeno un cliente e un prodotto.</p>':''}<div class="suggest"><span>Suggerimenti rapidi</span><div>${lastC.map(c=>`<button type="button" data-client="${c}">♙ ${esc(name('clienti',c))}</button>`).join('')||'<span class="muted">Appariranno dopo le prime registrazioni.</span>'}</div><div>${lastP.map(p=>`<button type="button" data-product="${p}">◇ ${esc(name('prodotti',p))}</button>`).join('')}</div></div></section><section class="card"><div class="section-head"><div><p class="eyebrow">OGGI</p><h2>Il pitazzo</h2></div><b>${daily.length} righe · ${eur(daily.reduce((a,m)=>a+Number(m.totale),0))}</b></div><div class="table-scroll"><table class="pit-table"><tr><th>Cliente</th>${db.prodotti.map(p=>`<th>${esc(p.nome)}</th>`).join('')}<th>Totale</th></tr>${clients.map(c=>{const r=daily.filter(m=>m.cliente_id===c),t=r.reduce((a,m)=>a+Number(m.totale),0);return `<tr><td class="pit-client"><b>${esc(name('clienti',c))}</b><small>${r.length} registrazioni</small></td>${db.prodotti.map(p=>`<td>${cell(c,p)}</td>`).join('')}<td class="pit-money">${eur(t)}</td></tr>`}).join('')||`<tr><td class="empty" colspan="${db.prodotti.length+2}">Il pitazzo di oggi è vuoto.</td></tr>`}</table></div></section><section class="card"><div class="section-head"><div><p class="eyebrow">ARCHIVIO CLIENTE</p><h2>Storico vendite</h2></div><select id="hist">${opts(db.clienti,h)}</select></div>${h?`<div class="history-name">Storico di <b>${esc(name('clienti',h))}</b></div><div class="table-scroll"><table><tr><th>Data</th><th>Articolo</th><th>Colli</th><th>Kg</th><th>Totale</th></tr>${history.map(m=>`<tr><td>${esc(m.data)}</td><td><b>${esc(name('prodotti',m.prodotto_id))}</b></td><td>${m.colli}</td><td>${m.peso}</td><td>${eur(m.totale)}</td></tr>`).join('')||'<tr><td colspan="5" class="empty">Nessuna vendita.</td></tr>'}</table></div>`:'<p class="muted">Scegli un cliente.</p>'}</section>`}
-function list(kind,title){return `<section class="card"><p class="eyebrow">ARCHIVIO</p><h2>${title}</h2><form data-add="${kind}" class="grid"><div><label>Nome</label><input name="nome" required></div><div><label>&nbsp;</label><button>Aggiungi</button></div></form></section><section class="card"><table><tr><th>Nome</th><th></th></tr>${db[kind].map(x=>`<tr><td>${esc(x.nome)}</td><td><button class="del" data-kind="${kind}" data-id="${x.id}">Elimina</button></td></tr>`).join('')||'<tr><td colspan="2" class="empty">Nessun elemento.</td></tr>'}</table></section>`}function prodotti(){return list('prodotti','Prodotti')}function clienti(){return list('clienti','Clienti')}
-function report(){let s=db.movimenti.filter(m=>m.tipo==='uscita');return `<section class="card"><p class="eyebrow">RIEPILOGO</p><h2>Vendite per articolo</h2><table><tr><th>Articolo</th><th>Colli</th><th>Kg</th><th>Totale</th></tr>${db.prodotti.map(p=>{let r=s.filter(m=>m.prodotto_id===p.id);return `<tr><td><b>${esc(p.nome)}</b></td><td>${r.reduce((a,m)=>a+Number(m.colli),0)}</td><td>${r.reduce((a,m)=>a+Number(m.peso),0)}</td><td>${eur(r.reduce((a,m)=>a+Number(m.totale),0))}</td></tr>`}).join('')}</table></section>`}
-function addMove(f,type){let price=Number(f.get('prezzo'));db.movimenti.push({id:id(),data:stamp(),dateKey:today(),tipo:type,prodotto_id:f.get('prodotto_id'),cliente_id:f.get('cliente_id'),colli:Number(f.get('colli')),peso:Number(f.get('peso')),prezzo:price,totale:price*Number(f.get('colli'))})}
-function bind(){document.querySelectorAll('[data-page],[data-go]').forEach(b=>b.onclick=()=>{current=b.dataset.page||b.dataset.go;render()});document.querySelectorAll('[data-add]').forEach(f=>f.onsubmit=async e=>{e.preventDefault();let n=new FormData(f).get('nome').trim(),k=f.dataset.add;if(!n)return;db[k].push({id:id(),nome:n});await save()});document.querySelectorAll('.del').forEach(b=>b.onclick=async()=>{if(confirm('Eliminare?')){db[b.dataset.kind]=db[b.dataset.kind].filter(x=>x.id!==b.dataset.id);await save()}});let mf=$('#mov-form');if(mf)mf.onsubmit=async e=>{e.preventDefault();addMove(new FormData(mf),new FormData(mf).get('tipo'));await save();current='home';render()};let pf=$('#pit-form');if(pf)pf.onsubmit=async e=>{e.preventDefault();let f=new FormData(pf),note=$('#pit-msg'),c=f.get('cliente_id'),p=f.get('prodotto_id');if(!c||!p){note.className='message error';note.textContent='Scegli prima cliente e articolo.';return}try{note.className='message';note.textContent='Salvataggio…';addMove(f,'uscita');histClient=c;await save();render()}catch(x){note.className='message error';note.textContent='Errore: '+x.message}};document.querySelectorAll('[data-client]').forEach(b=>b.onclick=()=>$('#pit-form [name="cliente_id"]').value=b.dataset.client);document.querySelectorAll('[data-product]').forEach(b=>b.onclick=()=>$('#pit-form [name="prodotto_id"]').value=b.dataset.product);let h=$('#hist');if(h)h.onchange=()=>{histClient=h.value;render()}}
-onAuthStateChanged(auth,user=>{if(unsubscribe)unsubscribe();if(!user){login();return}$('#nav').hidden=false;$('#user').innerHTML=`${esc(user.email||'')}<button id="out">Esci</button>`;$('#out').onclick=()=>signOut(auth);unsubscribe=onSnapshot(doc(store,'eurofrutta','dati'),snap=>{db=snap.exists()?{...empty(),...snap.data()}:empty();render()},err=>{$('#app').innerHTML=`<section class="card"><h2>Accesso ai dati bloccato</h2><p class="message error">${esc(err.message)}</p></section>`})});
+const firebaseConfig = {
+  apiKey: 'AIzaSyBPjPrPcfSluKKWfWY9qKGgQMKQpJQ_iFM',
+  authDomain: 'eurofrutta-d0607.firebaseapp.com',
+  projectId: 'eurofrutta-d0607',
+  storageBucket: 'eurofrutta-d0607.firebasestorage.app',
+  messagingSenderId: '295810282880',
+  appId: '1:295810282880:web:8bf0cb43d896013e8afd65',
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const store = getFirestore(app);
+const provider = new GoogleAuthProvider();
+
+let db = { clienti: [], prodotti: [], movimenti: [] };
+let current = 'home';
+let selectedClient = '';
+let unsubscribe;
+
+const $ = (selector) => document.querySelector(selector);
+const id = () => `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+const today = () => new Date().toLocaleDateString('en-CA');
+const stamp = () => new Date().toLocaleString('it-IT');
+const eur = (value) => `€ ${Number(value || 0).toFixed(2)}`;
+const esc = (value) => String(value ?? '').replace(
+  /[&<>"']/g,
+  (character) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  })[character],
+);
+
+const empty = () => ({ clienti: [], prodotti: [], movimenti: [] });
+
+function opts(items, selected = '') {
+  return '<option value="">— scegli —</option>' + items.map((item) => (
+    `<option value="${item.id}" ${item.id === selected ? 'selected' : ''}>${esc(item.nome)}</option>`
+  )).join('');
+}
+
+function name(kind, itemId) {
+  return db[kind].find((item) => item.id === itemId)?.nome || '—';
+}
+
+function valueOrDash(value) {
+  return value ? esc(value) : '<span class="muted">Non indicato</span>';
+}
+
+async function save() {
+  await setDoc(doc(store, 'eurofrutta', 'dati'), db);
+}
+
+function login() {
+  document.querySelector('header').style.display = 'flex';
+  $('#user').textContent = '';
+  $('#nav').hidden = true;
+  $('#app').innerHTML = `
+    <section class="card login">
+      <div class="mark">EF</div>
+      <p class="eyebrow">EUROFRUTTA ONLINE</p>
+      <h2>Il tuo lavoro, sempre disponibile.</h2>
+      <p>Accedi con il tuo account Google autorizzato per aprire il gestionale.</p>
+      <button id="google"><span class="g">G</span> Accedi con Google</button>
+      <p id="login-error" class="message error" hidden></p>
+    </section>`;
+
+  $('#google').onclick = async () => {
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (error) {
+      const message = $('#login-error');
+      message.hidden = false;
+      message.textContent = `Accesso non riuscito: ${error.message}`;
+    }
+  };
+}
+
+function render() {
+  document.querySelectorAll('#nav button').forEach((button) => {
+    button.classList.toggle('active', button.dataset.page === current);
+  });
+  $('#app').innerHTML = ({ home, pitazzo, movimento, prodotti, clienti, report })[current]();
+  bind();
+}
+
+function home() {
+  const sales = db.movimenti.filter((movement) => movement.tipo === 'uscita');
+  const total = sales.reduce((sum, movement) => sum + Number(movement.totale), 0);
+  const latest = db.movimenti.slice().reverse().slice(0, 4);
+
+  return `
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">PANORAMICA OPERATIVA</p>
+        <h2>Il lavoro,<br><em>sotto controllo.</em></h2>
+        <p>Merce, clienti e vendite sempre aggiornati. Apri il gestionale da qualsiasi dispositivo.</p>
+        <button data-go="pitazzo">Apri il pitazzo →</button>
+      </div>
+      <div class="hero-art">
+        <svg viewBox="0 0 310 220" fill="none">
+          <path d="M60 181h200" stroke="#ffffff66" stroke-width="2"/>
+          <path d="M92 146c25 0 46 18 46 40H47c0-22 20-40 45-40Z" fill="#f8b842"/>
+          <path d="M138 186H47v12h91v-12Z" fill="#e69226"/>
+          <path d="M190 108c24 0 45 18 45 40h-90c0-22 20-40 45-40Z" fill="#ffcf69"/>
+          <path d="M235 148h-90v12h90v-12Z" fill="#eb9d28"/>
+          <circle cx="90" cy="154" r="8" fill="#fff1a2"/>
+          <circle cx="116" cy="165" r="7" fill="#fff1a2"/>
+          <circle cx="187" cy="116" r="8" fill="#fff1a2"/>
+          <path d="M72 182c4-28 14-48 34-64" stroke="#4e9f63" stroke-width="8" stroke-linecap="round"/>
+          <path d="M78 133c-14-13-29-12-35-11 4 16 18 28 35 25" fill="#73c77e"/>
+          <path d="M104 123c14-13 29-11 35-9-5 16-18 26-35 24" fill="#73c77e"/>
+        </svg>
+      </div>
+    </section>
+    <section class="stats">
+      <article class="stat"><i>◇</i><div><h3>Prodotti</h3><div class="big">${db.prodotti.length}</div><p>In catalogo</p></div></article>
+      <article class="stat"><i>♙</i><div><h3>Clienti</h3><div class="big">${db.clienti.length}</div><p>Registrati</p></div></article>
+      <article class="stat"><i>€</i><div><h3>Vendite</h3><div class="big">${eur(total)}</div><p>${sales.length} movimenti</p></div></article>
+    </section>
+    <section class="card">
+      <div class="section-head">
+        <div><p class="eyebrow">ATTIVITÀ</p><h2>Ultimi movimenti</h2></div>
+        <button class="ghost" data-go="report">Vedi riepilogo →</button>
+      </div>
+      ${latest.map((movement) => `
+        <div class="activity-row">
+          <i>${movement.tipo === 'uscita' ? '↗' : '↙'}</i>
+          <div>
+            <b>${esc(name('prodotti', movement.prodotto_id))}</b>
+            <small>${esc(movement.data)} · ${esc(movement.tipo)}</small>
+          </div>
+          <strong>${movement.tipo === 'uscita' ? eur(movement.totale) : `${movement.colli} colli`}</strong>
+        </div>`).join('') || '<p class="notice">Inizia dal Pitazzo per registrare le prime vendite.</p>'}
+    </section>`;
+}
+
+function movimento() {
+  return `
+    <section class="card">
+      <p class="eyebrow">MOVIMENTO SINGOLO</p>
+      <h2>Registra movimento</h2>
+      <form id="mov-form" class="grid">
+        <div><label>Tipo</label><select name="tipo"><option value="uscita">Uscita / vendita</option><option value="entrata">Entrata</option></select></div>
+        <div><label>Articolo</label><select name="prodotto_id" required>${opts(db.prodotti)}</select></div>
+        <div><label>Cliente</label><select name="cliente_id">${opts(db.clienti)}</select></div>
+        <div><label>Colli</label><input name="colli" type="number" min="0" step="0.01" placeholder="0" inputmode="decimal"></div>
+        <div><label>Peso (kg)</label><input name="peso" type="number" min="0" step="0.01" placeholder="0" inputmode="decimal"></div>
+        <div><label>Prezzo unitario</label><input name="prezzo" type="number" min="0" step="0.01" placeholder="0,00" inputmode="decimal"></div>
+        <div><label>&nbsp;</label><button>Salva movimento</button></div>
+      </form>
+    </section>`;
+}
+
+function pitazzo() {
+  const date = today();
+  const daily = db.movimenti.filter((movement) => movement.tipo === 'uscita' && movement.dateKey === date);
+  const dailyClients = [...new Set(daily.map((movement) => movement.cliente_id).filter(Boolean))];
+  const recentClients = [...new Set(db.movimenti.slice().reverse().map((movement) => movement.cliente_id).filter(Boolean))].slice(0, 5);
+  const recentProducts = [...new Set(db.movimenti.slice().reverse().map((movement) => movement.prodotto_id).filter(Boolean))].slice(0, 6);
+
+  const cell = (clientId, product) => {
+    const movements = daily.filter((movement) => movement.cliente_id === clientId && movement.prodotto_id === product.id);
+    if (!movements.length) return '<span class="muted">—</span>';
+    const packages = movements.reduce((sum, movement) => sum + Number(movement.colli), 0);
+    const weight = movements.reduce((sum, movement) => sum + Number(movement.peso), 0);
+    const total = movements.reduce((sum, movement) => sum + Number(movement.totale), 0);
+    return `<b>${packages} c.</b><small>${weight} kg · ${eur(total)}</small>`;
+  };
+
+  return `
+    <section class="pit-title">
+      <div>
+        <p class="eyebrow">PITAZZO GIORNALIERO</p>
+        <h2>Foglio merce di oggi</h2>
+        <p>Ogni salvataggio aggiorna il pitazzo e la scheda del cliente.</p>
+      </div>
+      <div class="date"><small>OGGI</small>${date.split('-').reverse().join('.')}</div>
+    </section>
+    <section class="pit-entry">
+      <div class="quick-head">
+        <div class="quick-icon">▤</div>
+        <div><h3>Inserimento rapido</h3><p>Scrivi cliente, articolo, colli, peso e prezzo. Fatto.</p></div>
+      </div>
+      <form id="pit-form" class="pit-form" novalidate>
+        <div><label>Cliente</label><select name="cliente_id">${opts(db.clienti)}</select></div>
+        <div><label>Articolo</label><select name="prodotto_id">${opts(db.prodotti)}</select></div>
+        <div><label>Colli</label><input name="colli" type="number" min="0" step="0.01" placeholder="0" inputmode="decimal"></div>
+        <div><label>Peso kg</label><input name="peso" type="number" min="0" step="0.01" placeholder="0" inputmode="decimal"></div>
+        <div><label>Prezzo unitario</label><input name="prezzo" type="number" min="0" step="0.01" placeholder="0,00" inputmode="decimal"></div>
+        <button type="submit" ${!db.clienti.length || !db.prodotti.length ? 'disabled' : ''}>Salva sul pitazzo →</button>
+      </form>
+      <p id="pit-msg"></p>
+      ${!db.clienti.length || !db.prodotti.length ? '<p class="message error">Aggiungi prima almeno un cliente e un prodotto.</p>' : ''}
+      <div class="suggest">
+        <span>Suggerimenti rapidi</span>
+        <div>${recentClients.map((clientId) => `<button type="button" data-client="${clientId}">♙ ${esc(name('clienti', clientId))}</button>`).join('') || '<span class="muted">Appariranno dopo le prime registrazioni.</span>'}</div>
+        <div>${recentProducts.map((productId) => `<button type="button" data-product="${productId}">◇ ${esc(name('prodotti', productId))}</button>`).join('')}</div>
+      </div>
+    </section>
+    <section class="card">
+      <div class="section-head">
+        <div><p class="eyebrow">OGGI</p><h2>Il pitazzo</h2></div>
+        <b>${daily.length} righe · ${eur(daily.reduce((sum, movement) => sum + Number(movement.totale), 0))}</b>
+      </div>
+      <div class="table-scroll">
+        <table class="pit-table">
+          <tr><th>Cliente</th>${db.prodotti.map((product) => `<th>${esc(product.nome)}</th>`).join('')}<th>Totale</th></tr>
+          ${dailyClients.map((clientId) => {
+            const clientMovements = daily.filter((movement) => movement.cliente_id === clientId);
+            const total = clientMovements.reduce((sum, movement) => sum + Number(movement.totale), 0);
+            return `<tr>
+              <td class="pit-client"><b>${esc(name('clienti', clientId))}</b><small>${clientMovements.length} registrazioni</small></td>
+              ${db.prodotti.map((product) => `<td>${cell(clientId, product)}</td>`).join('')}
+              <td class="pit-money">${eur(total)}</td>
+            </tr>`;
+          }).join('') || `<tr><td class="empty" colspan="${db.prodotti.length + 2}">Il pitazzo di oggi è vuoto.</td></tr>`}
+        </table>
+      </div>
+    </section>`;
+}
+
+function prodotti() {
+  return `
+    <section class="card">
+      <p class="eyebrow">ARCHIVIO</p>
+      <h2>Prodotti</h2>
+      <form data-add="prodotti" class="grid">
+        <div><label>Nome articolo</label><input name="nome" required placeholder="Es. Arance"></div>
+        <div><label>&nbsp;</label><button>Aggiungi prodotto</button></div>
+      </form>
+    </section>
+    <section class="card">
+      <div class="table-scroll"><table>
+        <tr><th>Nome</th><th></th></tr>
+        ${db.prodotti.map((product) => `<tr><td><b>${esc(product.nome)}</b></td><td><button class="del" data-kind="prodotti" data-id="${product.id}">Elimina</button></td></tr>`).join('') || '<tr><td colspan="2" class="empty">Nessun prodotto.</td></tr>'}
+      </table></div>
+    </section>`;
+}
+
+function clientHistory(clientId) {
+  const history = db.movimenti
+    .filter((movement) => movement.cliente_id === clientId && movement.tipo === 'uscita')
+    .slice()
+    .reverse();
+  const total = history.reduce((sum, movement) => sum + Number(movement.totale), 0);
+
+  return `
+    <section class="card">
+      <div class="section-head">
+        <div><p class="eyebrow">STORICO CLIENTE</p><h2>Vendite registrate</h2></div>
+        <b>${history.length} righe · ${eur(total)}</b>
+      </div>
+      <div class="table-scroll"><table>
+        <tr><th>Data</th><th>Articolo</th><th>Colli</th><th>Kg</th><th>Totale</th></tr>
+        ${history.map((movement) => `<tr>
+          <td>${esc(movement.data)}</td>
+          <td><b>${esc(name('prodotti', movement.prodotto_id))}</b></td>
+          <td>${movement.colli}</td>
+          <td>${movement.peso}</td>
+          <td>${eur(movement.totale)}</td>
+        </tr>`).join('') || '<tr><td colspan="5" class="empty">Nessuna vendita per questo cliente.</td></tr>'}
+      </table></div>
+    </section>`;
+}
+
+function clienti() {
+  const client = db.clienti.find((item) => item.id === selectedClient);
+
+  return `
+    <section class="card">
+      <p class="eyebrow">NUOVO CLIENTE</p>
+      <h2>Crea la scheda cliente</h2>
+      <p class="muted">Solo il nome è obbligatorio. Tutti gli altri campi sono facoltativi.</p>
+      <form id="client-form" class="grid">
+        <div><label>Nome / Ragione sociale *</label><input name="nome" required placeholder="Nome del cliente"></div>
+        <div><label>Telefono</label><input name="telefono" type="tel" placeholder="Facoltativo"></div>
+        <div><label>Email</label><input name="email" type="email" placeholder="Facoltativa"></div>
+        <div><label>Indirizzo</label><input name="indirizzo" placeholder="Facoltativo"></div>
+        <div><label>Città</label><input name="citta" placeholder="Facoltativa"></div>
+        <div><label>Partita IVA / Codice fiscale</label><input name="piva" placeholder="Facoltativo"></div>
+        <div><label>Note</label><input name="note" placeholder="Facoltative"></div>
+        <div><label>&nbsp;</label><button>Crea cliente</button></div>
+      </form>
+    </section>
+    <section class="card">
+      <div class="section-head"><div><p class="eyebrow">RUBRICA</p><h2>Clienti</h2></div><b>${db.clienti.length} registrati</b></div>
+      <div class="table-scroll"><table>
+        <tr><th>Cliente</th><th>Contatti</th><th>Sede</th><th></th></tr>
+        ${db.clienti.map((item) => `<tr>
+          <td><b>${esc(item.nome)}</b></td>
+          <td>${valueOrDash(item.telefono || item.email)}</td>
+          <td>${valueOrDash(item.citta)}</td>
+          <td>
+            <button class="ghost" data-open-client="${item.id}">Apri scheda</button>
+            <button class="del" data-kind="clienti" data-id="${item.id}">Elimina</button>
+          </td>
+        </tr>`).join('') || '<tr><td colspan="4" class="empty">Nessun cliente.</td></tr>'}
+      </table></div>
+    </section>
+    ${client ? `
+      <section class="card">
+        <div class="section-head">
+          <div><p class="eyebrow">SCHEDA CLIENTE</p><h2>${esc(client.nome)}</h2></div>
+          <button class="ghost" id="close-client">Chiudi scheda</button>
+        </div>
+        <form id="client-edit-form" data-id="${client.id}" class="grid">
+          <div><label>Nome / Ragione sociale *</label><input name="nome" required value="${esc(client.nome)}"></div>
+          <div><label>Telefono</label><input name="telefono" type="tel" value="${esc(client.telefono || '')}" placeholder="Facoltativo"></div>
+          <div><label>Email</label><input name="email" type="email" value="${esc(client.email || '')}" placeholder="Facoltativa"></div>
+          <div><label>Indirizzo</label><input name="indirizzo" value="${esc(client.indirizzo || '')}" placeholder="Facoltativo"></div>
+          <div><label>Città</label><input name="citta" value="${esc(client.citta || '')}" placeholder="Facoltativa"></div>
+          <div><label>Partita IVA / Codice fiscale</label><input name="piva" value="${esc(client.piva || '')}" placeholder="Facoltativo"></div>
+          <div><label>Note</label><input name="note" value="${esc(client.note || '')}" placeholder="Facoltative"></div>
+          <div><label>&nbsp;</label><button>Salva modifiche</button></div>
+        </form>
+        <p id="client-msg"></p>
+      </section>
+      ${clientHistory(client.id)}` : ''}`;
+}
+
+function report() {
+  const sales = db.movimenti.filter((movement) => movement.tipo === 'uscita');
+  return `
+    <section class="card">
+      <p class="eyebrow">RIEPILOGO</p>
+      <h2>Vendite per articolo</h2>
+      <div class="table-scroll"><table>
+        <tr><th>Articolo</th><th>Colli</th><th>Kg</th><th>Totale</th></tr>
+        ${db.prodotti.map((product) => {
+          const rows = sales.filter((movement) => movement.prodotto_id === product.id);
+          return `<tr>
+            <td><b>${esc(product.nome)}</b></td>
+            <td>${rows.reduce((sum, movement) => sum + Number(movement.colli), 0)}</td>
+            <td>${rows.reduce((sum, movement) => sum + Number(movement.peso), 0)}</td>
+            <td>${eur(rows.reduce((sum, movement) => sum + Number(movement.totale), 0))}</td>
+          </tr>`;
+        }).join('')}
+      </table></div>
+    </section>`;
+}
+
+function addMove(form, type) {
+  const price = Number(form.get('prezzo') || 0);
+  const packages = Number(form.get('colli') || 0);
+  db.movimenti.push({
+    id: id(),
+    data: stamp(),
+    dateKey: today(),
+    tipo: type,
+    prodotto_id: form.get('prodotto_id'),
+    cliente_id: form.get('cliente_id'),
+    colli: packages,
+    peso: Number(form.get('peso') || 0),
+    prezzo: price,
+    totale: price * packages,
+  });
+}
+
+function formDataObject(form, fields) {
+  const data = new FormData(form);
+  return Object.fromEntries(fields.map((field) => [field, String(data.get(field) || '').trim()]));
+}
+
+function bind() {
+  document.querySelectorAll('[data-page],[data-go]').forEach((button) => {
+    button.onclick = () => {
+      current = button.dataset.page || button.dataset.go;
+      render();
+    };
+  });
+
+  document.querySelectorAll('[data-add]').forEach((form) => {
+    form.onsubmit = async (event) => {
+      event.preventDefault();
+      const productName = String(new FormData(form).get('nome') || '').trim();
+      if (!productName) return;
+      db.prodotti.push({ id: id(), nome: productName });
+      await save();
+      render();
+    };
+  });
+
+  const clientForm = $('#client-form');
+  if (clientForm) {
+    clientForm.onsubmit = async (event) => {
+      event.preventDefault();
+      const fields = ['nome', 'telefono', 'email', 'indirizzo', 'citta', 'piva', 'note'];
+      const client = { id: id(), ...formDataObject(clientForm, fields) };
+      if (!client.nome) return;
+      db.clienti.push(client);
+      selectedClient = client.id;
+      await save();
+      render();
+    };
+  }
+
+  document.querySelectorAll('[data-open-client]').forEach((button) => {
+    button.onclick = () => {
+      selectedClient = button.dataset.openClient;
+      render();
+      $('#client-edit-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+  });
+
+  const closeClient = $('#close-client');
+  if (closeClient) {
+    closeClient.onclick = () => {
+      selectedClient = '';
+      render();
+    };
+  }
+
+  const clientEditForm = $('#client-edit-form');
+  if (clientEditForm) {
+    clientEditForm.onsubmit = async (event) => {
+      event.preventDefault();
+      const fields = ['nome', 'telefono', 'email', 'indirizzo', 'citta', 'piva', 'note'];
+      const clientIndex = db.clienti.findIndex((item) => item.id === clientEditForm.dataset.id);
+      if (clientIndex < 0) return;
+      const updated = formDataObject(clientEditForm, fields);
+      if (!updated.nome) return;
+      db.clienti[clientIndex] = { ...db.clienti[clientIndex], ...updated };
+      const message = $('#client-msg');
+      message.className = 'message';
+      message.textContent = 'Scheda cliente salvata.';
+      await save();
+    };
+  }
+
+  document.querySelectorAll('.del').forEach((button) => {
+    button.onclick = async () => {
+      if (!confirm('Eliminare definitivamente questo elemento?')) return;
+      db[button.dataset.kind] = db[button.dataset.kind].filter((item) => item.id !== button.dataset.id);
+      if (selectedClient === button.dataset.id) selectedClient = '';
+      await save();
+      render();
+    };
+  });
+
+  const movementForm = $('#mov-form');
+  if (movementForm) {
+    movementForm.onsubmit = async (event) => {
+      event.preventDefault();
+      const form = new FormData(movementForm);
+      addMove(form, form.get('tipo'));
+      await save();
+      current = 'home';
+      render();
+    };
+  }
+
+  const pitForm = $('#pit-form');
+  if (pitForm) {
+    pitForm.onsubmit = async (event) => {
+      event.preventDefault();
+      const form = new FormData(pitForm);
+      const message = $('#pit-msg');
+      const clientId = form.get('cliente_id');
+      const productId = form.get('prodotto_id');
+      if (!clientId || !productId) {
+        message.className = 'message error';
+        message.textContent = 'Scegli prima cliente e articolo.';
+        return;
+      }
+      try {
+        message.className = 'message';
+        message.textContent = 'Salvataggio…';
+        addMove(form, 'uscita');
+        await save();
+        render();
+      } catch (error) {
+        message.className = 'message error';
+        message.textContent = `Errore: ${error.message}`;
+      }
+    };
+  }
+
+  document.querySelectorAll('[data-client]').forEach((button) => {
+    button.onclick = () => {
+      $('#pit-form [name="cliente_id"]').value = button.dataset.client;
+    };
+  });
+
+  document.querySelectorAll('[data-product]').forEach((button) => {
+    button.onclick = () => {
+      $('#pit-form [name="prodotto_id"]').value = button.dataset.product;
+    };
+  });
+}
+
+onAuthStateChanged(auth, (user) => {
+  if (unsubscribe) unsubscribe();
+  if (!user) {
+    login();
+    return;
+  }
+
+  $('#nav').hidden = false;
+  $('#user').innerHTML = `${esc(user.email || '')}<button id="out">Esci</button>`;
+  $('#out').onclick = () => signOut(auth);
+
+  unsubscribe = onSnapshot(
+    doc(store, 'eurofrutta', 'dati'),
+    (snapshot) => {
+      const saved = snapshot.exists() ? snapshot.data() : empty();
+      db = {
+        clienti: Array.isArray(saved.clienti) ? saved.clienti : [],
+        prodotti: Array.isArray(saved.prodotti) ? saved.prodotti : [],
+        movimenti: Array.isArray(saved.movimenti) ? saved.movimenti : [],
+      };
+      render();
+    },
+    (error) => {
+      $('#app').innerHTML = `<section class="card"><h2>Accesso ai dati bloccato</h2><p class="message error">${esc(error.message)}</p></section>`;
+    },
+  );
+});
