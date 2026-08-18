@@ -81,11 +81,18 @@ function opts(items, selected = '') {
 }
 
 function lotLabel(lot) {
-  return `${name('prodotti', lot.prodotto_id)} · ${lot.proprietario || 'Proprietario non indicato'} · R ${Number(lot.colli_rimanenti || 0)} colli`;
+  const packages = Number(lot.colli_rimanenti || 0);
+  const weight = Number(lot.peso_rimanente || 0);
+  return `${name('prodotti', lot.prodotto_id)} · ${lot.proprietario || 'Proprietario non indicato'} · R ${packages} colli / ${weight} kg`;
+}
+
+function lotIsOpen(lot) {
+  if (Number(lot.peso_iniziale || 0) > 0) return Number(lot.peso_rimanente || 0) > 0;
+  return Number(lot.colli_rimanenti || 0) > 0;
 }
 
 function lotOpts(selected = '') {
-  const available = db.lotti.filter((lot) => Number(lot.colli_rimanenti) > 0);
+  const available = db.lotti.filter(lotIsOpen);
   return '<option value="">— scegli lotto —</option>' + available.map((lot) => (
     `<option value="${lot.id}" ${lot.id === selected ? 'selected' : ''}>${esc(lotLabel(lot))}</option>`
   )).join('');
@@ -97,6 +104,19 @@ function lotById(lotId) {
 
 function roundQty(value) {
   return Math.round((Number(value) + Number.EPSILON) * 100) / 100;
+}
+
+function roundMoney(value) {
+  return Math.round((Number(value) + Number.EPSILON) * 100) / 100;
+}
+
+function formatQty(value) {
+  return Number(value || 0).toLocaleString('it-IT', { maximumFractionDigits: 2 });
+}
+
+function formatDateKey(dateKey) {
+  const parts = String(dateKey || '').split('-');
+  return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : String(dateKey || '');
 }
 
 function name(kind, itemId) {
@@ -237,9 +257,14 @@ function render() {
 }
 
 function home() {
-  const openLots = db.lotti.filter((lot) => Number(lot.colli_rimanenti) > 0);
+  const openLots = db.lotti.filter(lotIsOpen);
   const remaining = openLots.reduce((sum, lot) => sum + Number(lot.colli_rimanenti), 0);
-  const lowLots = openLots.filter((lot) => Number(lot.colli_rimanenti) <= 10);
+  const remainingKg = openLots.reduce((sum, lot) => sum + Number(lot.peso_rimanente || 0), 0);
+  const lowLots = openLots.filter((lot) => (
+    Number(lot.peso_rimanente || 0) > 0
+      ? Number(lot.peso_rimanente) <= 100
+      : Number(lot.colli_rimanenti || 0) <= 10
+  ));
   const stockRows = openLots.slice().reverse().slice(0, 8);
 
   return `
@@ -270,9 +295,9 @@ function home() {
       </div>
     </section>
     <section class="stats">
-      <article class="stat"><i>▦</i><div><h3>Magazzino</h3><div class="big">R ${remaining}</div><p>${openLots.length} lotti aperti</p></div></article>
+      <article class="stat"><i>▦</i><div><h3>Magazzino</h3><div class="big">${remainingKg} kg</div><p>R ${remaining} colli · ${openLots.length} lotti</p></div></article>
       <article class="stat"><i>◇</i><div><h3>Prodotti</h3><div class="big">${db.prodotti.length}</div><p>In catalogo</p></div></article>
-      <article class="stat"><i>!</i><div><h3>In esaurimento</h3><div class="big">${lowLots.length}</div><p>Lotti con 10 colli o meno</p></div></article>
+      <article class="stat"><i>!</i><div><h3>In esaurimento</h3><div class="big">${lowLots.length}</div><p>Lotti con poca merce rimasta</p></div></article>
     </section>
     <section class="card">
       <div class="section-head">
@@ -284,9 +309,9 @@ function home() {
         ${stockRows.map((lot) => `<tr>
           <td><button class="ghost" data-open-product="${lot.prodotto_id}"><b>${esc(name('prodotti', lot.prodotto_id))}</b></button></td>
           <td>${esc(lot.proprietario || '—')}</td>
-          <td>${Number(lot.colli_iniziali || 0)} colli</td>
-          <td class="pit-money"><b>R ${Number(lot.colli_rimanenti || 0)}</b></td>
-          <td>${Number(lot.colli_rimanenti) <= 10 ? '<span class="warn">In esaurimento</span>' : '<span class="notice">Disponibile</span>'}</td>
+          <td>${formatQty(lot.peso_iniziale)} kg<br><small>${formatQty(lot.colli_iniziali)} colli</small></td>
+          <td class="pit-money"><b>R ${formatQty(lot.peso_rimanente)} kg</b><br><small>${formatQty(lot.colli_rimanenti)} colli</small></td>
+          <td>${lowLots.includes(lot) ? '<span class="warn">In esaurimento</span>' : '<span class="notice">Disponibile</span>'}</td>
         </tr>`).join('') || '<tr><td colspan="5" class="empty">Nessuna merce in magazzino.</td></tr>'}
       </table></div>
     </section>`;
@@ -302,12 +327,12 @@ function movimento() {
       <form id="mov-form" class="grid">
         <div><label>Lotto / articolo</label><select name="lotto_id" required>${lotOpts()}</select></div>
         <div><label>Cliente</label><select name="cliente_id" required>${opts(db.clienti)}</select></div>
-        <div><label>Colli</label><input name="colli" type="number" min="0" step="0.01" placeholder="0" inputmode="decimal"></div>
-        <div><label>Peso (kg)</label><input name="peso" type="number" min="0" step="0.01" placeholder="0" inputmode="decimal"></div>
-        <div><label>Prezzo unitario</label><input name="prezzo" type="number" min="0" step="0.01" placeholder="0,00" inputmode="decimal"></div>
+        <div><label>Colli (facoltativi)</label><input name="colli" type="number" min="0" step="0.01" placeholder="0" inputmode="decimal"></div>
+        <div><label>Peso (kg) *</label><input name="peso" required type="number" min="0.01" step="0.01" placeholder="0" inputmode="decimal"></div>
+        <div><label>Prezzo al kg</label><input name="prezzo" type="number" min="0" step="0.01" placeholder="0,00" inputmode="decimal"></div>
         <div><label>&nbsp;</label><button>Salva vendita</button></div>
       </form>
-      ${!db.lotti.some((lot) => Number(lot.colli_rimanenti) > 0) ? '<p class="message error">Prima registra uno scarico nella sezione Magazzino.</p>' : ''}
+      ${!db.lotti.some(lotIsOpen) ? '<p class="message error">Prima registra uno scarico nella sezione Magazzino.</p>' : ''}
     </section>`;
 }
 
@@ -318,10 +343,10 @@ function pitazzo() {
   const recentClients = [...new Set(db.movimenti.slice().reverse().map((movement) => movement.cliente_id).filter(Boolean))].slice(0, 5);
   const recentLots = [...new Set(db.movimenti.slice().reverse().map((movement) => movement.lotto_id).filter(Boolean))]
     .map(lotById)
-    .filter((lot) => lot && Number(lot.colli_rimanenti) > 0)
+    .filter((lot) => lot && lotIsOpen(lot))
     .slice(0, 6);
   const visibleLots = db.lotti.filter((lot) => (
-    Number(lot.colli_rimanenti) > 0 || daily.some((movement) => movement.lotto_id === lot.id)
+    lotIsOpen(lot) || daily.some((movement) => movement.lotto_id === lot.id)
   ));
 
   const cell = (clientId, lot) => {
@@ -350,14 +375,14 @@ function pitazzo() {
       <form id="pit-form" class="pit-form" novalidate>
         <div><label>Cliente</label><select name="cliente_id">${opts(db.clienti)}</select></div>
         <div><label>Lotto / articolo</label><select name="lotto_id">${lotOpts()}</select></div>
-        <div><label>Colli</label><input name="colli" type="number" min="0" step="0.01" placeholder="0" inputmode="decimal"></div>
-        <div><label>Peso kg</label><input name="peso" type="number" min="0" step="0.01" placeholder="0" inputmode="decimal"></div>
-        <div><label>Prezzo unitario</label><input name="prezzo" type="number" min="0" step="0.01" placeholder="0,00" inputmode="decimal"></div>
-        <button type="submit" ${!db.clienti.length || !db.lotti.some((lot) => Number(lot.colli_rimanenti) > 0) ? 'disabled' : ''}>Salva sul pitazzo →</button>
+        <div><label>Colli (facoltativi)</label><input name="colli" type="number" min="0" step="0.01" placeholder="0" inputmode="decimal"></div>
+        <div><label>Peso kg *</label><input name="peso" required type="number" min="0.01" step="0.01" placeholder="0" inputmode="decimal"></div>
+        <div><label>Prezzo al kg</label><input name="prezzo" type="number" min="0" step="0.01" placeholder="0,00" inputmode="decimal"></div>
+        <button type="submit" ${!db.clienti.length || !db.lotti.some(lotIsOpen) ? 'disabled' : ''}>Salva sul pitazzo →</button>
       </form>
       <p id="pit-msg"></p>
       ${!db.clienti.length ? '<p class="message error">Aggiungi prima almeno un cliente.</p>' : ''}
-      ${!db.lotti.some((lot) => Number(lot.colli_rimanenti) > 0) ? '<p class="message error">Non ci sono lotti disponibili. Registra prima uno scarico in Magazzino.</p>' : ''}
+      ${!db.lotti.some(lotIsOpen) ? '<p class="message error">Non ci sono lotti disponibili. Registra prima uno scarico in Magazzino.</p>' : ''}
       <div class="suggest">
         <span>Suggerimenti rapidi</span>
         <div>${recentClients.map((clientId) => `<button type="button" data-client="${clientId}">♙ ${esc(name('clienti', clientId))}</button>`).join('') || '<span class="muted">Appariranno dopo le prime registrazioni.</span>'}</div>
@@ -366,12 +391,22 @@ function pitazzo() {
     </section>
     <section class="card">
       <div class="section-head">
+        <div><p class="eyebrow">FINE GIORNATA</p><h2>Biglietti automatici</h2><p>Crea un biglietto per ogni lotto venduto, pronto da stampare o salvare in PDF.</p></div>
+        <div style="display:flex;gap:10px;align-items:end;flex-wrap:wrap">
+          <div><label>Giornata</label><input id="ticket-date" type="date" value="${date}"></div>
+          <button id="generate-tickets" type="button">Genera tutti i biglietti →</button>
+        </div>
+      </div>
+      <p id="ticket-msg"></p>
+    </section>
+    <section class="card">
+      <div class="section-head">
         <div><p class="eyebrow">OGGI</p><h2>Il pitazzo</h2></div>
         <b>${daily.length} righe · ${eur(daily.reduce((sum, movement) => sum + Number(movement.totale), 0))}</b>
       </div>
       <div class="table-scroll">
         <table class="pit-table">
-          <tr><th>Cliente</th>${visibleLots.map((lot) => `<th>${esc(name('prodotti', lot.prodotto_id))}<small>${esc(lot.proprietario)}<br>R ${Number(lot.colli_rimanenti)} colli</small></th>`).join('')}<th>Totale</th></tr>
+          <tr><th>Cliente</th>${visibleLots.map((lot) => `<th>${esc(name('prodotti', lot.prodotto_id))}<small>${esc(lot.proprietario)}<br>R ${Number(lot.peso_rimanente || 0)} kg / ${Number(lot.colli_rimanenti || 0)} colli</small></th>`).join('')}<th>Totale</th></tr>
           ${dailyClients.map((clientId) => {
             const clientMovements = daily.filter((movement) => movement.cliente_id === clientId);
             const total = clientMovements.reduce((sum, movement) => sum + Number(movement.totale), 0);
@@ -388,14 +423,15 @@ function pitazzo() {
 
 function magazzino() {
   const openLots = db.lotti
-    .filter((lot) => Number(lot.colli_rimanenti) > 0)
+    .filter(lotIsOpen)
     .slice()
     .reverse();
   const closedLots = db.lotti
-    .filter((lot) => Number(lot.colli_rimanenti) <= 0)
+    .filter((lot) => !lotIsOpen(lot))
     .slice()
     .reverse();
   const totalRemaining = openLots.reduce((sum, lot) => sum + Number(lot.colli_rimanenti), 0);
+  const totalRemainingKg = openLots.reduce((sum, lot) => sum + Number(lot.peso_rimanente || 0), 0);
   const owners = [...new Set(db.lotti.map((lot) => lot.proprietario).filter(Boolean))];
 
   const rows = (lots) => lots.map((lot) => {
@@ -420,7 +456,7 @@ function magazzino() {
         <h2>Rimanenze sempre aggiornate</h2>
         <p>Ogni scarico crea un lotto separato per prodotto e proprietario.</p>
       </div>
-      <div class="date"><small>COLLI DISPONIBILI</small>R ${totalRemaining}</div>
+      <div class="date"><small>KG DISPONIBILI</small>R ${formatQty(totalRemainingKg)}<small>${formatQty(totalRemaining)} colli</small></div>
     </section>
     <section class="card">
       <p class="eyebrow">NUOVO SCARICO</p>
@@ -428,8 +464,8 @@ function magazzino() {
       <form id="load-form" class="grid">
         <div><label>Prodotto *</label><select name="prodotto_id" required>${opts(db.prodotti)}</select></div>
         <div><label>Proprietario / fornitore *</label><input name="proprietario" required list="owners" placeholder="Es. Angelo"><datalist id="owners">${owners.map((owner) => `<option value="${esc(owner)}">`).join('')}</datalist></div>
-        <div><label>Colli arrivati *</label><input name="colli" required type="number" min="0.01" step="0.01" placeholder="0" inputmode="decimal"></div>
-        <div><label>Peso totale kg</label><input name="peso" type="number" min="0" step="0.01" placeholder="0" inputmode="decimal"></div>
+        <div><label>Colli arrivati (facoltativi)</label><input name="colli" type="number" min="0" step="0.01" placeholder="0" inputmode="decimal"></div>
+        <div><label>Peso totale kg *</label><input name="peso" required type="number" min="0.01" step="0.01" placeholder="0" inputmode="decimal"></div>
         <div><label>Note</label><input name="note" placeholder="Facoltative"></div>
         <div><label>&nbsp;</label><button ${!db.prodotti.length ? 'disabled' : ''}>Registra scarico</button></div>
       </form>
@@ -439,7 +475,7 @@ function magazzino() {
     <section class="card">
       <div class="section-head">
         <div><p class="eyebrow">DISPONIBILE</p><h2>Lotti aperti</h2></div>
-        <b>${openLots.length} lotti · R ${totalRemaining} colli</b>
+        <b>${openLots.length} lotti · R ${formatQty(totalRemainingKg)} kg / ${formatQty(totalRemaining)} colli</b>
       </div>
       <div class="table-scroll"><table>
         <tr><th>Carico</th><th>Prodotto</th><th>Proprietario</th><th>Iniziali</th><th>Venduti</th><th>Rimanenza</th><th>Peso rimasto</th></tr>
@@ -459,6 +495,7 @@ function productDetail(product) {
   const sales = db.movimenti.filter((movement) => movement.tipo === 'uscita' && movement.prodotto_id === product.id).slice().reverse();
   const lots = db.lotti.filter((lot) => lot.prodotto_id === product.id).slice().reverse();
   const remaining = lots.reduce((sum, lot) => sum + Number(lot.colli_rimanenti || 0), 0);
+  const remainingKg = lots.reduce((sum, lot) => sum + Number(lot.peso_rimanente || 0), 0);
   const soldPackages = sales.reduce((sum, movement) => sum + Number(movement.colli || 0), 0);
   const salesTotal = sales.reduce((sum, movement) => sum + Number(movement.totale || 0), 0);
 
@@ -469,7 +506,7 @@ function productDetail(product) {
         <button class="ghost" id="close-product">Chiudi scheda</button>
       </div>
       <section class="stats">
-        <article class="stat"><i>▦</i><div><h3>Rimanenza</h3><div class="big">R ${remaining}</div><p>${lots.filter((lot) => Number(lot.colli_rimanenti) > 0).length} lotti aperti</p></div></article>
+        <article class="stat"><i>▦</i><div><h3>Rimanenza</h3><div class="big">R ${formatQty(remainingKg)} kg</div><p>${formatQty(remaining)} colli · ${lots.filter(lotIsOpen).length} lotti aperti</p></div></article>
         <article class="stat"><i>↗</i><div><h3>Colli venduti</h3><div class="big">${soldPackages}</div><p>${sales.length} vendite</p></div></article>
         <article class="stat"><i>€</i><div><h3>Totale storico</h3><div class="big">${eur(salesTotal)}</div><p>Valore vendite</p></div></article>
       </section>
@@ -477,8 +514,8 @@ function productDetail(product) {
     <section class="card">
       <div class="section-head"><div><p class="eyebrow">MAGAZZINO</p><h2>Lotti del prodotto</h2></div><b>${lots.length} totali</b></div>
       <div class="table-scroll"><table>
-        <tr><th>Data carico</th><th>Proprietario</th><th>Iniziali</th><th>Rimanenza</th></tr>
-        ${lots.map((lot) => `<tr><td>${esc(lot.dataCarico || '—')}</td><td>${esc(lot.proprietario || '—')}</td><td>${Number(lot.colli_iniziali || 0)}</td><td class="pit-money">R ${Number(lot.colli_rimanenti || 0)}</td></tr>`).join('') || '<tr><td colspan="4" class="empty">Nessun lotto.</td></tr>'}
+        <tr><th>Data carico</th><th>Proprietario / provenienza</th><th>Iniziali</th><th>Rimanenza</th></tr>
+        ${lots.map((lot) => `<tr><td>${esc(lot.dataCarico || '—')}</td><td>${esc(lot.proprietario || '—')}</td><td>${formatQty(lot.peso_iniziale)} kg<br><small>${formatQty(lot.colli_iniziali)} colli</small></td><td class="pit-money">R ${formatQty(lot.peso_rimanente)} kg<br><small>${formatQty(lot.colli_rimanenti)} colli</small></td></tr>`).join('') || '<tr><td colspan="4" class="empty">Nessun lotto.</td></tr>'}
       </table></div>
     </section>
     <section class="card">
@@ -700,18 +737,134 @@ function report() {
     </section>`;
 }
 
+function dailyTicketData(dateKey) {
+  const daySales = db.movimenti.filter((movement) => (
+    movement.tipo === 'uscita' && movement.dateKey === dateKey
+  ));
+  const groups = new Map();
+
+  daySales.forEach((movement) => {
+    const key = movement.lotto_id || `${movement.prodotto_id || 'prodotto'}-${movement.proprietario || 'senza-provenienza'}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(movement);
+  });
+
+  return [...groups.entries()].map(([key, sales]) => {
+    const first = sales[0];
+    const lot = lotById(first.lotto_id) || {
+      id: key,
+      prodotto_id: first.prodotto_id,
+      proprietario: first.proprietario || '',
+      colli_iniziali: 0,
+      peso_iniziale: 0,
+    };
+    const previousSales = db.movimenti.filter((movement) => (
+      movement.tipo === 'uscita'
+      && movement.lotto_id === first.lotto_id
+      && movement.dateKey < dateKey
+    ));
+    const soldBeforeKg = previousSales.reduce((sum, movement) => sum + Number(movement.peso || 0), 0);
+    const soldBeforePackages = previousSales.reduce((sum, movement) => sum + Number(movement.colli || 0), 0);
+    const soldTodayKg = sales.reduce((sum, movement) => sum + Number(movement.peso || 0), 0);
+    const soldTodayPackages = sales.reduce((sum, movement) => sum + Number(movement.colli || 0), 0);
+    const recordedInitialKg = Number(lot.peso_iniziale || 0);
+    const recordedInitialPackages = Number(lot.colli_iniziali || 0);
+    const startKg = recordedInitialKg > 0 ? Math.max(0, recordedInitialKg - soldBeforeKg) : soldTodayKg;
+    const startPackages = recordedInitialPackages > 0
+      ? Math.max(0, recordedInitialPackages - soldBeforePackages)
+      : soldTodayPackages;
+    const gross = roundMoney(sales.reduce((sum, movement) => sum + Number(movement.totale || 0), 0));
+    const deduction = Math.floor(((gross * 0.10) + Number.EPSILON) * 10) / 10;
+
+    return {
+      lot,
+      sales,
+      product: name('prodotti', lot.prodotto_id),
+      owner: lot.proprietario || 'Provenienza non indicata',
+      startKg: roundQty(startKg),
+      startPackages: roundQty(startPackages),
+      soldTodayKg: roundQty(soldTodayKg),
+      soldTodayPackages: roundQty(soldTodayPackages),
+      remainingKg: roundQty(Math.max(0, startKg - soldTodayKg)),
+      remainingPackages: roundQty(Math.max(0, startPackages - soldTodayPackages)),
+      hasPackageData: soldTodayPackages > 0,
+      gross,
+      deduction,
+      net: roundMoney(gross - deduction),
+    };
+  });
+}
+
+function generateTickets(dateKey) {
+  const tickets = dailyTicketData(dateKey);
+  if (!tickets.length) throw new Error(`Non ci sono vendite registrate il ${formatDateKey(dateKey)}.`);
+
+  const ticketHtml = tickets.map((ticket, index) => `
+    <section class="ticket">
+      <header>
+        <div><small>SIGNOR / AZIENDA</small><strong>${esc(ticket.owner)}</strong></div>
+        <div class="ticket-date"><small>DATA</small><strong>${esc(formatDateKey(dateKey))}</strong></div>
+      </header>
+      <div class="lot-title">R ${formatQty(ticket.startKg)} KG · ${esc(ticket.product)} · ${esc(ticket.owner)}</div>
+      <div class="lot-subtitle">Rimanenza iniziale: <b>${formatQty(ticket.startKg)} kg</b>${ticket.hasPackageData ? ` · ${formatQty(ticket.startPackages)} colli` : ''}</div>
+      <table>
+        <thead><tr><th>Colli</th><th>Cliente</th><th>Peso</th><th>Prezzo/kg</th><th>Importo</th></tr></thead>
+        <tbody>${ticket.sales.map((sale) => `<tr>
+          <td>${Number(sale.colli || 0) ? formatQty(sale.colli) : '—'}</td>
+          <td>${esc(name('clienti', sale.cliente_id))}</td>
+          <td>${formatQty(sale.peso)} kg</td>
+          <td>${eur(sale.prezzo)}</td>
+          <td><b>${eur(sale.totale)}</b></td>
+        </tr>`).join('')}</tbody>
+      </table>
+      <div class="totals">
+        <div class="remaining"><span>VENDUTO</span><b>${formatQty(ticket.soldTodayKg)} kg</b><small>${ticket.hasPackageData ? `${formatQty(ticket.soldTodayPackages)} colli` : ''}</small></div>
+        <div class="remaining"><span>RIMANENZA</span><b>R ${formatQty(ticket.remainingKg)} kg</b><small>${ticket.hasPackageData ? `${formatQty(ticket.remainingPackages)} colli` : ''}</small></div>
+        <dl>
+          <dt>Totale lordo</dt><dd>${eur(ticket.gross)}</dd>
+          <dt>10%</dt><dd>− ${eur(ticket.deduction)}</dd>
+          <dt class="net">TOTALE NETTO</dt><dd class="net">${eur(ticket.net)}</dd>
+        </dl>
+      </div>
+      <footer>Eurofrutta · Biglietto ${index + 1} di ${tickets.length} · Generato da ${esc(operatorName())}</footer>
+    </section>`).join('');
+
+  const preview = window.open('', '_blank');
+  if (!preview) throw new Error('Il browser ha bloccato la finestra. Consenti i popup e riprova.');
+  preview.document.open();
+  preview.document.write(`<!doctype html>
+    <html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Biglietti ${esc(formatDateKey(dateKey))}</title>
+    <style>
+      @page{size:A5 portrait;margin:9mm}*{box-sizing:border-box}body{margin:0;background:#eef2f0;color:#172334;font-family:Arial,sans-serif}.toolbar{position:sticky;top:0;z-index:2;display:flex;justify-content:center;gap:10px;padding:14px;background:#15334a}.toolbar button{border:0;border-radius:8px;padding:11px 18px;font-weight:700;cursor:pointer}.toolbar .print{background:#35b779;color:#fff}.ticket{width:148mm;min-height:210mm;margin:18px auto;padding:10mm;background:#fff;box-shadow:0 4px 24px #0002;page-break-after:always;display:flex;flex-direction:column}.ticket:last-child{page-break-after:auto}header{display:flex;justify-content:space-between;gap:20px;border-bottom:2px solid #172334;padding-bottom:7px}header div{display:flex;flex-direction:column}small{color:#6b7788}.ticket-date{text-align:right}.lot-title{margin:13px 0 4px;color:#c43232;font-size:20px;font-weight:800;text-transform:uppercase}.lot-subtitle{margin-bottom:14px;color:#4d5968}table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid #aab3bc;padding:7px 5px;text-align:left}th{background:#eef2f0;text-transform:uppercase;font-size:10px}th:nth-child(n+3),td:nth-child(n+3){text-align:right}.totals{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}.remaining{border:2px solid #172334;padding:9px;display:flex;flex-direction:column}.remaining span{font-size:10px;font-weight:700;color:#637082}.remaining b{font-size:19px;margin-top:3px}.remaining small{min-height:14px}dl{grid-column:1/-1;margin:0 0 0 auto;width:64%;display:grid;grid-template-columns:1fr auto;gap:4px 20px;border-top:1px solid #aab3bc;padding-top:9px}dt,dd{margin:0}dd{text-align:right;font-weight:700}.net{margin-top:5px;padding-top:7px;border-top:2px solid #172334;font-size:16px;font-weight:800}footer{margin-top:auto;padding-top:18px;text-align:center;color:#7a8490;font-size:9px}@media print{body{background:#fff}.toolbar{display:none}.ticket{margin:0;padding:0;box-shadow:none;width:auto;min-height:190mm}}
+    </style></head><body>
+      <div class="toolbar"><button class="print" onclick="window.print()">Stampa / Salva PDF</button><button onclick="window.close()">Chiudi</button></div>
+      ${ticketHtml}
+    </body></html>`);
+  preview.document.close();
+  preview.focus();
+  return tickets.length;
+}
+
 function addSale(form) {
   const lot = lotById(form.get('lotto_id'));
   if (!lot) throw new Error('Scegli un lotto disponibile.');
   const price = Number(form.get('prezzo') || 0);
   const packages = Number(form.get('colli') || 0);
   const weight = Number(form.get('peso') || 0);
-  const remaining = Number(lot.colli_rimanenti || 0);
-  if (packages <= 0) throw new Error('Inserisci il numero di colli venduti.');
-  if (packages > remaining) throw new Error(`Disponibili soltanto ${remaining} colli per questo lotto.`);
+  const remainingPackages = Number(lot.colli_rimanenti || 0);
+  const remainingWeight = Number(lot.peso_rimanente || 0);
+  if (weight <= 0) throw new Error('Inserisci i kg venduti.');
+  if (packages < 0) throw new Error('Il numero di colli non può essere negativo.');
+  if (packages > 0 && packages > remainingPackages) {
+    throw new Error(`Disponibili soltanto ${formatQty(remainingPackages)} colli per questo lotto.`);
+  }
+  if (Number(lot.peso_iniziale || 0) > 0 && weight > remainingWeight) {
+    throw new Error(`Disponibili soltanto ${formatQty(remainingWeight)} kg per questo lotto.`);
+  }
 
-  lot.colli_rimanenti = roundQty(remaining - packages);
-  lot.peso_rimanente = roundQty(Math.max(0, Number(lot.peso_rimanente || 0) - weight));
+  if (packages > 0) lot.colli_rimanenti = roundQty(remainingPackages - packages);
+  lot.peso_rimanente = roundQty(Math.max(0, remainingWeight - weight));
   db.movimenti.push({
     id: id(),
     data: stamp(),
@@ -724,12 +877,12 @@ function addSale(form) {
     colli: packages,
     peso: weight,
     prezzo: price,
-    totale: price * packages,
+    totale: roundMoney(price * weight),
     operatore: operatorName(),
     operatore_uid: signedUser?.uid || '',
     operatore_email: userEmail(),
   });
-  audit('Vendita registrata', `${name('prodotti', lot.prodotto_id)} · ${lot.proprietario} · ${packages} colli · cliente ${name('clienti', form.get('cliente_id'))}`);
+  audit('Vendita registrata', `${name('prodotti', lot.prodotto_id)} · ${lot.proprietario} · ${formatQty(weight)} kg${packages ? ` · ${formatQty(packages)} colli` : ''} · cliente ${name('clienti', form.get('cliente_id'))}`);
 }
 
 function addLoad(form) {
@@ -739,7 +892,8 @@ function addLoad(form) {
   const weight = Number(form.get('peso') || 0);
   if (!productId) throw new Error('Scegli il prodotto.');
   if (!owner) throw new Error('Scrivi il proprietario o fornitore.');
-  if (packages <= 0) throw new Error('Inserisci i colli arrivati.');
+  if (packages < 0) throw new Error('Il numero di colli non può essere negativo.');
+  if (weight <= 0) throw new Error('Inserisci il peso totale in kg.');
 
   const lot = {
     id: id(),
@@ -771,7 +925,7 @@ function addLoad(form) {
     operatore_uid: signedUser?.uid || '',
     operatore_email: userEmail(),
   });
-  audit('Scarico registrato', `${name('prodotti', productId)} · ${owner} · ${packages} colli`);
+  audit('Scarico registrato', `${name('prodotti', productId)} · ${owner} · ${formatQty(weight)} kg${packages ? ` · ${formatQty(packages)} colli` : ''}`);
 }
 
 function formDataObject(form, fields) {
@@ -952,6 +1106,22 @@ function bind() {
       $('#pit-form [name="lotto_id"]').value = button.dataset.lot;
     };
   });
+
+  const generateTicketsButton = $('#generate-tickets');
+  if (generateTicketsButton) {
+    generateTicketsButton.onclick = () => {
+      const message = $('#ticket-msg');
+      const dateKey = $('#ticket-date')?.value || today();
+      try {
+        const count = generateTickets(dateKey);
+        message.className = 'message';
+        message.textContent = `${count} ${count === 1 ? 'biglietto creato' : 'biglietti creati'}. Nella nuova pagina premi “Stampa / Salva PDF”.`;
+      } catch (error) {
+        message.className = 'message error';
+        message.textContent = `Errore: ${error.message}`;
+      }
+    };
+  }
 
   const memberForm = $('#member-form');
   if (memberForm) {
