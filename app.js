@@ -9,6 +9,7 @@ import {
 import {
   getFirestore,
   doc,
+  getDoc,
   onSnapshot,
   setDoc,
 } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js';
@@ -25,11 +26,17 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const store = getFirestore(app);
-const provider = new GoogleAuthProvider();
+const googleProvider = new GoogleAuthProvider();
+const OWNER_EMAIL = 'angysuperakab@gmail.com';
 
-let db = { clienti: [], prodotti: [], lotti: [], movimenti: [] };
+let db = { clienti: [], prodotti: [], lotti: [], movimenti: [], registro: [] };
+let accessConfig = { membri: [], amministratori: [] };
+let currentAccess = null;
+let currentProfile = null;
 let current = 'home';
 let selectedClient = '';
+let selectedProduct = '';
+let signedUser = null;
 let unsubscribe;
 
 const $ = (selector) => document.querySelector(selector);
@@ -48,18 +55,24 @@ const esc = (value) => String(value ?? '').replace(
   })[character],
 );
 
-const empty = () => ({ clienti: [], prodotti: [], lotti: [], movimenti: [] });
+const empty = () => ({ clienti: [], prodotti: [], lotti: [], movimenti: [], registro: [] });
 
-function ensureMagazzinoNav() {
+function addNavButton(page, icon, label, beforePage = '') {
   const nav = $('#nav');
-  if (!nav || nav.querySelector('[data-page="magazzino"]')) return;
+  if (!nav || nav.querySelector(`[data-page="${page}"]`)) return;
   const button = document.createElement('button');
-  button.dataset.page = 'magazzino';
-  button.innerHTML = '▦ <span>Magazzino</span>';
-  nav.insertBefore(button, nav.querySelector('[data-page="prodotti"]'));
+  button.dataset.page = page;
+  button.innerHTML = `${icon} <span>${label}</span>`;
+  nav.insertBefore(button, beforePage ? nav.querySelector(`[data-page="${beforePage}"]`) : null);
 }
 
-ensureMagazzinoNav();
+function ensureDynamicNav() {
+  addNavButton('magazzino', '▦', 'Magazzino', 'prodotti');
+  addNavButton('vendite', '€', 'Vendite', 'report');
+  addNavButton('registro', '♛', 'Amministrazione');
+  const registerButton = $('#nav [data-page="registro"]');
+  if (registerButton) registerButton.hidden = !isAdmin();
+}
 
 function opts(items, selected = '') {
   return '<option value="">— scegli —</option>' + items.map((item) => (
@@ -90,6 +103,39 @@ function name(kind, itemId) {
   return db[kind].find((item) => item.id === itemId)?.nome || '—';
 }
 
+function userEmail(user = signedUser) {
+  return String(user?.email || '').trim().toLowerCase();
+}
+
+function operatorName() {
+  return currentProfile?.username || signedUser?.displayName || 'Operatore';
+}
+
+function isAdmin(user = signedUser) {
+  const email = userEmail(user);
+  return email === OWNER_EMAIL || currentAccess?.ruolo === 'amministratore';
+}
+
+function isAuthorized(user = signedUser) {
+  const email = userEmail(user);
+  return email === OWNER_EMAIL || currentAccess?.abilitato === true;
+}
+
+function audit(action, detail) {
+  if (!Array.isArray(db.registro)) db.registro = [];
+  db.registro.push({
+    id: id(),
+    data: stamp(),
+    dateKey: today(),
+    operatore: operatorName(),
+    operatore_uid: signedUser?.uid || '',
+    operatore_email: userEmail(),
+    azione: action,
+    dettaglio: detail,
+  });
+  if (db.registro.length > 1500) db.registro = db.registro.slice(-1500);
+}
+
 function valueOrDash(value) {
   return value ? esc(value) : '<span class="muted">Non indicato</span>';
 }
@@ -106,45 +152,106 @@ function login() {
     <section class="card login">
       <div class="mark">EF</div>
       <p class="eyebrow">EUROFRUTTA ONLINE</p>
-      <h2>Il tuo lavoro, sempre disponibile.</h2>
-      <p>Accedi con il tuo account Google autorizzato per aprire il gestionale.</p>
-      <button id="google"><span class="g">G</span> Accedi con Google</button>
+      <h2>Accedi al gestionale</h2>
+      <p>Usa il tuo account Google personale. Nel gestionale verrà mostrato soltanto il nome utente che sceglierai.</p>
+      <button id="google-login" type="button">G&nbsp;&nbsp; Accedi con Google</button>
       <p id="login-error" class="message error" hidden></p>
     </section>`;
 
-  $('#google').onclick = async () => {
+  $('#google-login').onclick = async () => {
+    const message = $('#login-error');
     try {
-      await signInWithPopup(auth, provider);
+      await signInWithPopup(auth, googleProvider);
     } catch (error) {
-      const message = $('#login-error');
       message.hidden = false;
-      message.textContent = `Accesso non riuscito: ${error.message}`;
+      message.textContent = 'Accesso Google non riuscito. Riprova.';
     }
   };
 }
 
+function usernameSetup() {
+  $('#nav').hidden = true;
+  $('#user').innerHTML = '<button id="out">Esci</button>';
+  $('#out').onclick = () => signOut(auth);
+  $('#app').innerHTML = `
+    <section class="card login">
+      <div class="mark">EF</div>
+      <p class="eyebrow">PRIMO ACCESSO</p>
+      <h2>Scegli il tuo nome utente</h2>
+      <p>Questo sarà il nome visibile nel gestionale e nel registro delle modifiche. Dopo il salvataggio resterà fisso.</p>
+      <form id="username-form">
+        <label>Nome utente</label>
+        <input name="username" required minlength="2" maxlength="30" autocomplete="off" placeholder="Es. Angelo o Maria">
+        <button>Salva e continua</button>
+      </form>
+      <p id="username-error" class="message error" hidden></p>
+    </section>`;
+
+  $('#username-form').onsubmit = async (event) => {
+    event.preventDefault();
+    const username = String(new FormData(event.currentTarget).get('username') || '').trim();
+    const message = $('#username-error');
+    if (username.length < 2) {
+      message.hidden = false;
+      message.textContent = 'Scrivi un nome utente di almeno 2 caratteri.';
+      return;
+    }
+    try {
+      currentProfile = {
+        username,
+        email: userEmail(),
+        creatoIl: stamp(),
+      };
+      await setDoc(doc(store, 'profili', signedUser.uid), currentProfile);
+      startDataSubscription();
+    } catch (error) {
+      message.hidden = false;
+      message.textContent = `Non riesco a salvare il nome utente: ${error.message}`;
+    }
+  };
+}
+
+function accessDenied() {
+  $('#nav').hidden = true;
+  $('#user').innerHTML = '<button id="out">Esci</button>';
+  $('#out').onclick = () => signOut(auth);
+  $('#app').innerHTML = `
+    <section class="card login">
+      <div class="mark">EF</div>
+      <p class="eyebrow">ACCESSO NON AUTORIZZATO</p>
+      <h2>Chiedi l’abilitazione</h2>
+      <p>Un amministratore deve prima aggiungere il tuo account Google nella sezione Amministrazione.</p>
+      <button id="denied-out" type="button">Esci</button>
+    </section>`;
+  $('#denied-out').onclick = () => signOut(auth);
+}
+
 function render() {
+  ensureDynamicNav();
   document.querySelectorAll('#nav button').forEach((button) => {
     button.classList.toggle('active', button.dataset.page === current);
   });
-  $('#app').innerHTML = ({ home, pitazzo, movimento, magazzino, prodotti, clienti, report })[current]();
+  if (current === 'registro' && !isAdmin()) current = 'home';
+  $('#app').innerHTML = ({ home, pitazzo, movimento, magazzino, prodotti, clienti, vendite, report, registro })[current]();
   bind();
 }
 
 function home() {
-  const sales = db.movimenti.filter((movement) => movement.tipo === 'uscita');
-  const total = sales.reduce((sum, movement) => sum + Number(movement.totale), 0);
   const openLots = db.lotti.filter((lot) => Number(lot.colli_rimanenti) > 0);
   const remaining = openLots.reduce((sum, lot) => sum + Number(lot.colli_rimanenti), 0);
-  const latest = db.movimenti.slice().reverse().slice(0, 4);
+  const lowLots = openLots.filter((lot) => Number(lot.colli_rimanenti) <= 10);
+  const stockRows = openLots.slice().reverse().slice(0, 8);
 
   return `
     <section class="hero">
       <div class="hero-copy">
-        <p class="eyebrow">PANORAMICA OPERATIVA</p>
-        <h2>Il lavoro,<br><em>sotto controllo.</em></h2>
-        <p>Merce, clienti e vendite sempre aggiornati. Apri il gestionale da qualsiasi dispositivo.</p>
-        <button data-go="pitazzo">Apri il pitazzo →</button>
+        <p class="eyebrow">BUON LAVORO, ${esc(operatorName().toUpperCase())}</p>
+        <h2>Tutto pronto<br><em>per iniziare.</em></h2>
+        <p>Apri il pitazzo, registra uno scarico oppure controlla le rimanenze disponibili.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button data-go="pitazzo">Apri il pitazzo →</button>
+          <button data-go="magazzino">Registra scarico</button>
+        </div>
       </div>
       <div class="hero-art">
         <svg viewBox="0 0 310 220" fill="none">
@@ -164,23 +271,24 @@ function home() {
     </section>
     <section class="stats">
       <article class="stat"><i>▦</i><div><h3>Magazzino</h3><div class="big">R ${remaining}</div><p>${openLots.length} lotti aperti</p></div></article>
-      <article class="stat"><i>♙</i><div><h3>Clienti</h3><div class="big">${db.clienti.length}</div><p>Registrati</p></div></article>
-      <article class="stat"><i>€</i><div><h3>Vendite</h3><div class="big">${eur(total)}</div><p>${sales.length} movimenti</p></div></article>
+      <article class="stat"><i>◇</i><div><h3>Prodotti</h3><div class="big">${db.prodotti.length}</div><p>In catalogo</p></div></article>
+      <article class="stat"><i>!</i><div><h3>In esaurimento</h3><div class="big">${lowLots.length}</div><p>Lotti con 10 colli o meno</p></div></article>
     </section>
     <section class="card">
       <div class="section-head">
-        <div><p class="eyebrow">ATTIVITÀ</p><h2>Ultimi movimenti</h2></div>
-        <button class="ghost" data-go="report">Vedi riepilogo →</button>
+        <div><p class="eyebrow">MAGAZZINO</p><h2>Rimanenze principali</h2></div>
+        <button class="ghost" data-go="magazzino">Apri tutto il magazzino →</button>
       </div>
-      ${latest.map((movement) => `
-        <div class="activity-row">
-          <i>${movement.tipo === 'uscita' ? '↗' : '↙'}</i>
-          <div>
-            <b>${esc(name('prodotti', movement.prodotto_id))}</b>
-            <small>${esc(movement.data)} · ${esc(movement.tipo)}</small>
-          </div>
-          <strong>${movement.tipo === 'uscita' ? eur(movement.totale) : `${movement.colli} colli`}</strong>
-        </div>`).join('') || '<p class="notice">Inizia dal Pitazzo per registrare le prime vendite.</p>'}
+      <div class="table-scroll"><table>
+        <tr><th>Prodotto</th><th>Proprietario</th><th>Carico iniziale</th><th>Rimanenza</th><th>Stato</th></tr>
+        ${stockRows.map((lot) => `<tr>
+          <td><button class="ghost" data-open-product="${lot.prodotto_id}"><b>${esc(name('prodotti', lot.prodotto_id))}</b></button></td>
+          <td>${esc(lot.proprietario || '—')}</td>
+          <td>${Number(lot.colli_iniziali || 0)} colli</td>
+          <td class="pit-money"><b>R ${Number(lot.colli_rimanenti || 0)}</b></td>
+          <td>${Number(lot.colli_rimanenti) <= 10 ? '<span class="warn">In esaurimento</span>' : '<span class="notice">Disponibile</span>'}</td>
+        </tr>`).join('') || '<tr><td colspan="5" class="empty">Nessuna merce in magazzino.</td></tr>'}
+      </table></div>
     </section>`;
 }
 
@@ -347,22 +455,63 @@ function magazzino() {
     </section>` : ''}`;
 }
 
-function prodotti() {
+function productDetail(product) {
+  const sales = db.movimenti.filter((movement) => movement.tipo === 'uscita' && movement.prodotto_id === product.id).slice().reverse();
+  const lots = db.lotti.filter((lot) => lot.prodotto_id === product.id).slice().reverse();
+  const remaining = lots.reduce((sum, lot) => sum + Number(lot.colli_rimanenti || 0), 0);
+  const soldPackages = sales.reduce((sum, movement) => sum + Number(movement.colli || 0), 0);
+  const salesTotal = sales.reduce((sum, movement) => sum + Number(movement.totale || 0), 0);
+
   return `
     <section class="card">
-      <p class="eyebrow">ARCHIVIO</p>
-      <h2>Prodotti</h2>
+      <div class="section-head">
+        <div><p class="eyebrow">SCHEDA PRODOTTO</p><h2>${esc(product.nome)}</h2></div>
+        <button class="ghost" id="close-product">Chiudi scheda</button>
+      </div>
+      <section class="stats">
+        <article class="stat"><i>▦</i><div><h3>Rimanenza</h3><div class="big">R ${remaining}</div><p>${lots.filter((lot) => Number(lot.colli_rimanenti) > 0).length} lotti aperti</p></div></article>
+        <article class="stat"><i>↗</i><div><h3>Colli venduti</h3><div class="big">${soldPackages}</div><p>${sales.length} vendite</p></div></article>
+        <article class="stat"><i>€</i><div><h3>Totale storico</h3><div class="big">${eur(salesTotal)}</div><p>Valore vendite</p></div></article>
+      </section>
+    </section>
+    <section class="card">
+      <div class="section-head"><div><p class="eyebrow">MAGAZZINO</p><h2>Lotti del prodotto</h2></div><b>${lots.length} totali</b></div>
+      <div class="table-scroll"><table>
+        <tr><th>Data carico</th><th>Proprietario</th><th>Iniziali</th><th>Rimanenza</th></tr>
+        ${lots.map((lot) => `<tr><td>${esc(lot.dataCarico || '—')}</td><td>${esc(lot.proprietario || '—')}</td><td>${Number(lot.colli_iniziali || 0)}</td><td class="pit-money">R ${Number(lot.colli_rimanenti || 0)}</td></tr>`).join('') || '<tr><td colspan="4" class="empty">Nessun lotto.</td></tr>'}
+      </table></div>
+    </section>
+    <section class="card">
+      <div class="section-head"><div><p class="eyebrow">VENDITE</p><h2>Storico del prodotto</h2></div><b>${sales.length} righe</b></div>
+      <div class="table-scroll"><table>
+        <tr><th>Data</th><th>Cliente</th><th>Proprietario lotto</th><th>Colli</th><th>Kg</th><th>Totale</th><th>Operatore</th></tr>
+        ${sales.map((movement) => `<tr>
+          <td>${esc(movement.data)}</td><td>${esc(name('clienti', movement.cliente_id))}</td><td>${esc(movement.proprietario || lotById(movement.lotto_id)?.proprietario || '—')}</td>
+          <td>${Number(movement.colli || 0)}</td><td>${Number(movement.peso || 0)}</td><td>${eur(movement.totale)}</td><td>${esc(movement.operatore || '—')}</td>
+        </tr>`).join('') || '<tr><td colspan="7" class="empty">Nessuna vendita.</td></tr>'}
+      </table></div>
+    </section>`;
+}
+
+function prodotti() {
+  const selected = db.prodotti.find((product) => product.id === selectedProduct);
+  return `
+    ${isAdmin() ? `<section class="card">
+      <p class="eyebrow">AMMINISTRAZIONE</p>
+      <h2>Aggiungi prodotto</h2>
       <form data-add="prodotti" class="grid">
         <div><label>Nome articolo</label><input name="nome" required placeholder="Es. Arance"></div>
         <div><label>&nbsp;</label><button>Aggiungi prodotto</button></div>
       </form>
-    </section>
+    </section>` : ''}
     <section class="card">
+      <div class="section-head"><div><p class="eyebrow">ARCHIVIO</p><h2>Prodotti</h2></div><b>${db.prodotti.length} articoli</b></div>
       <div class="table-scroll"><table>
         <tr><th>Nome</th><th></th></tr>
-        ${db.prodotti.map((product) => `<tr><td><b>${esc(product.nome)}</b></td><td><button class="del" data-kind="prodotti" data-id="${product.id}">Elimina</button></td></tr>`).join('') || '<tr><td colspan="2" class="empty">Nessun prodotto.</td></tr>'}
+        ${db.prodotti.map((product) => `<tr><td><button class="ghost" data-open-product="${product.id}"><b>${esc(product.nome)}</b></button></td><td><button class="ghost" data-open-product="${product.id}">Apri scheda →</button>${isAdmin() ? ` <button class="del" data-kind="prodotti" data-id="${product.id}">Elimina</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="2" class="empty">Nessun prodotto.</td></tr>'}
       </table></div>
-    </section>`;
+    </section>
+    ${selected ? productDetail(selected) : ''}`;
 }
 
 function clientHistory(clientId) {
@@ -424,7 +573,7 @@ function clienti() {
           <td>${valueOrDash(item.citta)}</td>
           <td>
             <button class="ghost" data-open-client="${item.id}">Apri scheda</button>
-            <button class="del" data-kind="clienti" data-id="${item.id}">Elimina</button>
+            ${isAdmin() ? `<button class="del" data-kind="clienti" data-id="${item.id}">Elimina</button>` : ''}
           </td>
         </tr>`).join('') || '<tr><td colspan="4" class="empty">Nessun cliente.</td></tr>'}
       </table></div>
@@ -450,6 +599,86 @@ function clienti() {
       ${clientHistory(client.id)}` : ''}`;
 }
 
+function vendite() {
+  const sales = db.movimenti.filter((movement) => movement.tipo === 'uscita').slice().reverse();
+  const total = sales.reduce((sum, movement) => sum + Number(movement.totale || 0), 0);
+  const packages = sales.reduce((sum, movement) => sum + Number(movement.colli || 0), 0);
+
+  return `
+    <section class="pit-title">
+      <div><p class="eyebrow">VENDITE</p><h2>Storico completo</h2><p>Tutte le vendite registrate, separate dalla dashboard.</p></div>
+      <div class="date"><small>TOTALE STORICO</small>${eur(total)}</div>
+    </section>
+    <section class="stats">
+      <article class="stat"><i>↗</i><div><h3>Vendite</h3><div class="big">${sales.length}</div><p>Operazioni registrate</p></div></article>
+      <article class="stat"><i>▦</i><div><h3>Colli</h3><div class="big">${packages}</div><p>Colli venduti</p></div></article>
+      <article class="stat"><i>€</i><div><h3>Valore</h3><div class="big">${eur(total)}</div><p>Totale storico</p></div></article>
+    </section>
+    <section class="card">
+      <div class="section-head"><div><p class="eyebrow">ARCHIVIO</p><h2>Elenco vendite</h2></div><b>${sales.length} righe</b></div>
+      <div class="table-scroll"><table>
+        <tr><th>Data</th><th>Prodotto</th><th>Proprietario lotto</th><th>Cliente</th><th>Colli</th><th>Kg</th><th>Prezzo</th><th>Totale</th><th>Operatore</th></tr>
+        ${sales.map((movement) => `<tr>
+          <td>${esc(movement.data)}</td>
+          <td><button class="ghost" data-open-product="${movement.prodotto_id}"><b>${esc(name('prodotti', movement.prodotto_id))}</b></button></td>
+          <td>${esc(movement.proprietario || lotById(movement.lotto_id)?.proprietario || '—')}</td>
+          <td>${esc(name('clienti', movement.cliente_id))}</td>
+          <td>${Number(movement.colli || 0)}</td><td>${Number(movement.peso || 0)}</td><td>${eur(movement.prezzo)}</td><td><b>${eur(movement.totale)}</b></td><td>${esc(movement.operatore || '—')}</td>
+        </tr>`).join('') || '<tr><td colspan="9" class="empty">Nessuna vendita registrata.</td></tr>'}
+      </table></div>
+    </section>`;
+}
+
+async function saveAccessConfig() {
+  accessConfig = {
+    membri: [...new Set(accessConfig.membri.map((email) => String(email).toLowerCase()))],
+    amministratori: [...new Set(accessConfig.amministratori.map((email) => String(email).toLowerCase()))],
+  };
+  await setDoc(doc(store, 'eurofrutta', 'config'), accessConfig);
+}
+
+function registro() {
+  if (!isAdmin()) return '<section class="card"><h2>Area riservata all’amministratore</h2></section>';
+  const entries = db.registro.slice().reverse();
+  const authorized = [...new Set([...accessConfig.membri, ...accessConfig.amministratori])]
+    .filter((email) => email !== OWNER_EMAIL)
+    .sort();
+  return `
+    <section class="card">
+      <div class="section-head">
+        <div><p class="eyebrow">AREA PROTETTA</p><h2>Persone e amministratori</h2></div>
+        <b>♛ ${esc(operatorName())} · Amministratore</b>
+      </div>
+      <p class="muted">Aggiungi prima l’email Google della persona. Al primo accesso sceglierà il proprio nome utente fisso e vedrà gli stessi dati condivisi.</p>
+      <div class="grid">
+        <form id="member-form">
+          <label>Autorizza un operatore</label>
+          <input name="email" type="email" required placeholder="email@gmail.com">
+          <button>Autorizza operatore</button>
+        </form>
+        <form id="admin-form">
+          <label>Aggiungi un amministratore</label>
+          <input name="email" type="email" required placeholder="email@gmail.com">
+          <button>Aggiungi amministratore</button>
+        </form>
+      </div>
+      <p id="access-msg"></p>
+      <div class="table-scroll"><table>
+        <tr><th>Account Google autorizzato</th><th>Ruolo</th></tr>
+        <tr><td>${OWNER_EMAIL}</td><td><b>♛ Proprietario</b></td></tr>
+        ${authorized.map((email) => `<tr><td>${esc(email)}</td><td>${accessConfig.amministratori.includes(email) ? '<b>♛ Amministratore</b>' : 'Operatore'}</td></tr>`).join('')}
+      </table></div>
+    </section>
+    <section class="card">
+      <div class="section-head"><div><p class="eyebrow">AMMINISTRAZIONE</p><h2>Registro delle modifiche</h2></div><b>${entries.length} attività</b></div>
+      <p class="muted">Qui puoi controllare chi ha registrato vendite, scarichi o modificato gli archivi.</p>
+      <div class="table-scroll"><table>
+        <tr><th>Data</th><th>Nome utente</th><th>Account</th><th>Azione</th><th>Dettaglio</th></tr>
+        ${entries.map((entry) => `<tr><td>${esc(entry.data)}</td><td><b>${esc(entry.operatore || '—')}</b></td><td>${esc(entry.operatore_email || '—')}</td><td>${esc(entry.azione || '—')}</td><td>${esc(entry.dettaglio || '—')}</td></tr>`).join('') || '<tr><td colspan="5" class="empty">Il registro è ancora vuoto.</td></tr>'}
+      </table></div>
+    </section>`;
+}
+
 function report() {
   const sales = db.movimenti.filter((movement) => movement.tipo === 'uscita');
   return `
@@ -461,7 +690,7 @@ function report() {
         ${db.prodotti.map((product) => {
           const rows = sales.filter((movement) => movement.prodotto_id === product.id);
           return `<tr>
-            <td><b>${esc(product.nome)}</b></td>
+            <td><button class="ghost" data-open-product="${product.id}"><b>${esc(product.nome)}</b></button></td>
             <td>${rows.reduce((sum, movement) => sum + Number(movement.colli), 0)}</td>
             <td>${rows.reduce((sum, movement) => sum + Number(movement.peso), 0)}</td>
             <td>${eur(rows.reduce((sum, movement) => sum + Number(movement.totale), 0))}</td>
@@ -496,7 +725,11 @@ function addSale(form) {
     peso: weight,
     prezzo: price,
     totale: price * packages,
+    operatore: operatorName(),
+    operatore_uid: signedUser?.uid || '',
+    operatore_email: userEmail(),
   });
+  audit('Vendita registrata', `${name('prodotti', lot.prodotto_id)} · ${lot.proprietario} · ${packages} colli · cliente ${name('clienti', form.get('cliente_id'))}`);
 }
 
 function addLoad(form) {
@@ -534,7 +767,11 @@ function addLoad(form) {
     peso: weight,
     prezzo: 0,
     totale: 0,
+    operatore: operatorName(),
+    operatore_uid: signedUser?.uid || '',
+    operatore_email: userEmail(),
   });
+  audit('Scarico registrato', `${name('prodotti', productId)} · ${owner} · ${packages} colli`);
 }
 
 function formDataObject(form, fields) {
@@ -550,12 +787,30 @@ function bind() {
     };
   });
 
+  document.querySelectorAll('[data-open-product]').forEach((button) => {
+    button.onclick = () => {
+      selectedProduct = button.dataset.openProduct;
+      current = 'prodotti';
+      render();
+      $('#close-product')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+  });
+
+  const closeProduct = $('#close-product');
+  if (closeProduct) {
+    closeProduct.onclick = () => {
+      selectedProduct = '';
+      render();
+    };
+  }
+
   document.querySelectorAll('[data-add]').forEach((form) => {
     form.onsubmit = async (event) => {
       event.preventDefault();
       const productName = String(new FormData(form).get('nome') || '').trim();
       if (!productName) return;
       db.prodotti.push({ id: id(), nome: productName });
+      audit('Prodotto creato', productName);
       await save();
       render();
     };
@@ -588,6 +843,7 @@ function bind() {
       if (!client.nome) return;
       db.clienti.push(client);
       selectedClient = client.id;
+      audit('Cliente creato', client.nome);
       await save();
       render();
     };
@@ -619,6 +875,7 @@ function bind() {
       const updated = formDataObject(clientEditForm, fields);
       if (!updated.nome) return;
       db.clienti[clientIndex] = { ...db.clienti[clientIndex], ...updated };
+      audit('Cliente modificato', updated.nome);
       const message = $('#client-msg');
       message.className = 'message';
       message.textContent = 'Scheda cliente salvata.';
@@ -633,8 +890,11 @@ function bind() {
         return;
       }
       if (!confirm('Eliminare definitivamente questo elemento?')) return;
+      const removed = db[button.dataset.kind].find((item) => item.id === button.dataset.id);
       db[button.dataset.kind] = db[button.dataset.kind].filter((item) => item.id !== button.dataset.id);
       if (selectedClient === button.dataset.id) selectedClient = '';
+      if (selectedProduct === button.dataset.id) selectedProduct = '';
+      audit('Elemento eliminato', `${button.dataset.kind}: ${removed?.nome || button.dataset.id}`);
       await save();
       render();
     };
@@ -692,19 +952,76 @@ function bind() {
       $('#pit-form [name="lotto_id"]').value = button.dataset.lot;
     };
   });
-}
 
-onAuthStateChanged(auth, (user) => {
-  if (unsubscribe) unsubscribe();
-  if (!user) {
-    login();
-    return;
+  const memberForm = $('#member-form');
+  if (memberForm) {
+    memberForm.onsubmit = async (event) => {
+      event.preventDefault();
+      const email = String(new FormData(memberForm).get('email') || '').trim().toLowerCase();
+      const message = $('#access-msg');
+      if (!email) return;
+      try {
+        if (!accessConfig.membri.includes(email) && !accessConfig.amministratori.includes(email)) {
+          accessConfig.membri.push(email);
+          await setDoc(doc(store, 'accessi', email), {
+            email,
+            ruolo: 'operatore',
+            abilitato: true,
+            aggiornatoIl: stamp(),
+          });
+          await saveAccessConfig();
+          audit('Operatore autorizzato', email);
+          await save();
+        }
+        message.className = 'message';
+        message.textContent = 'Operatore autorizzato. Ora può accedere con Google.';
+        render();
+      } catch (error) {
+        message.className = 'message error';
+        message.textContent = `Errore: ${error.message}`;
+      }
+    };
   }
 
+  const adminForm = $('#admin-form');
+  if (adminForm) {
+    adminForm.onsubmit = async (event) => {
+      event.preventDefault();
+      const email = String(new FormData(adminForm).get('email') || '').trim().toLowerCase();
+      const message = $('#access-msg');
+      if (!email) return;
+      try {
+        accessConfig.membri = accessConfig.membri.filter((item) => item !== email);
+        if (!accessConfig.amministratori.includes(email) && email !== OWNER_EMAIL) {
+          accessConfig.amministratori.push(email);
+          await setDoc(doc(store, 'accessi', email), {
+            email,
+            ruolo: 'amministratore',
+            abilitato: true,
+            aggiornatoIl: stamp(),
+          });
+          await saveAccessConfig();
+          audit('Amministratore aggiunto', email);
+          await save();
+        }
+        message.className = 'message';
+        message.textContent = 'Amministratore aggiunto.';
+        render();
+      } catch (error) {
+        message.className = 'message error';
+        message.textContent = `Errore: ${error.message}`;
+      }
+    };
+  }
+}
+
+function startDataSubscription() {
+  ensureDynamicNav();
   $('#nav').hidden = false;
-  $('#user').innerHTML = `${esc(user.email || '')}<button id="out">Esci</button>`;
+  $('#user').innerHTML = `${isAdmin() ? '<span title="Amministratore">♛</span> ' : ''}<b>${esc(operatorName())}</b>${isAdmin() ? ' · Amministratore' : ' · Operatore'} <button id="out">Esci</button>`;
   $('#out').onclick = () => signOut(auth);
 
+  if (unsubscribe) unsubscribe();
   unsubscribe = onSnapshot(
     doc(store, 'eurofrutta', 'dati'),
     (snapshot) => {
@@ -714,6 +1031,7 @@ onAuthStateChanged(auth, (user) => {
         prodotti: Array.isArray(saved.prodotti) ? saved.prodotti : [],
         lotti: Array.isArray(saved.lotti) ? saved.lotti : [],
         movimenti: Array.isArray(saved.movimenti) ? saved.movimenti : [],
+        registro: Array.isArray(saved.registro) ? saved.registro : [],
       };
       render();
     },
@@ -721,4 +1039,66 @@ onAuthStateChanged(auth, (user) => {
       $('#app').innerHTML = `<section class="card"><h2>Accesso ai dati bloccato</h2><p class="message error">${esc(error.message)}</p></section>`;
     },
   );
+}
+
+async function initializeUser(user) {
+  try {
+    const email = userEmail(user);
+    const owner = email === OWNER_EMAIL;
+    currentAccess = owner ? { ruolo: 'proprietario', abilitato: true } : null;
+
+    if (!owner) {
+      const accessSnapshot = await getDoc(doc(store, 'accessi', email));
+      currentAccess = accessSnapshot.exists() ? accessSnapshot.data() : null;
+    }
+
+    if (!isAuthorized(user)) {
+      accessDenied();
+      return;
+    }
+
+    if (isAdmin(user)) {
+      const configRef = doc(store, 'eurofrutta', 'config');
+      const configSnapshot = await getDoc(configRef);
+      if (!configSnapshot.exists() && owner) {
+        accessConfig = { membri: [], amministratori: [] };
+        await setDoc(configRef, accessConfig);
+      } else {
+        const savedConfig = configSnapshot.exists() ? configSnapshot.data() : {};
+        accessConfig = {
+          membri: Array.isArray(savedConfig.membri) ? savedConfig.membri.map((item) => String(item).toLowerCase()) : [],
+          amministratori: Array.isArray(savedConfig.amministratori) ? savedConfig.amministratori.map((item) => String(item).toLowerCase()) : [],
+        };
+      }
+    } else {
+      accessConfig = { membri: [], amministratori: [] };
+    }
+
+    const profileSnapshot = await getDoc(doc(store, 'profili', user.uid));
+    if (!profileSnapshot.exists()) {
+      usernameSetup();
+      return;
+    }
+    currentProfile = profileSnapshot.data();
+    startDataSubscription();
+  } catch (error) {
+    $('#nav').hidden = true;
+    $('#app').innerHTML = `<section class="card"><h2>Configurazione accesso non riuscita</h2><p class="message error">${esc(error.message)}</p><p>Controlla le regole Firestore e riprova.</p></section>`;
+  }
+}
+
+onAuthStateChanged(auth, async (user) => {
+  if (unsubscribe) {
+    unsubscribe();
+    unsubscribe = null;
+  }
+  signedUser = user;
+  currentProfile = null;
+  currentAccess = null;
+  if (!user) {
+    accessConfig = { membri: [], amministratori: [] };
+    login();
+    return;
+  }
+  await initializeUser(user);
 });
