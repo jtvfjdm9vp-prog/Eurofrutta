@@ -182,6 +182,20 @@ function formatQty(value) {
   return Number(value || 0).toLocaleString('it-IT', { maximumFractionDigits: 2 });
 }
 
+function stockState(value, unit) {
+  const amount = roundQty(value);
+  if (amount < 0) return `GAP +${formatQty(Math.abs(amount))} ${unit}`;
+  if (amount === 0) return 'Esaurito';
+  return `R ${formatQty(amount)} ${unit}`;
+}
+
+function stockStateHtml(value, unit) {
+  const amount = roundQty(value);
+  if (amount < 0) return `<span class="warn"><b>GAP +${formatQty(Math.abs(amount))} ${unit}</b></span>`;
+  if (amount === 0) return '<span class="muted"><b>Esaurito</b></span>';
+  return `<span class="pit-money"><b>R ${formatQty(amount)} ${unit}</b></span>`;
+}
+
 function formatDateKey(dateKey) {
   const parts = String(dateKey || '').split('-');
   return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : String(dateKey || '');
@@ -332,8 +346,7 @@ function render() {
 
 function home() {
   const openLots = db.lotti.filter(lotIsOpen);
-  const remaining = openLots.reduce((sum, lot) => sum + Number(lot.colli_rimanenti), 0);
-  const remainingKg = openLots.reduce((sum, lot) => sum + Number(lot.peso_rimanente || 0), 0);
+  const availableArticles = new Set(openLots.map((lot) => `${lot.prodotto_id}::${normalized(lot.proprietario)}`)).size;
   const lowLots = openLots.filter((lot) => (
     Number(lot.peso_rimanente || 0) > 0
       ? Number(lot.peso_rimanente) <= 100
@@ -369,7 +382,7 @@ function home() {
       </div>
     </section>
     <section class="stats">
-      <article class="stat"><i>▦</i><div><h3>Magazzino</h3><div class="big">${remainingKg} kg</div><p>R ${remaining} colli · ${openLots.length} lotti</p></div></article>
+      <article class="stat"><i>▦</i><div><h3>Magazzino</h3><div class="big">${availableArticles}</div><p>Rimanenze divise per articolo</p></div></article>
       <article class="stat"><i>◇</i><div><h3>Prodotti</h3><div class="big">${db.prodotti.length}</div><p>In catalogo</p></div></article>
       <article class="stat"><i>!</i><div><h3>In esaurimento</h3><div class="big">${lowLots.length}</div><p>Lotti con poca merce rimasta</p></div></article>
     </section>
@@ -384,7 +397,7 @@ function home() {
           <td><button class="ghost" data-open-product="${lot.prodotto_id}"><b>${esc(name('prodotti', lot.prodotto_id))}</b></button></td>
           <td>${esc(lot.proprietario || '—')}</td>
           <td>${formatQty(lot.peso_iniziale)} kg<br><small>${formatQty(lot.colli_iniziali)} colli</small></td>
-          <td class="pit-money"><b>R ${formatQty(lot.peso_rimanente)} kg</b><br><small>${formatQty(lot.colli_rimanenti)} colli</small></td>
+          <td>${Number(lot.peso_iniziale || 0) > 0 ? stockStateHtml(lot.peso_rimanente, 'kg') : ''}<br><small>${Number(lot.colli_iniziali || 0) > 0 ? stockState(lot.colli_rimanenti, 'colli') : ''}</small></td>
           <td>${lowLots.includes(lot) ? '<span class="warn">In esaurimento</span>' : '<span class="notice">Disponibile</span>'}</td>
         </tr>`).join('') || '<tr><td colspan="5" class="empty">Nessuna merce in magazzino.</td></tr>'}
       </table></div>
@@ -442,10 +455,10 @@ function pitazzo() {
         <div><label>Peso kg</label><input name="peso" type="number" min="0" step="0.01" placeholder="0" inputmode="decimal"></div>
         <div><label>Prezzo unitario</label><input name="prezzo" required type="number" min="0" step="0.01" placeholder="0,00" inputmode="decimal"></div>
         <div><label>Tipo prezzo</label><div class="price-choice"><label><input name="unita_prezzo" type="radio" value="kg" checked><span>Al kg</span></label><label><input name="unita_prezzo" type="radio" value="collo"><span>A collo</span></label></div></div>
-        <button type="submit" ${!db.clienti.length || !db.lotti.some(lotIsOpen) ? 'disabled' : ''}>Salva sul pitazzo →</button>
+        <button type="submit" ${!db.lotti.some(lotIsOpen) ? 'disabled' : ''}>Salva sul pitazzo →</button>
       </form>
       <p id="pit-msg"></p>
-      ${!db.clienti.length ? '<p class="message error">Aggiungi prima almeno un cliente.</p>' : ''}
+      <p class="muted">Se il cliente non esiste ancora, verrà creato automaticamente con il nome scritto. Potrai completare la sua scheda in seguito.</p>
       ${!db.lotti.some(lotIsOpen) ? '<p class="message error">Non ci sono lotti disponibili. Registra prima uno scarico in Magazzino.</p>' : ''}
       <div class="suggest">
         <span>Suggerimenti rapidi</span>
@@ -483,32 +496,32 @@ function pitazzo() {
 }
 
 function magazzino() {
-  const openLots = db.lotti
-    .filter(lotIsOpen)
-    .slice()
-    .reverse();
-  const closedLots = db.lotti
-    .filter((lot) => !lotIsOpen(lot))
-    .slice()
-    .reverse();
-  const totalRemaining = openLots.reduce((sum, lot) => sum + Number(lot.colli_rimanenti), 0);
-  const totalRemainingKg = openLots.reduce((sum, lot) => sum + Number(lot.peso_rimanente || 0), 0);
   const owners = [...new Set(db.lotti.map((lot) => lot.proprietario).filter(Boolean))];
-
-  const rows = (lots) => lots.map((lot) => {
-    const initial = Number(lot.colli_iniziali || 0);
-    const remaining = Number(lot.colli_rimanenti || 0);
-    const sold = roundQty(initial - remaining);
-    return `<tr>
-      <td>${esc(lot.dataCarico || '—')}</td>
-      <td><b>${esc(name('prodotti', lot.prodotto_id))}</b></td>
-      <td>${esc(lot.proprietario || '—')}</td>
-      <td>${initial}</td>
-      <td>${sold}</td>
-      <td class="pit-money"><b>R ${remaining}</b></td>
-      <td>${Number(lot.peso_rimanente || 0)} kg</td>
-    </tr>`;
-  }).join('');
+  const groups = new Map();
+  db.lotti.forEach((lot) => {
+    const key = `${lot.prodotto_id}::${normalized(lot.proprietario)}`;
+    if (!groups.has(key)) {
+      groups.set(key, {
+        prodotto_id: lot.prodotto_id,
+        proprietario: lot.proprietario || '—',
+        lotti: 0,
+        colliIniziali: 0,
+        colliRimanenti: 0,
+        kgIniziali: 0,
+        kgRimanenti: 0,
+      });
+    }
+    const group = groups.get(key);
+    group.lotti += 1;
+    group.colliIniziali += Number(lot.colli_iniziali || 0);
+    group.colliRimanenti += Number(lot.colli_rimanenti || 0);
+    group.kgIniziali += Number(lot.peso_iniziale || 0);
+    group.kgRimanenti += Number(lot.peso_rimanente || 0);
+  });
+  const inventory = [...groups.values()].sort((a, b) => (
+    `${name('prodotti', a.prodotto_id)} ${a.proprietario}`.localeCompare(`${name('prodotti', b.prodotto_id)} ${b.proprietario}`, 'it')
+  ));
+  const measure = (tracked, value, unit) => tracked ? `${formatQty(value)} ${unit}` : '—';
 
   return `
     <section class="pit-title">
@@ -517,7 +530,6 @@ function magazzino() {
         <h2>Rimanenze sempre aggiornate</h2>
         <p>Ogni scarico crea un lotto separato per prodotto e proprietario.</p>
       </div>
-      <div class="date"><small>KG DISPONIBILI</small>R ${formatQty(totalRemainingKg)}<small>${formatQty(totalRemaining)} colli</small></div>
     </section>
     <section class="card">
       <p class="eyebrow">NUOVO SCARICO</p>
@@ -536,21 +548,25 @@ function magazzino() {
     </section>
     <section class="card">
       <div class="section-head">
-        <div><p class="eyebrow">DISPONIBILE</p><h2>Lotti aperti</h2></div>
-        <b>${openLots.length} lotti · R ${formatQty(totalRemainingKg)} kg / ${formatQty(totalRemaining)} colli</b>
+        <div><p class="eyebrow">DISPONIBILITÀ PER ARTICOLO</p><h2>Rimanenze in magazzino</h2></div>
       </div>
       <div class="table-scroll"><table>
-        <tr><th>Carico</th><th>Prodotto</th><th>Proprietario</th><th>Iniziali</th><th>Venduti</th><th>Rimanenza</th><th>Peso rimasto</th></tr>
-        ${rows(openLots) || '<tr><td colspan="7" class="empty">Nessun lotto disponibile. Registra il primo scarico.</td></tr>'}
+        <tr><th>Articolo / provenienza</th><th>Arrivati</th><th>Venduti</th><th>Rimanenza colli</th><th>Rimanenza kg</th></tr>
+        ${inventory.map((group) => {
+          const tracksPackages = group.colliIniziali > 0;
+          const tracksWeight = group.kgIniziali > 0;
+          const soldPackages = roundQty(group.colliIniziali - group.colliRimanenti);
+          const soldWeight = roundQty(group.kgIniziali - group.kgRimanenti);
+          return `<tr>
+            <td><button class="ghost" data-open-product="${group.prodotto_id}"><b>${esc(name('prodotti', group.prodotto_id))}</b></button><br><small>${esc(group.proprietario)} · ${group.lotti} ${group.lotti === 1 ? 'scarico' : 'scarichi'}</small></td>
+            <td>${measure(tracksPackages, group.colliIniziali, 'colli')}<br><small>${measure(tracksWeight, group.kgIniziali, 'kg')}</small></td>
+            <td>${measure(tracksPackages, soldPackages, 'colli')}<br><small>${measure(tracksWeight, soldWeight, 'kg')}</small></td>
+            <td>${tracksPackages ? stockStateHtml(group.colliRimanenti, 'colli') : '—'}</td>
+            <td>${tracksWeight ? stockStateHtml(group.kgRimanenti, 'kg') : '—'}</td>
+          </tr>`;
+        }).join('') || '<tr><td colspan="5" class="empty">Nessuna merce registrata. Registra il primo scarico.</td></tr>'}
       </table></div>
-    </section>
-    ${closedLots.length ? `<section class="card">
-      <div class="section-head"><div><p class="eyebrow">ARCHIVIO</p><h2>Lotti terminati</h2></div><b>${closedLots.length} chiusi</b></div>
-      <div class="table-scroll"><table>
-        <tr><th>Carico</th><th>Prodotto</th><th>Proprietario</th><th>Iniziali</th><th>Venduti</th><th>Rimanenza</th><th>Peso rimasto</th></tr>
-        ${rows(closedLots)}
-      </table></div>
-    </section>` : ''}`;
+    </section>`;
 }
 
 function productDetail(product) {
@@ -568,7 +584,7 @@ function productDetail(product) {
         <button class="ghost" id="close-product">Chiudi scheda</button>
       </div>
       <section class="stats">
-        <article class="stat"><i>▦</i><div><h3>Rimanenza</h3><div class="big">R ${formatQty(remainingKg)} kg</div><p>${formatQty(remaining)} colli · ${lots.filter(lotIsOpen).length} lotti aperti</p></div></article>
+        <article class="stat"><i>▦</i><div><h3>Rimanenza articolo</h3><div class="big">${stockState(remainingKg, 'kg')}</div><p>${stockState(remaining, 'colli')} · ${lots.length} carichi registrati</p></div></article>
         <article class="stat"><i>↗</i><div><h3>Colli venduti</h3><div class="big">${soldPackages}</div><p>${sales.length} vendite</p></div></article>
         <article class="stat"><i>€</i><div><h3>Totale storico</h3><div class="big">${eur(salesTotal)}</div><p>Valore vendite</p></div></article>
       </section>
@@ -577,7 +593,7 @@ function productDetail(product) {
       <div class="section-head"><div><p class="eyebrow">MAGAZZINO</p><h2>Lotti del prodotto</h2></div><b>${lots.length} totali</b></div>
       <div class="table-scroll"><table>
         <tr><th>Data carico</th><th>Proprietario / provenienza</th><th>Iniziali</th><th>Rimanenza</th></tr>
-        ${lots.map((lot) => `<tr><td>${esc(lot.dataCarico || '—')}</td><td>${esc(lot.proprietario || '—')}</td><td>${formatQty(lot.peso_iniziale)} kg<br><small>${formatQty(lot.colli_iniziali)} colli</small></td><td class="pit-money">R ${formatQty(lot.peso_rimanente)} kg<br><small>${formatQty(lot.colli_rimanenti)} colli</small></td></tr>`).join('') || '<tr><td colspan="4" class="empty">Nessun lotto.</td></tr>'}
+        ${lots.map((lot) => `<tr><td>${esc(lot.dataCarico || '—')}</td><td>${esc(lot.proprietario || '—')}</td><td>${formatQty(lot.peso_iniziale)} kg<br><small>${formatQty(lot.colli_iniziali)} colli</small></td><td>${Number(lot.peso_iniziale || 0) > 0 ? stockStateHtml(lot.peso_rimanente, 'kg') : ''}<br><small>${Number(lot.colli_iniziali || 0) > 0 ? stockState(lot.colli_rimanenti, 'colli') : ''}</small></td></tr>`).join('') || '<tr><td colspan="4" class="empty">Nessun lotto.</td></tr>'}
       </table></div>
     </section>
     <section class="card">
@@ -762,7 +778,7 @@ function biglietti() {
           <tr><th>Cliente</th><th>Colli</th><th>Kg</th><th>Importo</th></tr>
           ${ticket.righe.map((sale) => `<tr><td>${esc(sale.cliente)}</td><td>${Number(sale.colli || 0) ? formatQty(sale.colli) : '—'}</td><td>${Number(sale.peso || 0) ? formatQty(sale.peso) : '—'}</td><td><b>${eur(sale.totale)}</b></td></tr>`).join('')}
         </table></div>
-        <p><b>Rimanenza:</b> ${ticket.hasWeightData ? `R ${formatQty(ticket.remainingKg)} kg` : ''}${ticket.hasWeightData && ticket.hasPackageData ? ' · ' : ''}${ticket.hasPackageData ? `R ${formatQty(ticket.remainingPackages)} colli` : ''}</p>
+        <p><b>Rimanenza:</b> ${ticket.hasWeightData ? stockState(ticket.remainingKg, 'kg') : ''}${ticket.hasWeightData && ticket.hasPackageData ? ' · ' : ''}${ticket.hasPackageData ? stockState(ticket.remainingPackages, 'colli') : ''}</p>
         <p><b>Lordo ${eur(ticket.gross)}</b> · 10% ${eur(ticket.deduction)} · <b>Netto ${eur(ticket.net)}</b></p>
         <div class="ticket-actions">
           <button type="button" data-print-ticket="${ticket.id}">Visualizza / stampa PDF</button>
@@ -890,8 +906,8 @@ function dailyTicketData(dateKey) {
       startPackages: roundQty(startPackages),
       soldTodayKg: roundQty(soldTodayKg),
       soldTodayPackages: roundQty(soldTodayPackages),
-      remainingKg: roundQty(Math.max(0, startKg - soldTodayKg)),
-      remainingPackages: roundQty(Math.max(0, startPackages - soldTodayPackages)),
+      remainingKg: roundQty(startKg - soldTodayKg),
+      remainingPackages: roundQty(startPackages - soldTodayPackages),
       hasPackageData: recordedInitialPackages > 0 || soldTodayPackages > 0,
       hasWeightData: recordedInitialKg > 0 || soldTodayKg > 0,
       gross,
@@ -970,7 +986,7 @@ function openTicketPreview(tickets) {
       </table>
       <div class="totals">
         <div class="remaining"><span>VENDUTO</span><b>${ticket.hasWeightData ? `${formatQty(ticket.soldTodayKg)} kg` : `${formatQty(ticket.soldTodayPackages)} colli`}</b><small>${ticket.hasWeightData && ticket.hasPackageData ? `${formatQty(ticket.soldTodayPackages)} colli` : ''}</small></div>
-        <div class="remaining"><span>RIMANENZA</span><b>${ticket.hasWeightData ? `R ${formatQty(ticket.remainingKg)} kg` : `R ${formatQty(ticket.remainingPackages)} colli`}</b><small>${ticket.hasWeightData && ticket.hasPackageData ? `R ${formatQty(ticket.remainingPackages)} colli` : ''}</small></div>
+        <div class="remaining"><span>RIMANENZA / GAP</span><b>${ticket.hasWeightData ? stockState(ticket.remainingKg, 'kg') : stockState(ticket.remainingPackages, 'colli')}</b><small>${ticket.hasWeightData && ticket.hasPackageData ? stockState(ticket.remainingPackages, 'colli') : ''}</small></div>
         <dl>
           <dt>Totale lordo</dt><dd>${eur(ticket.gross)}</dd>
           <dt>10%</dt><dd>− ${eur(ticket.deduction)}</dd>
@@ -999,8 +1015,8 @@ function openTicketPreview(tickets) {
 
 async function shareTicket(ticket) {
   const quantities = [
-    ticket.hasWeightData ? `Rimanenza: ${formatQty(ticket.remainingKg)} kg` : '',
-    ticket.hasPackageData ? `Rimanenza: ${formatQty(ticket.remainingPackages)} colli` : '',
+    ticket.hasWeightData ? stockState(ticket.remainingKg, 'kg') : '',
+    ticket.hasPackageData ? stockState(ticket.remainingPackages, 'colli') : '',
   ].filter(Boolean).join(' · ');
   const text = `${ticket.prodotto} · ${ticket.proprietario}\nData ${ticket.data}\n${quantities}\nLordo ${eur(ticket.gross)} · 10% ${eur(ticket.deduction)} · Netto ${eur(ticket.net)}`;
   if (navigator.share) {
@@ -1011,11 +1027,16 @@ async function shareTicket(ticket) {
   alert('Riepilogo copiato. Ora puoi incollarlo su WhatsApp o in un messaggio.');
 }
 
-function addSale(form) {
+function addSale(form, createClientIfMissing = false) {
   const lot = lotById(form.get('lotto_id')) || findLotByText(form.get('lotto_nome'));
-  const client = db.clienti.find((item) => item.id === form.get('cliente_id')) || findClientByText(form.get('cliente_nome'));
+  let client = db.clienti.find((item) => item.id === form.get('cliente_id')) || findClientByText(form.get('cliente_nome'));
+  let pendingClientName = '';
   if (!lot) throw new Error('Scegli l’articolo dai suggerimenti.');
-  if (!client) throw new Error('Scegli il cliente dai suggerimenti.');
+  if (!client && createClientIfMissing) {
+    pendingClientName = String(form.get('cliente_nome') || '').trim();
+    if (pendingClientName.length < 2) throw new Error('Scrivi il nome del cliente.');
+  }
+  if (!client && !pendingClientName) throw new Error('Scegli il cliente dai suggerimenti.');
   const price = Number(form.get('prezzo') || 0);
   const packages = Number(form.get('colli') || 0);
   const weight = Number(form.get('peso') || 0);
@@ -1033,15 +1054,25 @@ function addSale(form) {
   }
   if (priceUnit === 'kg' && weight <= 0) throw new Error('Per il prezzo al kg devi inserire i kg venduti.');
   if (priceUnit === 'collo' && packages <= 0) throw new Error('Per il prezzo a collo devi inserire i colli venduti.');
-  if (Number(lot.colli_iniziali || 0) > 0 && packages > remainingPackages) {
-    throw new Error(`Disponibili soltanto ${formatQty(remainingPackages)} colli per questo lotto.`);
-  }
-  if (Number(lot.peso_iniziale || 0) > 0 && weight > remainingWeight) {
-    throw new Error(`Disponibili soltanto ${formatQty(remainingWeight)} kg per questo lotto.`);
-  }
 
-  if (Number(lot.colli_iniziali || 0) > 0) lot.colli_rimanenti = roundQty(Math.max(0, remainingPackages - packages));
-  if (Number(lot.peso_iniziale || 0) > 0) lot.peso_rimanente = roundQty(Math.max(0, remainingWeight - weight));
+  if (!client) {
+    client = {
+      id: id(),
+      nome: pendingClientName,
+      telefono: '',
+      email: '',
+      indirizzo: '',
+      citta: '',
+      piva: '',
+      note: '',
+      creatoDaPitazzo: true,
+      creatoIl: stamp(),
+    };
+    db.clienti.push(client);
+    audit('Cliente creato dal Pitazzo', client.nome);
+  }
+  if (Number(lot.colli_iniziali || 0) > 0) lot.colli_rimanenti = roundQty(remainingPackages - packages);
+  if (Number(lot.peso_iniziale || 0) > 0) lot.peso_rimanente = roundQty(remainingWeight - weight);
   db.movimenti.push({
     id: id(),
     data: formatDateKey(dateKey),
@@ -1256,7 +1287,7 @@ function bind() {
       try {
         message.className = 'message';
         message.textContent = 'Salvataggio…';
-        addSale(form);
+        addSale(form, true);
         pitazzoDate = String(form.get('data_movimento') || today());
         await save();
         render();
