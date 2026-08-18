@@ -29,13 +29,16 @@ const store = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
 const OWNER_EMAIL = 'angysuperakab@gmail.com';
 
-let db = { clienti: [], prodotti: [], lotti: [], movimenti: [], registro: [] };
+let db = { clienti: [], prodotti: [], lotti: [], movimenti: [], biglietti: [], registro: [] };
 let accessConfig = { membri: [], amministratori: [] };
 let currentAccess = null;
 let currentProfile = null;
 let current = 'home';
 let selectedClient = '';
 let selectedProduct = '';
+let pitazzoDate = '';
+let expandedPitLot = '';
+let ticketsDate = '';
 let signedUser = null;
 let unsubscribe;
 
@@ -55,7 +58,39 @@ const esc = (value) => String(value ?? '').replace(
   })[character],
 );
 
-const empty = () => ({ clienti: [], prodotti: [], lotti: [], movimenti: [], registro: [] });
+const empty = () => ({ clienti: [], prodotti: [], lotti: [], movimenti: [], biglietti: [], registro: [] });
+
+function ensureAppStyles() {
+  if (document.querySelector('#eurofrutta-layout-styles')) return;
+  const style = document.createElement('style');
+  style.id = 'eurofrutta-layout-styles';
+  style.textContent = `
+    body.eurofrutta-shell{padding-left:244px;transition:padding-left .25s ease}
+    body.eurofrutta-shell #nav{position:fixed;inset:0 auto 0 0;width:244px;height:100vh;z-index:1000;display:flex!important;flex-direction:column;align-items:stretch;gap:7px;padding:112px 14px 20px;background:linear-gradient(180deg,#10283b 0%,#173b4e 58%,#116b55 130%);border:0;box-shadow:12px 0 35px #10283b1a;overflow-y:auto}
+    body.eurofrutta-shell #nav::before{content:'EUROFRUTTA';position:absolute;top:32px;left:22px;color:#fff;font-size:19px;font-weight:900;letter-spacing:.12em}
+    body.eurofrutta-shell #nav::after{content:'GESTIONALE OPERATIVO';position:absolute;top:60px;left:22px;color:#9fc1ca;font-size:9px;font-weight:800;letter-spacing:.18em}
+    body.eurofrutta-shell #nav button{width:100%;display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid transparent;border-radius:12px;background:transparent;color:#d7e5e8;text-align:left;font-size:14px;transform:translateX(0);transition:background .18s ease,color .18s ease,transform .18s ease,border-color .18s ease}
+    body.eurofrutta-shell #nav button:hover{background:#ffffff12;color:#fff;transform:translateX(4px);border-color:#ffffff18}
+    body.eurofrutta-shell #nav button.active{background:#fff;color:#0c6f51;box-shadow:0 7px 20px #061c2738;font-weight:800}
+    body.eurofrutta-shell #nav button span{white-space:nowrap}
+    body.eurofrutta-shell header{position:sticky;top:0;z-index:50;box-shadow:0 7px 24px #10283b0c}
+    .pit-simple-title{display:flex;align-items:end;justify-content:space-between;gap:20px;margin:6px 0 22px;padding:4px 2px}
+    .pit-simple-title h2{margin:0;font-size:clamp(28px,4vw,44px)}
+    .pit-simple-title label{display:block;margin-bottom:6px;color:#637286;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+    .pit-product-list{display:grid;gap:10px}
+    .pit-product-card{overflow:hidden;border:1px solid #dbe4e7;border-radius:15px;background:#fff;box-shadow:0 7px 20px #173b4e0a}
+    .pit-product-row{width:100%;display:grid;grid-template-columns:minmax(210px,1fr) auto auto auto auto;align-items:center;gap:18px;padding:17px 18px;border:0;background:#fff;color:#172334;text-align:left;transition:background .18s ease,transform .18s ease}
+    .pit-product-row:hover{background:#f1faf6;transform:translateY(-1px)}
+    .pit-product-row strong{font-size:18px}.pit-product-row small{display:block;margin-top:3px;color:#718093}
+    .pit-product-row .metric{text-align:right}.pit-product-row .chevron{color:#13845e;font-size:20px;transition:transform .2s ease}.pit-product-card.open .chevron{transform:rotate(90deg)}
+    .pit-buyers{padding:0 18px 17px;animation:pitOpen .2s ease both}.pit-buyers table{margin:0}
+    @keyframes pitOpen{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+    .ticket-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:16px}.ticket-card{border:1px solid #dbe4e7;border-radius:16px;background:#fff;padding:18px;box-shadow:0 8px 24px #173b4e0b}.ticket-card h3{margin:4px 0}.ticket-card .ticket-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.ticket-card .ticket-actions button{width:auto}
+    .price-choice{display:grid;grid-template-columns:1fr 1fr;gap:7px}.price-choice label{margin:0}.price-choice input{position:absolute;opacity:0;pointer-events:none}.price-choice span{display:block;padding:11px 9px;border:1px solid #ccd8dc;border-radius:10px;text-align:center;cursor:pointer;transition:.15s ease}.price-choice input:checked+span{border-color:#16835f;background:#eaf8f2;color:#0d7252;font-weight:800}
+    @media(max-width:900px){body.eurofrutta-shell{padding-left:0;padding-bottom:76px}body.eurofrutta-shell #nav{inset:auto 0 0 0;width:100%;height:68px;flex-direction:row;gap:4px;padding:8px 7px;overflow-x:auto;overflow-y:hidden;border-top:1px solid #ffffff20}body.eurofrutta-shell #nav::before,body.eurofrutta-shell #nav::after{display:none}body.eurofrutta-shell #nav button{min-width:76px;flex-direction:column;justify-content:center;gap:2px;padding:6px 8px;font-size:15px}body.eurofrutta-shell #nav button span{font-size:9px}body.eurofrutta-shell #nav button:hover{transform:none}.pit-product-row{grid-template-columns:1fr auto}.pit-product-row .metric{display:none}.pit-simple-title{align-items:flex-start;flex-direction:column}}
+  `;
+  document.head.appendChild(style);
+}
 
 function addNavButton(page, icon, label, beforePage = '') {
   const nav = $('#nav');
@@ -69,6 +104,7 @@ function addNavButton(page, icon, label, beforePage = '') {
 function ensureDynamicNav() {
   addNavButton('magazzino', '▦', 'Magazzino', 'prodotti');
   addNavButton('vendite', '€', 'Vendite', 'report');
+  addNavButton('biglietti', '▤', 'Biglietti', 'report');
   addNavButton('registro', '♛', 'Amministrazione');
   const registerButton = $('#nav [data-page="registro"]');
   if (registerButton) registerButton.hidden = !isAdmin();
@@ -87,8 +123,7 @@ function lotLabel(lot) {
 }
 
 function lotIsOpen(lot) {
-  if (Number(lot.peso_iniziale || 0) > 0) return Number(lot.peso_rimanente || 0) > 0;
-  return Number(lot.colli_rimanenti || 0) > 0;
+  return Number(lot.colli_rimanenti || 0) > 0 || Number(lot.peso_rimanente || 0) > 0;
 }
 
 function lotOpts(selected = '') {
@@ -100,6 +135,39 @@ function lotOpts(selected = '') {
 
 function lotById(lotId) {
   return db.lotti.find((lot) => lot.id === lotId);
+}
+
+function normalized(value) {
+  return String(value || '').trim().toLocaleLowerCase('it-IT');
+}
+
+function lotSearchName(lot) {
+  return `${name('prodotti', lot.prodotto_id)} · ${lot.proprietario || 'Provenienza non indicata'}`;
+}
+
+function findClientByText(value) {
+  const query = normalized(value);
+  const exact = db.clienti.find((client) => normalized(client.nome) === query);
+  if (exact) return exact;
+  const matches = db.clienti.filter((client) => normalized(client.nome).startsWith(query));
+  return matches.length === 1 ? matches[0] : null;
+}
+
+function findLotByText(value) {
+  const query = normalized(value);
+  const available = db.lotti.filter(lotIsOpen);
+  const exact = available.find((lot) => normalized(lotSearchName(lot)) === query);
+  if (exact) return exact;
+  const matches = available.filter((lot) => normalized(lotSearchName(lot)).startsWith(query));
+  return matches.length === 1 ? matches[0] : null;
+}
+
+function clientSuggestions() {
+  return `<datalist id="client-suggestions">${db.clienti.map((client) => `<option value="${esc(client.nome)}"></option>`).join('')}</datalist>`;
+}
+
+function lotSuggestions() {
+  return `<datalist id="lot-suggestions">${db.lotti.filter(lotIsOpen).map((lot) => `<option value="${esc(lotSearchName(lot))}">${esc(lotLabel(lot))}</option>`).join('')}</datalist>`;
 }
 
 function roundQty(value) {
@@ -165,6 +233,8 @@ async function save() {
 }
 
 function login() {
+  ensureAppStyles();
+  document.body.classList.remove('eurofrutta-shell');
   document.querySelector('header').style.display = 'flex';
   $('#user').textContent = '';
   $('#nav').hidden = true;
@@ -190,6 +260,8 @@ function login() {
 }
 
 function usernameSetup() {
+  ensureAppStyles();
+  document.body.classList.remove('eurofrutta-shell');
   $('#nav').hidden = true;
   $('#user').innerHTML = '<button id="out">Esci</button>';
   $('#out').onclick = () => signOut(auth);
@@ -232,6 +304,8 @@ function usernameSetup() {
 }
 
 function accessDenied() {
+  ensureAppStyles();
+  document.body.classList.remove('eurofrutta-shell');
   $('#nav').hidden = true;
   $('#user').innerHTML = '<button id="out">Esci</button>';
   $('#out').onclick = () => signOut(auth);
@@ -252,7 +326,7 @@ function render() {
     button.classList.toggle('active', button.dataset.page === current);
   });
   if (current === 'registro' && !isAdmin()) current = 'home';
-  $('#app').innerHTML = ({ home, pitazzo, movimento, magazzino, prodotti, clienti, vendite, report, registro })[current]();
+  $('#app').innerHTML = ({ home, pitazzo, movimento, magazzino, prodotti, clienti, vendite, biglietti, report, registro })[current]();
   bind();
 }
 
@@ -318,6 +392,7 @@ function home() {
 }
 
 function movimento() {
+  const date = today();
   return `
     <section class="card">
       <div class="section-head">
@@ -325,11 +400,13 @@ function movimento() {
         <button type="button" class="ghost" data-go="magazzino">Devi registrare uno scarico? Apri Magazzino →</button>
       </div>
       <form id="mov-form" class="grid">
-        <div><label>Lotto / articolo</label><select name="lotto_id" required>${lotOpts()}</select></div>
-        <div><label>Cliente</label><select name="cliente_id" required>${opts(db.clienti)}</select></div>
-        <div><label>Colli (facoltativi)</label><input name="colli" type="number" min="0" step="0.01" placeholder="0" inputmode="decimal"></div>
-        <div><label>Peso (kg) *</label><input name="peso" required type="number" min="0.01" step="0.01" placeholder="0" inputmode="decimal"></div>
-        <div><label>Prezzo al kg</label><input name="prezzo" type="number" min="0" step="0.01" placeholder="0,00" inputmode="decimal"></div>
+        <div><label>Data *</label><input name="data_movimento" required type="date" value="${date}"></div>
+        <div><label>Articolo / provenienza *</label><input name="lotto_nome" required list="lot-suggestions" autocomplete="off" placeholder="Scrivi le prime lettere…">${lotSuggestions()}</div>
+        <div><label>Cliente *</label><input name="cliente_nome" required list="client-suggestions" autocomplete="off" placeholder="Scrivi le prime lettere…">${clientSuggestions()}</div>
+        <div><label>Colli</label><input name="colli" type="number" min="0" step="0.01" placeholder="0" inputmode="decimal"></div>
+        <div><label>Peso (kg)</label><input name="peso" type="number" min="0" step="0.01" placeholder="0" inputmode="decimal"></div>
+        <div><label>Prezzo unitario</label><input name="prezzo" required type="number" min="0" step="0.01" placeholder="0,00" inputmode="decimal"></div>
+        <div><label>Calcola il prezzo</label><div class="price-choice"><label><input name="unita_prezzo" type="radio" value="kg" checked><span>Al kg</span></label><label><input name="unita_prezzo" type="radio" value="collo"><span>A collo</span></label></div></div>
         <div><label>&nbsp;</label><button>Salva vendita</button></div>
       </form>
       ${!db.lotti.some(lotIsOpen) ? '<p class="message error">Prima registra uno scarico nella sezione Magazzino.</p>' : ''}
@@ -337,47 +414,34 @@ function movimento() {
 }
 
 function pitazzo() {
-  const date = today();
+  const date = pitazzoDate || today();
   const daily = db.movimenti.filter((movement) => movement.tipo === 'uscita' && movement.dateKey === date);
-  const dailyClients = [...new Set(daily.map((movement) => movement.cliente_id).filter(Boolean))];
   const recentClients = [...new Set(db.movimenti.slice().reverse().map((movement) => movement.cliente_id).filter(Boolean))].slice(0, 5);
   const recentLots = [...new Set(db.movimenti.slice().reverse().map((movement) => movement.lotto_id).filter(Boolean))]
     .map(lotById)
     .filter((lot) => lot && lotIsOpen(lot))
     .slice(0, 6);
-  const visibleLots = db.lotti.filter((lot) => (
-    lotIsOpen(lot) || daily.some((movement) => movement.lotto_id === lot.id)
-  ));
-
-  const cell = (clientId, lot) => {
-    const movements = daily.filter((movement) => movement.cliente_id === clientId && movement.lotto_id === lot.id);
-    if (!movements.length) return '<span class="muted">—</span>';
-    const packages = movements.reduce((sum, movement) => sum + Number(movement.colli), 0);
-    const weight = movements.reduce((sum, movement) => sum + Number(movement.peso), 0);
-    const total = movements.reduce((sum, movement) => sum + Number(movement.totale), 0);
-    return `<b>${packages} c.</b><small>${weight} kg · ${eur(total)}</small>`;
-  };
+  const dailyLotIds = [...new Set(daily.map((movement) => movement.lotto_id).filter(Boolean))];
+  const dailyLots = dailyLotIds.map(lotById).filter(Boolean).sort((a, b) => lotSearchName(a).localeCompare(lotSearchName(b), 'it'));
 
   return `
-    <section class="pit-title">
-      <div>
-        <p class="eyebrow">PITAZZO GIORNALIERO</p>
-        <h2>Foglio merce di oggi</h2>
-        <p>Ogni lotto ha la sua colonna. Le vendite scalano automaticamente la rimanenza.</p>
-      </div>
-      <div class="date"><small>OGGI</small>${date.split('-').reverse().join('.')}</div>
+    <section class="pit-simple-title">
+      <h2>Pitazzo giornaliero</h2>
+      <div><label>Giornata visualizzata</label><input id="pit-date" type="date" value="${date}"></div>
     </section>
     <section class="pit-entry">
       <div class="quick-head">
         <div class="quick-icon">▤</div>
-        <div><h3>Inserimento rapido</h3><p>Scrivi cliente, articolo, colli, peso e prezzo. Fatto.</p></div>
+        <div><h3>Inserimento rapido</h3><p>Puoi scrivere le prime lettere e scegliere dai suggerimenti.</p></div>
       </div>
       <form id="pit-form" class="pit-form" novalidate>
-        <div><label>Cliente</label><select name="cliente_id">${opts(db.clienti)}</select></div>
-        <div><label>Lotto / articolo</label><select name="lotto_id">${lotOpts()}</select></div>
-        <div><label>Colli (facoltativi)</label><input name="colli" type="number" min="0" step="0.01" placeholder="0" inputmode="decimal"></div>
-        <div><label>Peso kg *</label><input name="peso" required type="number" min="0.01" step="0.01" placeholder="0" inputmode="decimal"></div>
-        <div><label>Prezzo al kg</label><input name="prezzo" type="number" min="0" step="0.01" placeholder="0,00" inputmode="decimal"></div>
+        <input name="data_movimento" type="hidden" value="${date}">
+        <div><label>Cliente</label><input name="cliente_nome" required list="client-suggestions" autocomplete="off" placeholder="Scrivi il cliente…">${clientSuggestions()}</div>
+        <div><label>Articolo / provenienza</label><input name="lotto_nome" required list="lot-suggestions" autocomplete="off" placeholder="Scrivi l’articolo…">${lotSuggestions()}</div>
+        <div><label>Colli</label><input name="colli" type="number" min="0" step="0.01" placeholder="0" inputmode="decimal"></div>
+        <div><label>Peso kg</label><input name="peso" type="number" min="0" step="0.01" placeholder="0" inputmode="decimal"></div>
+        <div><label>Prezzo unitario</label><input name="prezzo" required type="number" min="0" step="0.01" placeholder="0,00" inputmode="decimal"></div>
+        <div><label>Tipo prezzo</label><div class="price-choice"><label><input name="unita_prezzo" type="radio" value="kg" checked><span>Al kg</span></label><label><input name="unita_prezzo" type="radio" value="collo"><span>A collo</span></label></div></div>
         <button type="submit" ${!db.clienti.length || !db.lotti.some(lotIsOpen) ? 'disabled' : ''}>Salva sul pitazzo →</button>
       </form>
       <p id="pit-msg"></p>
@@ -386,38 +450,35 @@ function pitazzo() {
       <div class="suggest">
         <span>Suggerimenti rapidi</span>
         <div>${recentClients.map((clientId) => `<button type="button" data-client="${clientId}">♙ ${esc(name('clienti', clientId))}</button>`).join('') || '<span class="muted">Appariranno dopo le prime registrazioni.</span>'}</div>
-        <div>${recentLots.map((lot) => `<button type="button" data-lot="${lot.id}">▦ ${esc(lotLabel(lot))}</button>`).join('')}</div>
+        <div>${recentLots.map((lot) => `<button type="button" data-lot="${lot.id}">▦ ${esc(lotSearchName(lot))}</button>`).join('')}</div>
       </div>
     </section>
     <section class="card">
       <div class="section-head">
-        <div><p class="eyebrow">FINE GIORNATA</p><h2>Biglietti automatici</h2><p>Crea un biglietto per ogni lotto venduto, pronto da stampare o salvare in PDF.</p></div>
-        <div style="display:flex;gap:10px;align-items:end;flex-wrap:wrap">
-          <div><label>Giornata</label><input id="ticket-date" type="date" value="${date}"></div>
-          <button id="generate-tickets" type="button">Genera tutti i biglietti →</button>
-        </div>
+        <div><p class="eyebrow">${esc(formatDateKey(date))}</p><h2>Articoli movimentati</h2></div>
+        <div style="display:flex;align-items:center;gap:12px"><b>${daily.length} vendite · ${eur(daily.reduce((sum, movement) => sum + Number(movement.totale), 0))}</b><button type="button" data-generate-day="${date}">Genera biglietti →</button></div>
       </div>
       <p id="ticket-msg"></p>
-    </section>
-    <section class="card">
-      <div class="section-head">
-        <div><p class="eyebrow">OGGI</p><h2>Il pitazzo</h2></div>
-        <b>${daily.length} righe · ${eur(daily.reduce((sum, movement) => sum + Number(movement.totale), 0))}</b>
-      </div>
-      <div class="table-scroll">
-        <table class="pit-table">
-          <tr><th>Cliente</th>${visibleLots.map((lot) => `<th>${esc(name('prodotti', lot.prodotto_id))}<small>${esc(lot.proprietario)}<br>R ${Number(lot.peso_rimanente || 0)} kg / ${Number(lot.colli_rimanenti || 0)} colli</small></th>`).join('')}<th>Totale</th></tr>
-          ${dailyClients.map((clientId) => {
-            const clientMovements = daily.filter((movement) => movement.cliente_id === clientId);
-            const total = clientMovements.reduce((sum, movement) => sum + Number(movement.totale), 0);
-            return `<tr>
-              <td class="pit-client"><b>${esc(name('clienti', clientId))}</b><small>${clientMovements.length} registrazioni</small></td>
-              ${visibleLots.map((lot) => `<td>${cell(clientId, lot)}</td>`).join('')}
-              <td class="pit-money">${eur(total)}</td>
-            </tr>`;
-          }).join('') || `<tr><td class="empty" colspan="${visibleLots.length + 2}">Il pitazzo di oggi è vuoto.</td></tr>`}
-        </table>
-      </div>
+      <div class="pit-product-list">${dailyLots.map((lot) => {
+        const sales = daily.filter((movement) => movement.lotto_id === lot.id);
+        const packages = sales.reduce((sum, movement) => sum + Number(movement.colli || 0), 0);
+        const weight = sales.reduce((sum, movement) => sum + Number(movement.peso || 0), 0);
+        const total = sales.reduce((sum, movement) => sum + Number(movement.totale || 0), 0);
+        const open = expandedPitLot === lot.id;
+        return `<article class="pit-product-card ${open ? 'open' : ''}">
+          <button type="button" class="pit-product-row" data-expand-lot="${lot.id}">
+            <span><strong>${esc(name('prodotti', lot.prodotto_id))} · ${esc(lot.proprietario || '—')}</strong><small>${sales.length} ${sales.length === 1 ? 'cliente/registrazione' : 'registrazioni'} · clicca per i dettagli</small></span>
+            <span class="metric"><b>${formatQty(packages)} colli</b><small>venduti</small></span>
+            <span class="metric"><b>${formatQty(weight)} kg</b><small>venduti</small></span>
+            <span class="metric"><b>${eur(total)}</b><small>importo</small></span>
+            <span class="chevron">›</span>
+          </button>
+          ${open ? `<div class="pit-buyers"><div class="table-scroll"><table>
+            <tr><th>Cliente</th><th>Colli</th><th>Kg</th><th>Prezzo</th><th>Importo</th><th>Operatore</th></tr>
+            ${sales.map((sale) => `<tr><td><b>${esc(name('clienti', sale.cliente_id))}</b></td><td>${formatQty(sale.colli)}</td><td>${formatQty(sale.peso)}</td><td>${eur(sale.prezzo)} / ${sale.unita_prezzo === 'collo' ? 'collo' : 'kg'}</td><td><b>${eur(sale.totale)}</b></td><td>${esc(sale.operatore || '—')}</td></tr>`).join('')}
+          </table></div></div>` : ''}
+        </article>`;
+      }).join('') || '<p class="empty">Nessun articolo registrato nella giornata scelta.</p>'}</div>
     </section>`;
 }
 
@@ -464,11 +525,12 @@ function magazzino() {
       <form id="load-form" class="grid">
         <div><label>Prodotto *</label><select name="prodotto_id" required>${opts(db.prodotti)}</select></div>
         <div><label>Proprietario / fornitore *</label><input name="proprietario" required list="owners" placeholder="Es. Angelo"><datalist id="owners">${owners.map((owner) => `<option value="${esc(owner)}">`).join('')}</datalist></div>
-        <div><label>Colli arrivati (facoltativi)</label><input name="colli" type="number" min="0" step="0.01" placeholder="0" inputmode="decimal"></div>
-        <div><label>Peso totale kg *</label><input name="peso" required type="number" min="0.01" step="0.01" placeholder="0" inputmode="decimal"></div>
+        <div><label>Colli arrivati</label><input name="colli" type="number" min="0" step="0.01" placeholder="0" inputmode="decimal"></div>
+        <div><label>Peso totale kg</label><input name="peso" type="number" min="0" step="0.01" placeholder="0" inputmode="decimal"></div>
         <div><label>Note</label><input name="note" placeholder="Facoltative"></div>
         <div><label>&nbsp;</label><button ${!db.prodotti.length ? 'disabled' : ''}>Registra scarico</button></div>
       </form>
+      <p class="muted">Inserisci almeno i colli oppure i kg. Puoi compilare anche entrambi.</p>
       <p id="load-msg"></p>
       ${!db.prodotti.length ? '<p class="message error">Prima aggiungi almeno un articolo nella sezione Prodotti.</p>' : ''}
     </section>
@@ -660,10 +722,53 @@ function vendite() {
           <td><button class="ghost" data-open-product="${movement.prodotto_id}"><b>${esc(name('prodotti', movement.prodotto_id))}</b></button></td>
           <td>${esc(movement.proprietario || lotById(movement.lotto_id)?.proprietario || '—')}</td>
           <td>${esc(name('clienti', movement.cliente_id))}</td>
-          <td>${Number(movement.colli || 0)}</td><td>${Number(movement.peso || 0)}</td><td>${eur(movement.prezzo)}</td><td><b>${eur(movement.totale)}</b></td><td>${esc(movement.operatore || '—')}</td>
+          <td>${formatQty(movement.colli)}</td><td>${formatQty(movement.peso)}</td><td>${eur(movement.prezzo)} / ${movement.unita_prezzo === 'collo' ? 'collo' : 'kg'}</td><td><b>${eur(movement.totale)}</b></td><td>${esc(movement.operatore || '—')}</td>
         </tr>`).join('') || '<tr><td colspan="9" class="empty">Nessuna vendita registrata.</td></tr>'}
       </table></div>
     </section>`;
+}
+
+function biglietti() {
+  const date = ticketsDate || today();
+  const tickets = (Array.isArray(db.biglietti) ? db.biglietti : [])
+    .filter((ticket) => ticket.dateKey === date)
+    .slice()
+    .sort((a, b) => String(a.prodotto).localeCompare(String(b.prodotto), 'it'));
+  const gross = tickets.reduce((sum, ticket) => sum + Number(ticket.gross || 0), 0);
+  const net = tickets.reduce((sum, ticket) => sum + Number(ticket.net || 0), 0);
+
+  return `
+    <section class="pit-simple-title">
+      <h2>Biglietti</h2>
+      <div><label>Giornata</label><input id="tickets-date" type="date" value="${date}"></div>
+    </section>
+    <section class="card">
+      <div class="section-head">
+        <div><p class="eyebrow">${esc(formatDateKey(date))}</p><h2>${tickets.length} ${tickets.length === 1 ? 'biglietto' : 'biglietti'} salvati</h2></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button type="button" data-generate-day="${date}">Genera / aggiorna</button>
+          <button type="button" class="ghost" data-print-day="${date}" ${tickets.length ? '' : 'disabled'}>Visualizza e stampa tutti</button>
+        </div>
+      </div>
+      <p id="ticket-msg"></p>
+      ${tickets.length ? `<p class="notice">Totale lordo ${eur(gross)} · Totale netto ${eur(net)}. I biglietti restano salvati e puoi riaprirli quando vuoi.</p>` : '<p class="empty">Non ci sono ancora biglietti per questa data. Premi “Genera / aggiorna”.</p>'}
+    </section>
+    <section class="ticket-grid">${tickets.map((ticket) => `
+      <article class="ticket-card">
+        <p class="eyebrow">${esc(ticket.data)}</p>
+        <h3>${esc(ticket.prodotto)} · ${esc(ticket.proprietario)}</h3>
+        <p class="muted">${ticketQuantityTitle(ticket)} · ${ticket.righe.length} ${ticket.righe.length === 1 ? 'vendita' : 'vendite'}</p>
+        <div class="table-scroll"><table>
+          <tr><th>Cliente</th><th>Colli</th><th>Kg</th><th>Importo</th></tr>
+          ${ticket.righe.map((sale) => `<tr><td>${esc(sale.cliente)}</td><td>${Number(sale.colli || 0) ? formatQty(sale.colli) : '—'}</td><td>${Number(sale.peso || 0) ? formatQty(sale.peso) : '—'}</td><td><b>${eur(sale.totale)}</b></td></tr>`).join('')}
+        </table></div>
+        <p><b>Rimanenza:</b> ${ticket.hasWeightData ? `R ${formatQty(ticket.remainingKg)} kg` : ''}${ticket.hasWeightData && ticket.hasPackageData ? ' · ' : ''}${ticket.hasPackageData ? `R ${formatQty(ticket.remainingPackages)} colli` : ''}</p>
+        <p><b>Lordo ${eur(ticket.gross)}</b> · 10% ${eur(ticket.deduction)} · <b>Netto ${eur(ticket.net)}</b></p>
+        <div class="ticket-actions">
+          <button type="button" data-print-ticket="${ticket.id}">Visualizza / stampa PDF</button>
+          <button type="button" class="ghost" data-share-ticket="${ticket.id}">Condividi</button>
+        </div>
+      </article>`).join('')}</section>`;
 }
 
 async function saveAccessConfig() {
@@ -787,7 +892,8 @@ function dailyTicketData(dateKey) {
       soldTodayPackages: roundQty(soldTodayPackages),
       remainingKg: roundQty(Math.max(0, startKg - soldTodayKg)),
       remainingPackages: roundQty(Math.max(0, startPackages - soldTodayPackages)),
-      hasPackageData: soldTodayPackages > 0,
+      hasPackageData: recordedInitialPackages > 0 || soldTodayPackages > 0,
+      hasWeightData: recordedInitialKg > 0 || soldTodayKg > 0,
       gross,
       deduction,
       net: roundMoney(gross - deduction),
@@ -795,38 +901,83 @@ function dailyTicketData(dateKey) {
   });
 }
 
-function generateTickets(dateKey) {
-  const tickets = dailyTicketData(dateKey);
-  if (!tickets.length) throw new Error(`Non ci sono vendite registrate il ${formatDateKey(dateKey)}.`);
+function createTicketRecords(dateKey) {
+  const calculated = dailyTicketData(dateKey);
+  if (!calculated.length) throw new Error(`Non ci sono vendite registrate il ${formatDateKey(dateKey)}.`);
+  if (!Array.isArray(db.biglietti)) db.biglietti = [];
+  const records = calculated.map((ticket) => ({
+    id: `${dateKey}-${ticket.lot.id}`,
+    dateKey,
+    data: formatDateKey(dateKey),
+    creatoIl: stamp(),
+    creatoDa: operatorName(),
+    lotto_id: ticket.lot.id,
+    prodotto: ticket.product,
+    proprietario: ticket.owner,
+    startKg: ticket.startKg,
+    startPackages: ticket.startPackages,
+    soldTodayKg: ticket.soldTodayKg,
+    soldTodayPackages: ticket.soldTodayPackages,
+    remainingKg: ticket.remainingKg,
+    remainingPackages: ticket.remainingPackages,
+    hasPackageData: ticket.hasPackageData,
+    hasWeightData: ticket.hasWeightData,
+    gross: ticket.gross,
+    deduction: ticket.deduction,
+    net: ticket.net,
+    righe: ticket.sales.map((sale) => ({
+      id: sale.id,
+      cliente: name('clienti', sale.cliente_id),
+      colli: Number(sale.colli || 0),
+      peso: Number(sale.peso || 0),
+      prezzo: Number(sale.prezzo || 0),
+      unita_prezzo: sale.unita_prezzo || (Number(sale.peso || 0) > 0 ? 'kg' : 'collo'),
+      totale: Number(sale.totale || 0),
+    })),
+  }));
+  db.biglietti = db.biglietti.filter((ticket) => ticket.dateKey !== dateKey).concat(records);
+  audit('Biglietti generati', `${formatDateKey(dateKey)} · ${records.length} biglietti`);
+  return records;
+}
+
+function ticketQuantityTitle(ticket) {
+  const parts = [];
+  if (ticket.hasWeightData) parts.push(`${formatQty(ticket.startKg)} KG`);
+  if (ticket.hasPackageData) parts.push(`${formatQty(ticket.startPackages)} COLLI`);
+  return parts.length ? `R ${parts.join(' / ')}` : 'RIMANENZA';
+}
+
+function openTicketPreview(tickets) {
+  if (!tickets.length) throw new Error('Non ci sono biglietti da visualizzare.');
 
   const ticketHtml = tickets.map((ticket, index) => `
     <section class="ticket">
       <header>
-        <div><small>SIGNOR / AZIENDA</small><strong>${esc(ticket.owner)}</strong></div>
-        <div class="ticket-date"><small>DATA</small><strong>${esc(formatDateKey(dateKey))}</strong></div>
+        <div><small>SIGNOR / AZIENDA</small><strong>${esc(ticket.proprietario)}</strong></div>
+        <div class="ticket-date"><small>DATA</small><strong>${esc(ticket.data)}</strong></div>
       </header>
-      <div class="lot-title">R ${formatQty(ticket.startKg)} KG · ${esc(ticket.product)} · ${esc(ticket.owner)}</div>
-      <div class="lot-subtitle">Rimanenza iniziale: <b>${formatQty(ticket.startKg)} kg</b>${ticket.hasPackageData ? ` · ${formatQty(ticket.startPackages)} colli` : ''}</div>
+      <div class="lot-title">${ticketQuantityTitle(ticket)} · ${esc(ticket.prodotto)} · ${esc(ticket.proprietario)}</div>
+      <div class="lot-subtitle">Rimanenza iniziale: ${ticket.hasWeightData ? `<b>${formatQty(ticket.startKg)} kg</b>` : ''}${ticket.hasWeightData && ticket.hasPackageData ? ' · ' : ''}${ticket.hasPackageData ? `<b>${formatQty(ticket.startPackages)} colli</b>` : ''}</div>
       <table>
-        <thead><tr><th>Colli</th><th>Cliente</th><th>Peso</th><th>Prezzo/kg</th><th>Importo</th></tr></thead>
-        <tbody>${ticket.sales.map((sale) => `<tr>
+        <thead><tr><th>Colli</th><th>Cliente</th><th>Peso</th><th>Prezzo</th><th>Importo</th></tr></thead>
+        <tbody>${ticket.righe.map((sale) => `<tr>
           <td>${Number(sale.colli || 0) ? formatQty(sale.colli) : '—'}</td>
-          <td>${esc(name('clienti', sale.cliente_id))}</td>
-          <td>${formatQty(sale.peso)} kg</td>
-          <td>${eur(sale.prezzo)}</td>
+          <td>${esc(sale.cliente)}</td>
+          <td>${Number(sale.peso || 0) ? `${formatQty(sale.peso)} kg` : '—'}</td>
+          <td>${eur(sale.prezzo)} / ${sale.unita_prezzo === 'kg' ? 'kg' : 'collo'}</td>
           <td><b>${eur(sale.totale)}</b></td>
         </tr>`).join('')}</tbody>
       </table>
       <div class="totals">
-        <div class="remaining"><span>VENDUTO</span><b>${formatQty(ticket.soldTodayKg)} kg</b><small>${ticket.hasPackageData ? `${formatQty(ticket.soldTodayPackages)} colli` : ''}</small></div>
-        <div class="remaining"><span>RIMANENZA</span><b>R ${formatQty(ticket.remainingKg)} kg</b><small>${ticket.hasPackageData ? `${formatQty(ticket.remainingPackages)} colli` : ''}</small></div>
+        <div class="remaining"><span>VENDUTO</span><b>${ticket.hasWeightData ? `${formatQty(ticket.soldTodayKg)} kg` : `${formatQty(ticket.soldTodayPackages)} colli`}</b><small>${ticket.hasWeightData && ticket.hasPackageData ? `${formatQty(ticket.soldTodayPackages)} colli` : ''}</small></div>
+        <div class="remaining"><span>RIMANENZA</span><b>${ticket.hasWeightData ? `R ${formatQty(ticket.remainingKg)} kg` : `R ${formatQty(ticket.remainingPackages)} colli`}</b><small>${ticket.hasWeightData && ticket.hasPackageData ? `R ${formatQty(ticket.remainingPackages)} colli` : ''}</small></div>
         <dl>
           <dt>Totale lordo</dt><dd>${eur(ticket.gross)}</dd>
           <dt>10%</dt><dd>− ${eur(ticket.deduction)}</dd>
           <dt class="net">TOTALE NETTO</dt><dd class="net">${eur(ticket.net)}</dd>
         </dl>
       </div>
-      <footer>Eurofrutta · Biglietto ${index + 1} di ${tickets.length} · Generato da ${esc(operatorName())}</footer>
+      <footer>Eurofrutta · Biglietto ${index + 1} di ${tickets.length} · Generato da ${esc(ticket.creatoDa || operatorName())}</footer>
     </section>`).join('');
 
   const preview = window.open('', '_blank');
@@ -834,7 +985,7 @@ function generateTickets(dateKey) {
   preview.document.open();
   preview.document.write(`<!doctype html>
     <html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Biglietti ${esc(formatDateKey(dateKey))}</title>
+    <title>Biglietti Eurofrutta</title>
     <style>
       @page{size:A5 portrait;margin:9mm}*{box-sizing:border-box}body{margin:0;background:#eef2f0;color:#172334;font-family:Arial,sans-serif}.toolbar{position:sticky;top:0;z-index:2;display:flex;justify-content:center;gap:10px;padding:14px;background:#15334a}.toolbar button{border:0;border-radius:8px;padding:11px 18px;font-weight:700;cursor:pointer}.toolbar .print{background:#35b779;color:#fff}.ticket{width:148mm;min-height:210mm;margin:18px auto;padding:10mm;background:#fff;box-shadow:0 4px 24px #0002;page-break-after:always;display:flex;flex-direction:column}.ticket:last-child{page-break-after:auto}header{display:flex;justify-content:space-between;gap:20px;border-bottom:2px solid #172334;padding-bottom:7px}header div{display:flex;flex-direction:column}small{color:#6b7788}.ticket-date{text-align:right}.lot-title{margin:13px 0 4px;color:#c43232;font-size:20px;font-weight:800;text-transform:uppercase}.lot-subtitle{margin-bottom:14px;color:#4d5968}table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid #aab3bc;padding:7px 5px;text-align:left}th{background:#eef2f0;text-transform:uppercase;font-size:10px}th:nth-child(n+3),td:nth-child(n+3){text-align:right}.totals{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}.remaining{border:2px solid #172334;padding:9px;display:flex;flex-direction:column}.remaining span{font-size:10px;font-weight:700;color:#637082}.remaining b{font-size:19px;margin-top:3px}.remaining small{min-height:14px}dl{grid-column:1/-1;margin:0 0 0 auto;width:64%;display:grid;grid-template-columns:1fr auto;gap:4px 20px;border-top:1px solid #aab3bc;padding-top:9px}dt,dd{margin:0}dd{text-align:right;font-weight:700}.net{margin-top:5px;padding-top:7px;border-top:2px solid #172334;font-size:16px;font-weight:800}footer{margin-top:auto;padding-top:18px;text-align:center;color:#7a8490;font-size:9px}@media print{body{background:#fff}.toolbar{display:none}.ticket{margin:0;padding:0;box-shadow:none;width:auto;min-height:190mm}}
     </style></head><body>
@@ -846,43 +997,70 @@ function generateTickets(dateKey) {
   return tickets.length;
 }
 
+async function shareTicket(ticket) {
+  const quantities = [
+    ticket.hasWeightData ? `Rimanenza: ${formatQty(ticket.remainingKg)} kg` : '',
+    ticket.hasPackageData ? `Rimanenza: ${formatQty(ticket.remainingPackages)} colli` : '',
+  ].filter(Boolean).join(' · ');
+  const text = `${ticket.prodotto} · ${ticket.proprietario}\nData ${ticket.data}\n${quantities}\nLordo ${eur(ticket.gross)} · 10% ${eur(ticket.deduction)} · Netto ${eur(ticket.net)}`;
+  if (navigator.share) {
+    await navigator.share({ title: `Biglietto ${ticket.prodotto}`, text });
+    return;
+  }
+  await navigator.clipboard.writeText(text);
+  alert('Riepilogo copiato. Ora puoi incollarlo su WhatsApp o in un messaggio.');
+}
+
 function addSale(form) {
-  const lot = lotById(form.get('lotto_id'));
-  if (!lot) throw new Error('Scegli un lotto disponibile.');
+  const lot = lotById(form.get('lotto_id')) || findLotByText(form.get('lotto_nome'));
+  const client = db.clienti.find((item) => item.id === form.get('cliente_id')) || findClientByText(form.get('cliente_nome'));
+  if (!lot) throw new Error('Scegli l’articolo dai suggerimenti.');
+  if (!client) throw new Error('Scegli il cliente dai suggerimenti.');
   const price = Number(form.get('prezzo') || 0);
   const packages = Number(form.get('colli') || 0);
   const weight = Number(form.get('peso') || 0);
+  const priceUnit = form.get('unita_prezzo') === 'collo' ? 'collo' : 'kg';
+  const dateKey = String(form.get('data_movimento') || today());
   const remainingPackages = Number(lot.colli_rimanenti || 0);
   const remainingWeight = Number(lot.peso_rimanente || 0);
-  if (weight <= 0) throw new Error('Inserisci i kg venduti.');
-  if (packages < 0) throw new Error('Il numero di colli non può essere negativo.');
-  if (packages > 0 && packages > remainingPackages) {
+  if (packages < 0 || weight < 0) throw new Error('Colli e kg non possono essere negativi.');
+  if (packages <= 0 && weight <= 0) throw new Error('Inserisci i colli venduti, i kg oppure entrambi.');
+  if (Number(lot.colli_iniziali || 0) > 0 && packages <= 0) {
+    throw new Error('Questo lotto tiene anche la rimanenza in colli: inserisci i colli venduti.');
+  }
+  if (Number(lot.peso_iniziale || 0) > 0 && weight <= 0) {
+    throw new Error('Questo lotto tiene anche la rimanenza in kg: inserisci i kg venduti.');
+  }
+  if (priceUnit === 'kg' && weight <= 0) throw new Error('Per il prezzo al kg devi inserire i kg venduti.');
+  if (priceUnit === 'collo' && packages <= 0) throw new Error('Per il prezzo a collo devi inserire i colli venduti.');
+  if (Number(lot.colli_iniziali || 0) > 0 && packages > remainingPackages) {
     throw new Error(`Disponibili soltanto ${formatQty(remainingPackages)} colli per questo lotto.`);
   }
   if (Number(lot.peso_iniziale || 0) > 0 && weight > remainingWeight) {
     throw new Error(`Disponibili soltanto ${formatQty(remainingWeight)} kg per questo lotto.`);
   }
 
-  if (packages > 0) lot.colli_rimanenti = roundQty(remainingPackages - packages);
-  lot.peso_rimanente = roundQty(Math.max(0, remainingWeight - weight));
+  if (Number(lot.colli_iniziali || 0) > 0) lot.colli_rimanenti = roundQty(Math.max(0, remainingPackages - packages));
+  if (Number(lot.peso_iniziale || 0) > 0) lot.peso_rimanente = roundQty(Math.max(0, remainingWeight - weight));
   db.movimenti.push({
     id: id(),
-    data: stamp(),
-    dateKey: today(),
+    data: formatDateKey(dateKey),
+    dateKey,
     tipo: 'uscita',
     lotto_id: lot.id,
     prodotto_id: lot.prodotto_id,
     proprietario: lot.proprietario,
-    cliente_id: form.get('cliente_id'),
+    cliente_id: client.id,
     colli: packages,
     peso: weight,
     prezzo: price,
-    totale: roundMoney(price * weight),
+    unita_prezzo: priceUnit,
+    totale: roundMoney(price * (priceUnit === 'kg' ? weight : packages)),
     operatore: operatorName(),
     operatore_uid: signedUser?.uid || '',
     operatore_email: userEmail(),
   });
-  audit('Vendita registrata', `${name('prodotti', lot.prodotto_id)} · ${lot.proprietario} · ${formatQty(weight)} kg${packages ? ` · ${formatQty(packages)} colli` : ''} · cliente ${name('clienti', form.get('cliente_id'))}`);
+  audit('Vendita registrata', `${name('prodotti', lot.prodotto_id)} · ${lot.proprietario} · ${packages ? `${formatQty(packages)} colli` : ''}${packages && weight ? ' · ' : ''}${weight ? `${formatQty(weight)} kg` : ''} · prezzo a ${priceUnit} · cliente ${client.nome}`);
 }
 
 function addLoad(form) {
@@ -892,8 +1070,8 @@ function addLoad(form) {
   const weight = Number(form.get('peso') || 0);
   if (!productId) throw new Error('Scegli il prodotto.');
   if (!owner) throw new Error('Scrivi il proprietario o fornitore.');
-  if (packages < 0) throw new Error('Il numero di colli non può essere negativo.');
-  if (weight <= 0) throw new Error('Inserisci il peso totale in kg.');
+  if (packages < 0 || weight < 0) throw new Error('Colli e kg non possono essere negativi.');
+  if (packages <= 0 && weight <= 0) throw new Error('Inserisci almeno i colli arrivati oppure il peso totale in kg.');
 
   const lot = {
     id: id(),
@@ -1075,17 +1253,11 @@ function bind() {
       event.preventDefault();
       const form = new FormData(pitForm);
       const message = $('#pit-msg');
-      const clientId = form.get('cliente_id');
-      const lotId = form.get('lotto_id');
-      if (!clientId || !lotId) {
-        message.className = 'message error';
-        message.textContent = 'Scegli prima cliente e lotto.';
-        return;
-      }
       try {
         message.className = 'message';
         message.textContent = 'Salvataggio…';
         addSale(form);
+        pitazzoDate = String(form.get('data_movimento') || today());
         await save();
         render();
       } catch (error) {
@@ -1097,31 +1269,98 @@ function bind() {
 
   document.querySelectorAll('[data-client]').forEach((button) => {
     button.onclick = () => {
-      $('#pit-form [name="cliente_id"]').value = button.dataset.client;
+      const client = db.clienti.find((item) => item.id === button.dataset.client);
+      const input = $('#pit-form [name="cliente_nome"]');
+      if (client && input) input.value = client.nome;
     };
   });
 
   document.querySelectorAll('[data-lot]').forEach((button) => {
     button.onclick = () => {
-      $('#pit-form [name="lotto_id"]').value = button.dataset.lot;
+      const lot = lotById(button.dataset.lot);
+      const input = $('#pit-form [name="lotto_nome"]');
+      if (lot && input) input.value = lotSearchName(lot);
     };
   });
 
-  const generateTicketsButton = $('#generate-tickets');
-  if (generateTicketsButton) {
-    generateTicketsButton.onclick = () => {
-      const message = $('#ticket-msg');
-      const dateKey = $('#ticket-date')?.value || today();
-      try {
-        const count = generateTickets(dateKey);
-        message.className = 'message';
-        message.textContent = `${count} ${count === 1 ? 'biglietto creato' : 'biglietti creati'}. Nella nuova pagina premi “Stampa / Salva PDF”.`;
-      } catch (error) {
-        message.className = 'message error';
-        message.textContent = `Errore: ${error.message}`;
-      }
+  const pitDate = $('#pit-date');
+  if (pitDate) {
+    pitDate.onchange = () => {
+      pitazzoDate = pitDate.value || today();
+      expandedPitLot = '';
+      render();
     };
   }
+
+  document.querySelectorAll('[data-expand-lot]').forEach((button) => {
+    button.onclick = () => {
+      expandedPitLot = expandedPitLot === button.dataset.expandLot ? '' : button.dataset.expandLot;
+      render();
+    };
+  });
+
+  const ticketsDateInput = $('#tickets-date');
+  if (ticketsDateInput) {
+    ticketsDateInput.onchange = () => {
+      ticketsDate = ticketsDateInput.value || today();
+      render();
+    };
+  }
+
+  document.querySelectorAll('[data-generate-day]').forEach((button) => {
+    button.onclick = async () => {
+      const dateKey = button.dataset.generateDay || pitazzoDate || ticketsDate || today();
+      const message = $('#ticket-msg');
+      try {
+        if (message) {
+          message.className = 'message';
+          message.textContent = 'Generazione e salvataggio…';
+        }
+        const records = createTicketRecords(dateKey);
+        await save();
+        ticketsDate = dateKey;
+        current = 'biglietti';
+        render();
+      } catch (error) {
+        if (message) {
+          message.className = 'message error';
+          message.textContent = `Errore: ${error.message}`;
+        } else {
+          alert(`Errore: ${error.message}`);
+        }
+      }
+    };
+  });
+
+  document.querySelectorAll('[data-print-ticket]').forEach((button) => {
+    button.onclick = () => {
+      const ticket = db.biglietti.find((item) => item.id === button.dataset.printTicket);
+      if (ticket) openTicketPreview([ticket]);
+    };
+  });
+
+  document.querySelectorAll('[data-print-day]').forEach((button) => {
+    button.onclick = () => {
+      const tickets = db.biglietti.filter((ticket) => ticket.dateKey === button.dataset.printDay);
+      try {
+        openTicketPreview(tickets);
+      } catch (error) {
+        alert(`Errore: ${error.message}`);
+      }
+    };
+  });
+
+  document.querySelectorAll('[data-share-ticket]').forEach((button) => {
+    button.onclick = async () => {
+      const ticket = db.biglietti.find((item) => item.id === button.dataset.shareTicket);
+      if (!ticket) return;
+      try {
+        await shareTicket(ticket);
+      } catch (error) {
+        if (error.name !== 'AbortError') alert(`Errore: ${error.message}`);
+      }
+    };
+  });
 
   const memberForm = $('#member-form');
   if (memberForm) {
@@ -1186,6 +1425,8 @@ function bind() {
 }
 
 function startDataSubscription() {
+  ensureAppStyles();
+  document.body.classList.add('eurofrutta-shell');
   ensureDynamicNav();
   $('#nav').hidden = false;
   $('#user').innerHTML = `${isAdmin() ? '<span title="Amministratore">♛</span> ' : ''}<b>${esc(operatorName())}</b>${isAdmin() ? ' · Amministratore' : ' · Operatore'} <button id="out">Esci</button>`;
@@ -1201,6 +1442,7 @@ function startDataSubscription() {
         prodotti: Array.isArray(saved.prodotti) ? saved.prodotti : [],
         lotti: Array.isArray(saved.lotti) ? saved.lotti : [],
         movimenti: Array.isArray(saved.movimenti) ? saved.movimenti : [],
+        biglietti: Array.isArray(saved.biglietti) ? saved.biglietti : [],
         registro: Array.isArray(saved.registro) ? saved.registro : [],
       };
       render();
