@@ -45,6 +45,7 @@ let closingDate = '';
 let homeSearch = '';
 let expandedHomeProduct = '';
 let editingSaleId = '';
+let editingTicketId = '';
 let adminSessionUnlocked = false;
 let signedUser = null;
 let unsubscribe;
@@ -255,7 +256,15 @@ function lotSearchName(lot) {
 }
 
 function partitaLabel(lot) {
-  return lot?.partita || `P-${String(lotGroupId(lot)).slice(-5).toUpperCase()}`;
+  if (!lot) return 'Scarico';
+  const custom = String(lot.partita || '').trim();
+  if (custom && !/^P-\d{8}-[A-Z0-9]{4}$/i.test(custom)) return custom;
+  const groups = [...new Set(db.lotti
+    .filter((item) => item.prodotto_id === lot.prodotto_id && normalized(item.proprietario) === normalized(lot.proprietario))
+    .sort((a, b) => `${a.dateKey || ''}-${a.id}`.localeCompare(`${b.dateKey || ''}-${b.id}`))
+    .map((item) => lotGroupId(item)))];
+  const position = Math.max(0, groups.indexOf(lotGroupId(lot))) + 1;
+  return `Scarico ${position}`;
 }
 
 function lotStatus(lot) {
@@ -881,8 +890,8 @@ function magazzino() {
         <div><label>Data arrivo *</label><input name="data_carico" required type="date" value="${today()}"></div>
         <div><label>Prodotto *</label><select name="prodotto_id" required>${opts(db.prodotti)}</select></div>
         <div><label>Proprietario / fornitore *</label><input name="proprietario" required list="owners" placeholder="Es. Angelo"><datalist id="owners">${owners.map((owner) => `<option value="${esc(owner)}">`).join('')}</datalist></div>
-        <div><label>Partita</label><input name="partita" placeholder="Es. PORRO-2 (se vuoto la creo io)"></div>
-        <div><label>Trattenuta / provvigione</label><select name="provvigione_percentuale"><option value="0">Nessuna</option><option value="10" selected>10%</option><option value="12">12% · conto commissione</option></select></div>
+        <div><label>Nome dello scarico (facoltativo)</label><input name="partita" placeholder="Es. Porro mattina"></div>
+        <div><label>Tipo di biglietto</label><select name="provvigione_percentuale"><option value="0">Normale · nessuna trattenuta</option><option value="10" selected>Normale · trattenuta 10%</option><option value="12">Padronale · provvigione 12%</option></select></div>
         <div><label>Note generali</label><input name="note" placeholder="Facoltative"></div>
         </div>
         <div class="section-head" style="margin-top:18px"><div><p class="eyebrow">PEZZATURE</p><h3>Colli e peso per descrizione</h3></div><button type="button" class="ghost" data-add-variant>+ Aggiungi pezzatura</button></div>
@@ -1173,23 +1182,43 @@ function biglietti() {
       <p id="ticket-msg"></p>
       ${tickets.length ? `<p class="notice">Totale lordo ${eur(gross)} · Totale netto ${eur(net)}. I biglietti restano salvati e puoi riaprirli quando vuoi.</p>` : '<p class="empty">Non ci sono ancora biglietti per questa data. Premi “Genera / aggiorna”.</p>'}
     </section>
-    <section class="ticket-grid">${tickets.map((ticket) => `
+    <section class="ticket-grid">${tickets.map((ticket) => {
+      const printRows = ticketPrintRows(ticket);
+      const linkedSales = ticketLinkedSales(ticket);
+      const openedSale = linkedSales.some((sale) => sale.id === editingSaleId);
+      return `
       <article class="ticket-card">
-        <p class="eyebrow">${esc(displayDateOnly(ticket.data, ticket.dateKey))}</p>
-        <h3>${esc(ticket.prodotto)} · ${esc(ticket.proprietario)}</h3>
-        <p class="muted">${esc(partitaLabel(lotById(ticket.lotto_id)))} · ${ticketQuantityTitle(ticket)}${ticket.qualita?.length ? ` · ${ticket.qualita.map(esc).join(' / ')}` : ''} · ${ticket.righe.length} righe</p>
+        <div class="section-head">
+          <div><p class="eyebrow">${esc(displayDateOnly(ticket.data, ticket.dateKey))}</p><h3>${esc(ticket.prodotto)} · ${esc(ticket.proprietario)}</h3></div>
+          <span class="quality-chip">${esc(ticketTypeLabel(ticket))}</span>
+        </div>
+        <p class="muted">${esc(ticketScaricoLabel(ticket))} · ${ticketQuantityTitle(ticket)}${ticket.qualita?.length ? ` · ${ticket.qualita.map(esc).join(' / ')}` : ''}</p>
         <div class="table-scroll"><table>
-          <tr><th>Colli</th><th>Descrizione</th><th>Peso</th><th>Prezzo</th><th>Totale</th><th></th></tr>
-          ${ticket.righe.map((sale) => `<tr class="${sale.annullato ? 'returned' : ''}"><td>${Number(sale.colli || 0) ? formatQty(sale.colli) : '—'}</td><td>${esc(sale.descrizione || sale.cliente || '—')}${sale.annullato ? '<br><span class="return-badge">RESO</span>' : ''}${sale.iva_percentuale ? `<br><small>IVA ${sale.iva_percentuale}%: ${eur(sale.iva)}</small>` : ''}</td><td>${Number(sale.peso || 0) ? `${formatQty(sale.peso)} kg` : '—'}</td><td>${sale.tipo === 'scarto' ? '—' : `${eur(sale.prezzo)} / ${sale.unita_prezzo === 'kg' ? 'kg' : 'collo'}`}</td><td><b>${eur(sale.totale)}</b></td><td>${sale.tipo === 'uscita' && !sale.annullato ? `<button type="button" class="ghost" data-edit-sale="${sale.movimento_id || sale.id}">Modifica</button> <button type="button" class="ghost" data-return-sale="${sale.movimento_id || sale.id}">Segna reso</button>` : ''}</td></tr>`).join('')}
+          <tr><th>Colli</th><th>Descrizione</th><th>Peso</th><th>Prezzo</th><th>Totale</th></tr>
+          ${printRows.map((sale) => `<tr class="${sale.annullato ? 'returned' : ''}"><td>${Number(sale.colli || 0) ? formatQty(sale.colli) : '—'}</td><td><b>${esc(sale.descrizione || 'Standard')}</b>${sale.annullato ? '<br><span class="return-badge">RESO</span>' : ''}${sale.iva_percentuale ? `<br><small>IVA ${sale.iva_percentuale}%: ${eur(sale.iva)}</small>` : ''}</td><td>${Number(sale.peso || 0) ? `${formatQty(sale.peso)} kg` : '—'}</td><td>${sale.tipo === 'scarto' ? '—' : `${eur(sale.prezzo)} / ${sale.unita_prezzo === 'kg' ? 'kg' : 'collo'}`}</td><td><b>${eur(sale.totale)}</b></td></tr>`).join('') || '<tr><td colspan="5" class="empty">Nessuna riga nel biglietto.</td></tr>'}
         </table></div>
-        ${editingSaleId && ticket.righe.some((sale) => (sale.movimento_id || sale.id) === editingSaleId) ? saleEditForm(editingSaleId) : ''}
         <p><b>Rimanenza:</b> ${ticket.hasPackageData ? stockState(ticket.remainingPackages, 'colli') : ''}${ticket.hasWeightData && ticket.hasPackageData ? ' · ' : ''}${ticket.hasWeightData ? stockState(ticket.remainingKg, 'kg') : ''}</p>
         <p><b>Lordo ${eur(ticket.gross)}</b> · ${Number(ticket.commissionPercent ?? 10) ? `Trattenuta ${Number(ticket.commissionPercent ?? 10)}% arrotondata ${eur(ticket.deduction)}` : 'Nessuna trattenuta'} · <b>Netto ${eur(ticket.net)}</b></p>
         <div class="ticket-actions">
           <button type="button" data-print-ticket="${ticket.id}">Visualizza / stampa PDF</button>
           <button type="button" class="ghost" data-share-ticket="${ticket.id}">Condividi</button>
+          <button type="button" class="ghost" data-edit-ticket="${ticket.id}">Tipo e trattenuta</button>
         </div>
-      </article>`).join('')}</section>`;
+        ${editingTicketId === ticket.id ? ticketSettingsForm(ticket) : ''}
+        <details class="edit-sale" ${openedSale ? 'open' : ''}>
+          <summary><b>Modifica vendite collegate</b></summary>
+          <p class="muted">I nomi dei clienti non compaiono sul biglietto. Da qui puoi correggere anche le vendite dei biglietti passati: il resto si aggiorna automaticamente.</p>
+          <div class="ticket-actions">${linkedSales.map((sale, index) => {
+            const quantity = Number(sale.colli || 0) ? `${formatQty(sale.colli)} colli` : `${formatQty(sale.peso)} kg`;
+            const label = `${index + 1}. ${sale.qualita || lotById(sale.lotto_id)?.qualita || 'Standard'} · ${quantity} · ${eur(sale.prezzo)} / ${sale.unita_prezzo === 'collo' ? 'collo' : 'kg'}`;
+            return sale.annullato
+              ? `<span class="return-badge">${esc(label)} · RESO</span>`
+              : `<button type="button" class="ghost" data-edit-sale="${sale.id}">${esc(label)}</button><button type="button" class="ghost" data-return-sale="${sale.id}">Segna reso</button>`;
+          }).join('') || '<span class="muted">Nessuna vendita collegata trovata. Premi “Genera / aggiorna” per riallineare questo biglietto.</span>'}</div>
+        </details>
+        ${openedSale ? saleEditForm(editingSaleId) : ''}
+      </article>`;
+    }).join('')}</section>`;
 }
 
 function saleEditForm(movementId) {
@@ -1442,10 +1471,10 @@ function createTicketRecords(dateKey) {
         tipo: row.tipo,
         annullato: Boolean(row.annullato),
         qualita: quality,
-        cliente: isWaste ? '' : name('clienti', row.cliente_id),
+        cliente: '',
         descrizione: isWaste
           ? `LAVORATI / SCARTO${quality !== 'Standard' ? ` · ${quality}` : ''}${row.note ? ` · ${row.note}` : ''}`
-          : `${name('clienti', row.cliente_id)}${quality !== 'Standard' ? ` · ${quality}` : ''}`,
+          : quality,
         colli: Number(row.colli || 0),
         peso: Number(row.peso || 0),
         prezzo: Number(row.prezzo || 0),
@@ -1470,8 +1499,19 @@ function ticketQuantityTitle(ticket) {
 }
 
 function ticketPrintRows(ticket) {
-  const rows = Array.isArray(ticket.righe) ? ticket.righe : [];
-  if (Number(ticket.commissionPercent) !== 12) return rows;
+  const rows = (Array.isArray(ticket.righe) ? ticket.righe : []).map((row) => {
+    const movement = db.movimenti.find((item) => item.id === (row.movimento_id || row.id));
+    const quality = row.qualita || movement?.qualita || 'Standard';
+    const type = row.tipo || movement?.tipo || 'uscita';
+    return {
+      ...row,
+      tipo: type,
+      qualita: quality,
+      descrizione: type === 'scarto'
+        ? `LAVORATI / SCARTO${quality !== 'Standard' ? ` · ${quality}` : ''}`
+        : quality,
+    };
+  });
   const grouped = new Map();
   rows.forEach((row) => {
     if (row.tipo !== 'uscita' || row.annullato) {
@@ -1479,21 +1519,78 @@ function ticketPrintRows(ticket) {
       return;
     }
     const key = [row.qualita || 'Standard', Number(row.prezzo || 0), row.unita_prezzo || 'kg', Number(row.iva_percentuale || 0)].join('|');
-    if (!grouped.has(key)) grouped.set(key, { ...row, colli: 0, peso: 0, imponibile: 0, iva: 0, totale: 0, clienti: [] });
+    if (!grouped.has(key)) grouped.set(key, { ...row, colli: 0, peso: 0, imponibile: 0, iva: 0, totale: 0 });
     const item = grouped.get(key);
     item.colli += Number(row.colli || 0);
     item.peso += Number(row.peso || 0);
     item.imponibile += Number(row.imponibile || 0);
     item.iva += Number(row.iva || 0);
     item.totale += Number(row.totale || 0);
-    if (row.cliente && !item.clienti.includes(row.cliente)) item.clienti.push(row.cliente);
-    item.descrizione = `${row.qualita || 'Standard'}${item.clienti.length ? ` · ${item.clienti.join(', ')}` : ''}`;
+    item.descrizione = row.qualita || 'Standard';
   });
   return [...grouped.values()].map((row) => ({
     ...row,
     colli: roundQty(row.colli), peso: roundQty(row.peso), imponibile: roundMoney(row.imponibile),
     iva: roundMoney(row.iva), totale: roundMoney(row.totale),
   }));
+}
+
+function ticketLinkedSales(ticket) {
+  const groupId = ticket.gruppo_id || lotGroupId(lotById(ticket.lotto_id));
+  const rowIds = new Set((ticket.righe || []).map((row) => row.movimento_id || row.id).filter(Boolean));
+  return db.movimenti.filter((movement) => (
+    movement.tipo === 'uscita'
+    && movement.dateKey === ticket.dateKey
+    && (rowIds.has(movement.id) || (groupId && (movement.gruppo_id || lotGroupId(lotById(movement.lotto_id))) === groupId))
+  ));
+}
+
+function ticketTypeLabel(ticket) {
+  const percentage = Number(ticket.commissionPercent ?? 10);
+  if (percentage === 12) return 'Padronale · provvigione 12%';
+  if (percentage === 0) return 'Normale · nessuna trattenuta';
+  return 'Normale · trattenuta 10%';
+}
+
+function ticketScaricoLabel(ticket) {
+  const lot = lotById(ticket.lotto_id);
+  if (lot) return partitaLabel(lot);
+  const saved = String(ticket.partita || '').trim();
+  if (saved && !/^P-\d{8}-[A-Z0-9]{4}$/i.test(saved)) return saved;
+  return 'Scarico';
+}
+
+function ticketSettingsForm(ticket) {
+  const percentage = Number(ticket.commissionPercent ?? 10);
+  return `<form id="ticket-settings-form" class="edit-sale" data-ticket-id="${ticket.id}">
+    <div class="section-head"><div><p class="eyebrow">TIPO BIGLIETTO</p><h3>Modifica trattenuta</h3><p class="muted">La scelta viene salvata anche nello scarico collegato.</p></div><button type="button" class="ghost" data-cancel-ticket-edit>Annulla</button></div>
+    <div class="grid"><div><label>Tipo</label><select name="provvigione_percentuale"><option value="0" ${percentage === 0 ? 'selected' : ''}>Normale · nessuna trattenuta</option><option value="10" ${percentage === 10 ? 'selected' : ''}>Normale · trattenuta 10%</option><option value="12" ${percentage === 12 ? 'selected' : ''}>Padronale · provvigione 12%</option></select></div><div><label>&nbsp;</label><button>Salva e ricalcola</button></div></div>
+    <p id="ticket-settings-msg"></p>
+  </form>`;
+}
+
+function updateTicketSettings(form) {
+  const ticket = db.biglietti.find((item) => item.id === form.dataset.ticketId);
+  if (!ticket) throw new Error('Biglietto non trovato.');
+  const percentage = Number(new FormData(form).get('provvigione_percentuale'));
+  if (![0, 10, 12].includes(percentage)) throw new Error('Scegli 0%, 10% oppure 12%.');
+  const groupId = ticket.gruppo_id || lotGroupId(lotById(ticket.lotto_id));
+  let lots = groupId ? lotsInGroup(groupId) : [];
+  if (!lots.length && lotById(ticket.lotto_id)) lots = [lotById(ticket.lotto_id)];
+  lots.forEach((lot) => {
+    lot.provvigione_percentuale = percentage;
+    lot.conto_commissione = percentage === 12;
+    lot.modificatoIl = stamp();
+    lot.modificatoDa = operatorName();
+  });
+  ticketLinkedSales(ticket).forEach((sale) => {
+    sale.provvigione_percentuale = percentage;
+  });
+  const dateKey = ticket.dateKey;
+  db.biglietti = db.biglietti.filter((item) => item.dateKey !== dateKey);
+  createTicketRecords(dateKey);
+  audit('Tipo biglietto modificato', `${ticket.prodotto} · ${ticket.proprietario} · ${ticketTypeLabel({ commissionPercent: percentage })}`);
+  return dateKey;
 }
 
 function openTicketPreview(tickets) {
@@ -1506,12 +1603,12 @@ function openTicketPreview(tickets) {
         <div class="ticket-date"><small>${esc(displayDateOnly(ticket.data, ticket.dateKey))}</small></div>
       </header>
       <div class="lot-title">${esc(ticket.prodotto)}</div>
-      <div class="lot-subtitle"><b>${esc(ticket.proprietario)}</b> · Partita <b>${esc(ticket.partita || '—')}</b>${ticket.qualita?.length ? ` · ${ticket.qualita.map(esc).join(' / ')}` : ''}<br>Rimanenza iniziale: ${ticket.hasPackageData ? `<b>${formatQty(ticket.startPackages)} colli</b>` : ''}${ticket.hasWeightData && ticket.hasPackageData ? ' · ' : ''}${ticket.hasWeightData ? `<b>${formatQty(ticket.startKg)} kg</b>` : ''}</div>
+      <div class="lot-subtitle"><b>${esc(ticket.proprietario)}</b> · <b>${esc(ticketScaricoLabel(ticket))}</b>${ticket.qualita?.length ? ` · ${ticket.qualita.map(esc).join(' / ')}` : ''}<br>${esc(ticketTypeLabel(ticket))}<br>Rimanenza iniziale: ${ticket.hasPackageData ? `<b>${formatQty(ticket.startPackages)} colli</b>` : ''}${ticket.hasWeightData && ticket.hasPackageData ? ' · ' : ''}${ticket.hasWeightData ? `<b>${formatQty(ticket.startKg)} kg</b>` : ''}</div>
       <table>
         <thead><tr><th>Colli</th><th>Descrizione</th><th>Peso</th><th>Prezzo</th><th>Totale</th></tr></thead>
         <tbody>${ticketPrintRows(ticket).map((sale) => `<tr>
           <td>${Number(sale.colli || 0) ? formatQty(sale.colli) : '—'}</td>
-          <td>${esc(sale.descrizione || sale.cliente || '—')}${sale.annullato ? '<br><b class="returned-label">RESO — IMPORTO ANNULLATO</b>' : ''}${sale.iva_percentuale ? `<br><small>IVA ${sale.iva_percentuale}%</small>` : ''}</td>
+          <td>${esc(sale.descrizione || 'Standard')}${sale.annullato ? '<br><b class="returned-label">RESO — IMPORTO ANNULLATO</b>' : ''}${sale.iva_percentuale ? `<br><small>IVA ${sale.iva_percentuale}%</small>` : ''}</td>
           <td>${Number(sale.peso || 0) ? `${formatQty(sale.peso)} kg` : '—'}</td>
           <td>${sale.tipo === 'scarto' ? '—' : `${eur(sale.prezzo)} / ${sale.unita_prezzo === 'kg' ? 'kg' : 'collo'}`}</td>
           <td><b>${eur(sale.totale)}</b></td>
@@ -1551,7 +1648,9 @@ async function shareTicket(ticket) {
     ticket.hasPackageData ? stockState(ticket.remainingPackages, 'colli') : '',
     ticket.hasWeightData ? stockState(ticket.remainingKg, 'kg') : '',
   ].filter(Boolean).join(' · ');
-  const text = `${ticket.prodotto} · ${ticket.proprietario}\nData ${displayDateOnly(ticket.data, ticket.dateKey)}\n${quantities}\nLordo ${eur(ticket.gross)} · ${Number(ticket.commissionPercent ?? 10)}% ${eur(ticket.deduction)} · Netto ${eur(ticket.net)}`;
+  const percentage = Number(ticket.commissionPercent ?? 10);
+  const deductionText = percentage ? `${percentage}% ${eur(ticket.deduction)}` : 'nessuna trattenuta';
+  const text = `${ticket.prodotto} · ${ticket.proprietario}\nData ${displayDateOnly(ticket.data, ticket.dateKey)}\n${ticketTypeLabel(ticket)}\n${quantities}\nLordo ${eur(ticket.gross)} · ${deductionText} · Netto ${eur(ticket.net)}`;
   if (navigator.share) {
     await navigator.share({ title: `Biglietto ${ticket.prodotto}`, text });
     return;
@@ -1709,7 +1808,7 @@ function addLoad(form) {
   if (!variants.length) throw new Error('Inserisci almeno i colli oppure i kg in una pezzatura.');
 
   const groupId = id();
-  const partita = String(form.get('partita') || '').trim() || `P-${dateKey.replaceAll('-', '')}-${String(groupId).slice(-4).toUpperCase()}`;
+  const partita = String(form.get('partita') || '').trim();
   const note = String(form.get('note') || '').trim();
   variants.forEach((variant) => {
     const lot = {
@@ -2253,9 +2352,40 @@ function bind() {
     };
   });
 
+  document.querySelectorAll('[data-edit-ticket]').forEach((button) => {
+    button.onclick = () => {
+      editingTicketId = button.dataset.editTicket;
+      editingSaleId = '';
+      render();
+      $('#ticket-settings-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    };
+  });
+  $('[data-cancel-ticket-edit]')?.addEventListener('click', () => {
+    editingTicketId = '';
+    render();
+  });
+  const ticketSettings = $('#ticket-settings-form');
+  if (ticketSettings) {
+    ticketSettings.onsubmit = async (event) => {
+      event.preventDefault();
+      const message = $('#ticket-settings-msg');
+      try {
+        const dateKey = updateTicketSettings(ticketSettings);
+        await save();
+        ticketsDate = dateKey;
+        editingTicketId = '';
+        render();
+      } catch (error) {
+        message.className = 'message error';
+        message.textContent = `Errore: ${error.message}`;
+      }
+    };
+  }
+
   document.querySelectorAll('[data-edit-sale]').forEach((button) => {
     button.onclick = () => {
       editingSaleId = button.dataset.editSale;
+      editingTicketId = '';
       render();
       $('#sale-edit-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     };
