@@ -291,6 +291,16 @@ function stockStateHtml(value, unit) {
   return `<span class="pit-money"><b>R ${formatQty(amount)} ${unit}</b></span>`;
 }
 
+function initialLotQuantity(lot) {
+  const packages = Number(lot.colli_iniziali || 0);
+  const weight = Number(lot.peso_iniziale || 0);
+  if (packages > 0) {
+    return `<b>${formatQty(packages)} colli</b>${weight > 0 ? `<br><small>${formatQty(weight)} kg</small>` : ''}`;
+  }
+  if (weight > 0) return `<b>${formatQty(weight)} kg</b>`;
+  return '<span class="muted">—</span>';
+}
+
 function formatDateKey(dateKey) {
   const parts = String(dateKey || '').split('-');
   return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : String(dateKey || '');
@@ -701,7 +711,7 @@ function productDetail(product) {
       <div class="section-head"><div><p class="eyebrow">MAGAZZINO</p><h2>Lotti del prodotto</h2></div><b>${lots.length} totali</b></div>
       <div class="table-scroll"><table>
         <tr><th>Data carico</th><th>Proprietario / provenienza</th><th>Pezzatura</th><th>Iniziali</th><th>Rimanenza</th></tr>
-        ${lots.map((lot) => `<tr><td>${esc(lot.dataCarico || '—')}</td><td>${esc(lot.proprietario || '—')}</td><td>${esc(lot.qualita || 'Standard')}</td><td>${formatQty(lot.peso_iniziale)} kg<br><small>${formatQty(lot.colli_iniziali)} colli</small></td><td>${Number(lot.peso_iniziale || 0) > 0 ? stockStateHtml(lot.peso_rimanente, 'kg') : ''}<br><small>${Number(lot.colli_iniziali || 0) > 0 ? stockState(lot.colli_rimanenti, 'colli') : ''}</small></td></tr>`).join('') || '<tr><td colspan="5" class="empty">Nessun lotto.</td></tr>'}
+        ${lots.map((lot) => `<tr><td>${esc(lot.dataCarico || '—')}</td><td>${esc(lot.proprietario || '—')}</td><td>${esc(lot.qualita || 'Standard')}</td><td>${initialLotQuantity(lot)}</td><td>${Number(lot.peso_iniziale || 0) > 0 ? stockStateHtml(lot.peso_rimanente, 'kg') : ''}<br><small>${Number(lot.colli_iniziali || 0) > 0 ? stockState(lot.colli_rimanenti, 'colli') : ''}</small></td></tr>`).join('') || '<tr><td colspan="5" class="empty">Nessun lotto.</td></tr>'}
       </table></div>
     </section>
     <section class="card">
