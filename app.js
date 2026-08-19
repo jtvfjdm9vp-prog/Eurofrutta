@@ -39,8 +39,16 @@ let selectedProduct = '';
 let pitazzoDate = '';
 let expandedPitLot = '';
 let ticketsDate = '';
+let homeSearch = '';
+let adminSessionUnlocked = false;
 let signedUser = null;
 let unsubscribe;
+const ADMIN_CODE_HASH = '4dd75592eec0dbdf1f491c6413c01b8573e8908b255b67c78f35f0d2bb2d4565';
+try {
+  adminSessionUnlocked = sessionStorage.getItem('eurofrutta-admin-unlocked') === '1';
+} catch (error) {
+  adminSessionUnlocked = false;
+}
 
 const $ = (selector) => document.querySelector(selector);
 const id = () => `${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -90,6 +98,7 @@ function ensureAppStyles() {
     .ticket-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:16px}.ticket-card{border:1px solid #dbe4e7;border-radius:16px;background:#fff;padding:18px;box-shadow:0 8px 24px #173b4e0b}.ticket-card h3{margin:4px 0}.ticket-card .ticket-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.ticket-card .ticket-actions button{width:auto}.returned{opacity:.65;text-decoration:line-through}.return-badge{display:inline-block;padding:3px 7px;border-radius:999px;background:#fff0e8;color:#a6461c;font-size:10px;font-weight:800;text-decoration:none}
     .price-choice{display:grid;grid-template-columns:1fr 1fr;gap:7px}.price-choice label{margin:0}.price-choice input{position:absolute;opacity:0;pointer-events:none}.price-choice span{display:block;padding:11px 9px;border:1px solid #ccd8dc;border-radius:10px;text-align:center;cursor:pointer;transition:.15s ease}.price-choice input:checked+span{border-color:#16835f;background:#eaf8f2;color:#0d7252;font-weight:800}
     .variant-list{display:grid;gap:10px;margin:15px 0}.variant-row{display:grid;grid-template-columns:1.4fr 1fr 1fr auto;gap:10px;align-items:end;padding:12px;border:1px solid #dce5e7;border-radius:13px;background:#f8fbfa}.variant-row button{width:auto;min-width:44px}.variant-row:first-child [data-remove-variant]{visibility:hidden}.secondary-panel{margin-top:18px;border:1px solid #dce5e7;border-radius:14px;background:#fbfdfc}.secondary-panel summary{padding:16px 18px;cursor:pointer;font-weight:800;color:#116c50}.secondary-panel>div{padding:0 18px 18px}.quality-chip{display:inline-block;margin-top:4px;padding:3px 8px;border-radius:999px;background:#eef6f2;color:#166c51;font-size:11px;font-weight:800}.mobile-nav-toggle,.nav-scrim{display:none}
+    .home-search{margin:22px 0;padding:22px;border:1px solid #d9e5e4;border-radius:18px;background:linear-gradient(135deg,#fff 0%,#f4fbf8 100%);box-shadow:0 9px 28px #173b4e0b}.home-search-head{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:13px}.home-search h2{margin:0;font-size:22px}.home-search-box{display:flex;align-items:center;gap:10px;border:2px solid #cbdad8;border-radius:14px;background:#fff;padding:0 12px;transition:border-color .18s ease,box-shadow .18s ease}.home-search-box:focus-within{border-color:#159268;box-shadow:0 0 0 4px #15926818}.home-search-box input{width:100%;border:0;box-shadow:none!important;background:transparent;font-size:17px}.home-search-box button{width:auto;min-width:38px;padding:7px;background:transparent;color:#647586}.search-results-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:15px}.search-result-group{padding:14px;border:1px solid #dce7e5;border-radius:14px;background:#fff}.search-result-group h3{margin:0 0 9px;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:#617386}.search-result{width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;margin:5px 0;padding:10px 11px;border:0;border-radius:10px;background:#f4f8f7;color:#173044;text-align:left}.search-result:hover{background:#e8f6f0}.search-result strong{display:block}.search-result small{display:block;color:#6b7b8d;margin-top:2px}.owner-badge{display:inline-flex;align-items:center;padding:7px 10px;border-radius:9px;background:#edf5f2;color:#154f40;font-weight:850}.inventory-product-name{font-size:16px;color:#142b3c}
     @media(max-width:900px){
       body.eurofrutta-shell{padding-left:0;overflow-x:hidden}
       body.eurofrutta-shell.nav-open{overflow:hidden}
@@ -117,10 +126,11 @@ function ensureAppStyles() {
       .table-scroll{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
       .table-scroll table{min-width:680px}
       .ticket-grid{grid-template-columns:1fr}
+      .search-results-grid{grid-template-columns:1fr}
       .variant-row{grid-template-columns:1fr 1fr}.variant-row>div:first-child{grid-column:1/-1}.variant-row button{width:100%}
       .hero{padding:24px 18px!important}.hero-art{display:none!important}.hero-copy h2{font-size:38px!important}
     }
-    @media(max-width:480px){body.eurofrutta-shell #nav{width:88vw}.ticket-card{padding:14px}.price-choice{grid-template-columns:1fr}.pit-product-row strong{font-size:16px}}
+    @media(max-width:480px){body.eurofrutta-shell #nav{width:88vw}.ticket-card{padding:14px}.price-choice{grid-template-columns:1fr}.pit-product-row strong{font-size:16px}.home-search{padding:16px}.home-search-head{align-items:flex-start;flex-direction:column}}
   `;
   document.head.appendChild(style);
 }
@@ -301,9 +311,30 @@ function initialLotQuantity(lot) {
   return '<span class="muted">—</span>';
 }
 
+function remainingLotQuantity(lot) {
+  const tracksPackages = Number(lot.colli_iniziali || 0) > 0;
+  const tracksWeight = Number(lot.peso_iniziale || 0) > 0;
+  if (tracksPackages) {
+    return `${stockStateHtml(lot.colli_rimanenti, 'colli')}${tracksWeight ? `<br><small>${stockState(lot.peso_rimanente, 'kg')}</small>` : ''}`;
+  }
+  if (tracksWeight) return stockStateHtml(lot.peso_rimanente, 'kg');
+  return '<span class="muted">—</span>';
+}
+
 function formatDateKey(dateKey) {
   const parts = String(dateKey || '').split('-');
   return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : String(dateKey || '');
+}
+
+function displayDateOnly(value, dateKey = '') {
+  if (dateKey) return formatDateKey(dateKey);
+  const text = String(value || '').trim();
+  if (!text) return '—';
+  const italian = text.match(/^(\d{1,2}\/\d{1,2}\/\d{4})/);
+  if (italian) return italian[1];
+  const iso = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return `${iso[3]}/${iso[2]}/${iso[1]}`;
+  return text.split(',')[0].trim();
 }
 
 function name(kind, itemId) {
@@ -326,6 +357,40 @@ function isAdmin(user = signedUser) {
 function isAuthorized(user = signedUser) {
   const email = userEmail(user);
   return email === OWNER_EMAIL || currentAccess?.abilitato === true;
+}
+
+async function sha256(value) {
+  const bytes = new TextEncoder().encode(String(value || ''));
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+async function unlockAdministration() {
+  if (!isAdmin()) return false;
+  if (adminSessionUnlocked) return true;
+  const code = window.prompt('Inserisci il codice dell’area Amministrazione');
+  if (code === null) return false;
+  if (await sha256(code) !== ADMIN_CODE_HASH) {
+    alert('Codice amministrazione errato.');
+    return false;
+  }
+  adminSessionUnlocked = true;
+  try {
+    sessionStorage.setItem('eurofrutta-admin-unlocked', '1');
+  } catch (error) {
+    // La sessione resta comunque sbloccata finché questa pagina rimane aperta.
+  }
+  return true;
+}
+
+function logout() {
+  adminSessionUnlocked = false;
+  try {
+    sessionStorage.removeItem('eurofrutta-admin-unlocked');
+  } catch (error) {
+    // Ignora browser che non rendono disponibile sessionStorage.
+  }
+  return signOut(auth);
 }
 
 function audit(action, detail) {
@@ -383,7 +448,7 @@ function usernameSetup() {
   document.body.classList.remove('eurofrutta-shell');
   $('#nav').hidden = true;
   $('#user').innerHTML = '<button id="out">Esci</button>';
-  $('#out').onclick = () => signOut(auth);
+  $('#out').onclick = logout;
   $('#app').innerHTML = `
     <section class="card login">
       <div class="mark">EF</div>
@@ -427,7 +492,7 @@ function accessDenied() {
   document.body.classList.remove('eurofrutta-shell');
   $('#nav').hidden = true;
   $('#user').innerHTML = '<button id="out">Esci</button>';
-  $('#out').onclick = () => signOut(auth);
+  $('#out').onclick = logout;
   $('#app').innerHTML = `
     <section class="card login">
       <div class="mark">EF</div>
@@ -436,17 +501,48 @@ function accessDenied() {
       <p>Un amministratore deve prima aggiungere il tuo account Google nella sezione Amministrazione.</p>
       <button id="denied-out" type="button">Esci</button>
     </section>`;
-  $('#denied-out').onclick = () => signOut(auth);
+  $('#denied-out').onclick = logout;
 }
 
 function render() {
   ensureDynamicNav();
+  if (current === 'registro' && (!isAdmin() || !adminSessionUnlocked)) current = 'home';
   document.querySelectorAll('#nav button').forEach((button) => {
     button.classList.toggle('active', button.dataset.page === current);
   });
-  if (current === 'registro' && !isAdmin()) current = 'home';
   $('#app').innerHTML = ({ home, pitazzo, movimento, magazzino, prodotti, clienti, vendite, biglietti, report, registro })[current]();
   bind();
+}
+
+function searchMatches(values, query) {
+  return normalized(values.filter(Boolean).join(' ')).includes(query);
+}
+
+function globalSearchResults(rawQuery) {
+  const query = normalized(rawQuery);
+  if (!query) return '<p class="muted">Cerca prodotti, fornitori, clienti, pezzature, note e vendite.</p>';
+
+  const products = db.prodotti.filter((product) => searchMatches([product.nome], query)).slice(0, 8);
+  const clients = db.clienti.filter((client) => searchMatches([
+    client.nome, client.telefono, client.email, client.indirizzo, client.citta, client.piva, client.note,
+  ], query)).slice(0, 8);
+  const lots = db.lotti.filter((lot) => searchMatches([
+    name('prodotti', lot.prodotto_id), lot.proprietario, lot.qualita, lot.note,
+  ], query)).slice(0, 8);
+  const movements = db.movimenti.filter((movement) => searchMatches([
+    name('prodotti', movement.prodotto_id), name('clienti', movement.cliente_id), movement.proprietario,
+    movement.qualita, movement.note, movement.operatore, movement.data,
+  ], query)).slice().reverse().slice(0, 8);
+  const total = products.length + clients.length + lots.length + movements.length;
+  if (!total) return '<p class="empty">Nessun risultato. Prova con un’altra parola.</p>';
+
+  const group = (title, rows) => rows.length ? `<section class="search-result-group"><h3>${title}</h3>${rows.join('')}</section>` : '';
+  return `<div class="search-results-grid">
+    ${group('Prodotti', products.map((product) => `<button type="button" class="search-result" data-search-product="${product.id}"><span><strong>${esc(product.nome)}</strong><small>Apri la scheda prodotto</small></span><b>›</b></button>`))}
+    ${group('Clienti', clients.map((client) => `<button type="button" class="search-result" data-search-client="${client.id}"><span><strong>${esc(client.nome)}</strong><small>${esc([client.citta, client.telefono || client.email].filter(Boolean).join(' · ') || 'Scheda cliente')}</small></span><b>›</b></button>`))}
+    ${group('Magazzino e fornitori', lots.map((lot) => `<button type="button" class="search-result" data-search-product="${lot.prodotto_id}"><span><strong>${esc(name('prodotti', lot.prodotto_id))}${lot.qualita && lot.qualita !== 'Standard' ? ` · ${esc(lot.qualita)}` : ''}</strong><small>Fornitore: ${esc(lot.proprietario || '—')} · ${esc(displayDateOnly(lot.dataCarico, lot.dateKey))}</small></span><b>›</b></button>`))}
+    ${group('Vendite e movimenti', movements.map((movement) => `<button type="button" class="search-result" data-search-product="${movement.prodotto_id}"><span><strong>${esc(name('prodotti', movement.prodotto_id))} · ${esc(name('clienti', movement.cliente_id))}</strong><small>${esc(displayDateOnly(movement.data, movement.dateKey))} · ${formatQty(movement.colli)} colli · ${formatQty(movement.peso)} kg</small></span><b>›</b></button>`))}
+  </div>`;
 }
 
 function home() {
@@ -486,6 +582,11 @@ function home() {
         </svg>
       </div>
     </section>
+    <section class="home-search">
+      <div class="home-search-head"><div><p class="eyebrow">RICERCA RAPIDA</p><h2>Cerca in tutto Eurofrutta</h2></div><span class="muted">Prodotti · fornitori · clienti · vendite</span></div>
+      <div class="home-search-box"><span aria-hidden="true">⌕</span><input id="global-search" type="search" value="${esc(homeSearch)}" placeholder="Scrivi un prodotto, un fornitore o un cliente…" autocomplete="off"><button id="clear-global-search" type="button" aria-label="Cancella ricerca">×</button></div>
+      <div id="global-search-results">${globalSearchResults(homeSearch)}</div>
+    </section>
     <section class="stats">
       <article class="stat"><i>▦</i><div><h3>Magazzino</h3><div class="big">${availableArticles}</div><p>Rimanenze divise per articolo</p></div></article>
       <article class="stat"><i>◇</i><div><h3>Prodotti</h3><div class="big">${db.prodotti.length}</div><p>In catalogo</p></div></article>
@@ -501,8 +602,8 @@ function home() {
         ${stockRows.map((lot) => `<tr>
           <td><button class="ghost" data-open-product="${lot.prodotto_id}"><b>${esc(name('prodotti', lot.prodotto_id))}</b></button></td>
           <td>${esc(lot.proprietario || '—')}</td>
-          <td>${formatQty(lot.peso_iniziale)} kg<br><small>${formatQty(lot.colli_iniziali)} colli</small></td>
-          <td>${Number(lot.peso_iniziale || 0) > 0 ? stockStateHtml(lot.peso_rimanente, 'kg') : ''}<br><small>${Number(lot.colli_iniziali || 0) > 0 ? stockState(lot.colli_rimanenti, 'colli') : ''}</small></td>
+          <td>${initialLotQuantity(lot)}</td>
+          <td>${remainingLotQuantity(lot)}</td>
           <td>${lowLots.includes(lot) ? '<span class="warn">In esaurimento</span>' : '<span class="notice">Disponibile</span>'}</td>
         </tr>`).join('') || '<tr><td colspan="5" class="empty">Nessuna merce in magazzino.</td></tr>'}
       </table></div>
@@ -667,15 +768,15 @@ function magazzino() {
         <div><p class="eyebrow">DISPONIBILITÀ</p><h2>Rimanenze per articolo e pezzatura</h2></div>
       </div>
       <div class="table-scroll"><table>
-        <tr><th>Articolo / pezzatura</th><th>Proprietario</th><th>Arrivati</th><th>Usciti</th><th>Rimanenza colli</th><th>Rimanenza kg</th></tr>
+        <tr><th>Articolo / pezzatura</th><th>Proprietario / fornitore</th><th>Arrivati</th><th>Usciti</th><th>Rimanenza colli</th><th>Rimanenza kg</th></tr>
         ${inventory.map((lot) => {
           const tracksPackages = Number(lot.colli_iniziali || 0) > 0;
           const tracksWeight = Number(lot.peso_iniziale || 0) > 0;
           const soldPackages = roundQty(Number(lot.colli_iniziali || 0) - Number(lot.colli_rimanenti || 0));
           const soldWeight = roundQty(Number(lot.peso_iniziale || 0) - Number(lot.peso_rimanente || 0));
           return `<tr>
-            <td><button class="ghost" data-open-product="${lot.prodotto_id}"><b>${esc(name('prodotti', lot.prodotto_id))}</b></button>${lot.qualita && lot.qualita !== 'Standard' ? `<br><span class="quality-chip">${esc(lot.qualita)}</span>` : ''}<br><small>${esc(formatDateKey(lot.dateKey || today()))}</small></td>
-            <td>${esc(lot.proprietario || '—')}</td>
+            <td><button class="ghost" data-open-product="${lot.prodotto_id}"><strong class="inventory-product-name">${esc(name('prodotti', lot.prodotto_id))}</strong></button>${lot.qualita && lot.qualita !== 'Standard' ? `<br><span class="quality-chip">${esc(lot.qualita)}</span>` : ''}<br><small>${esc(displayDateOnly(lot.dataCarico, lot.dateKey))}</small></td>
+            <td><span class="owner-badge">${esc(lot.proprietario || '—')}</span></td>
             <td>${measure(tracksPackages, lot.colli_iniziali, 'colli')}<br><small>${measure(tracksWeight, lot.peso_iniziale, 'kg')}</small></td>
             <td>${measure(tracksPackages, soldPackages, 'colli')}<br><small>${measure(tracksWeight, soldWeight, 'kg')}</small></td>
             <td>${tracksPackages ? stockStateHtml(lot.colli_rimanenti, 'colli') : '—'}</td>
@@ -694,6 +795,8 @@ function productDetail(product) {
   const remainingKg = lots.reduce((sum, lot) => sum + Number(lot.peso_rimanente || 0), 0);
   const soldPackages = activeSales.reduce((sum, movement) => sum + Number(movement.colli || 0), 0);
   const salesTotal = activeSales.reduce((sum, movement) => sum + Number(movement.totale || 0), 0);
+  const hasPackages = lots.some((lot) => Number(lot.colli_iniziali || 0) > 0);
+  const hasWeight = lots.some((lot) => Number(lot.peso_iniziale || 0) > 0);
 
   return `
     <section class="card">
@@ -702,7 +805,7 @@ function productDetail(product) {
         <button class="ghost" id="close-product">Chiudi scheda</button>
       </div>
       <section class="stats">
-        <article class="stat"><i>▦</i><div><h3>Rimanenza articolo</h3><div class="big">${stockState(remainingKg, 'kg')}</div><p>${stockState(remaining, 'colli')} · ${lots.length} carichi registrati</p></div></article>
+        <article class="stat"><i>▦</i><div><h3>Rimanenza articolo</h3><div class="big">${hasPackages ? stockState(remaining, 'colli') : stockState(remainingKg, 'kg')}</div><p>${hasPackages && hasWeight ? `${stockState(remainingKg, 'kg')} · ` : ''}${lots.length} carichi registrati</p></div></article>
         <article class="stat"><i>↗</i><div><h3>Colli venduti</h3><div class="big">${soldPackages}</div><p>${activeSales.length} vendite attive</p></div></article>
         <article class="stat"><i>€</i><div><h3>Totale storico</h3><div class="big">${eur(salesTotal)}</div><p>Valore vendite</p></div></article>
       </section>
@@ -711,7 +814,7 @@ function productDetail(product) {
       <div class="section-head"><div><p class="eyebrow">MAGAZZINO</p><h2>Lotti del prodotto</h2></div><b>${lots.length} totali</b></div>
       <div class="table-scroll"><table>
         <tr><th>Data carico</th><th>Proprietario / provenienza</th><th>Pezzatura</th><th>Iniziali</th><th>Rimanenza</th></tr>
-        ${lots.map((lot) => `<tr><td>${esc(lot.dataCarico || '—')}</td><td>${esc(lot.proprietario || '—')}</td><td>${esc(lot.qualita || 'Standard')}</td><td>${initialLotQuantity(lot)}</td><td>${Number(lot.peso_iniziale || 0) > 0 ? stockStateHtml(lot.peso_rimanente, 'kg') : ''}<br><small>${Number(lot.colli_iniziali || 0) > 0 ? stockState(lot.colli_rimanenti, 'colli') : ''}</small></td></tr>`).join('') || '<tr><td colspan="5" class="empty">Nessun lotto.</td></tr>'}
+        ${lots.map((lot) => `<tr><td>${esc(displayDateOnly(lot.dataCarico, lot.dateKey))}</td><td><span class="owner-badge">${esc(lot.proprietario || '—')}</span></td><td>${esc(lot.qualita || 'Standard')}</td><td>${initialLotQuantity(lot)}</td><td>${remainingLotQuantity(lot)}</td></tr>`).join('') || '<tr><td colspan="5" class="empty">Nessun lotto.</td></tr>'}
       </table></div>
     </section>
     <section class="card">
@@ -719,7 +822,7 @@ function productDetail(product) {
       <div class="table-scroll"><table>
         <tr><th>Data</th><th>Cliente</th><th>Proprietario lotto</th><th>Colli</th><th>Kg</th><th>Totale</th><th>Operatore</th></tr>
         ${sales.map((movement) => `<tr class="${movement.annullato ? 'returned' : ''}">
-          <td>${esc(movement.data)}</td><td>${esc(name('clienti', movement.cliente_id))}</td><td>${esc(movement.proprietario || lotById(movement.lotto_id)?.proprietario || '—')}</td>
+          <td>${esc(displayDateOnly(movement.data, movement.dateKey))}</td><td>${esc(name('clienti', movement.cliente_id))}</td><td>${esc(movement.proprietario || lotById(movement.lotto_id)?.proprietario || '—')}</td>
           <td>${Number(movement.colli || 0)}</td><td>${Number(movement.peso || 0)}</td><td>${eur(movement.totale)}${movement.annullato ? '<br><span class="return-badge">RESO</span>' : ''}</td><td>${esc(movement.operatore || '—')}</td>
         </tr>`).join('') || '<tr><td colspan="7" class="empty">Nessuna vendita.</td></tr>'}
       </table></div>
@@ -766,7 +869,7 @@ function clientHistory(clientId) {
         ${history.map((movement) => {
           const lot = lotById(movement.lotto_id);
           return `<tr class="${movement.annullato ? 'returned' : ''}">
-            <td>${esc(movement.data)}</td>
+            <td>${esc(displayDateOnly(movement.data, movement.dateKey))}</td>
             <td><b>${esc(name('prodotti', movement.prodotto_id))}</b></td>
             <td>${esc(lot?.proprietario || movement.proprietario || '—')}</td>
             <td>${movement.colli}</td>
@@ -854,7 +957,7 @@ function vendite() {
       <div class="table-scroll"><table>
         <tr><th>Data</th><th>Prodotto / pezzatura</th><th>Proprietario lotto</th><th>Cliente</th><th>Colli</th><th>Kg</th><th>Prezzo</th><th>Totale</th><th>Operatore</th></tr>
         ${sales.map((movement) => `<tr class="${movement.annullato ? 'returned' : ''}">
-          <td>${esc(movement.data)}</td>
+          <td>${esc(displayDateOnly(movement.data, movement.dateKey))}</td>
           <td><button class="ghost" data-open-product="${movement.prodotto_id}"><b>${esc(name('prodotti', movement.prodotto_id))}</b></button>${movement.qualita && movement.qualita !== 'Standard' ? `<br><span class="quality-chip">${esc(movement.qualita)}</span>` : ''}</td>
           <td>${esc(movement.proprietario || lotById(movement.lotto_id)?.proprietario || '—')}</td>
           <td>${esc(name('clienti', movement.cliente_id))}</td>
@@ -891,14 +994,14 @@ function biglietti() {
     </section>
     <section class="ticket-grid">${tickets.map((ticket) => `
       <article class="ticket-card">
-        <p class="eyebrow">${esc(ticket.data)}</p>
+        <p class="eyebrow">${esc(displayDateOnly(ticket.data, ticket.dateKey))}</p>
         <h3>${esc(ticket.prodotto)} · ${esc(ticket.proprietario)}</h3>
         <p class="muted">${ticketQuantityTitle(ticket)}${ticket.qualita?.length ? ` · ${ticket.qualita.map(esc).join(' / ')}` : ''} · ${ticket.righe.length} righe</p>
         <div class="table-scroll"><table>
           <tr><th>Colli</th><th>Descrizione</th><th>Peso</th><th>Prezzo</th><th>Totale</th><th></th></tr>
           ${ticket.righe.map((sale) => `<tr class="${sale.annullato ? 'returned' : ''}"><td>${Number(sale.colli || 0) ? formatQty(sale.colli) : '—'}</td><td>${esc(sale.descrizione || sale.cliente || '—')}${sale.annullato ? '<br><span class="return-badge">RESO</span>' : ''}</td><td>${Number(sale.peso || 0) ? `${formatQty(sale.peso)} kg` : '—'}</td><td>${sale.tipo === 'scarto' ? '—' : `${eur(sale.prezzo)} / ${sale.unita_prezzo === 'kg' ? 'kg' : 'collo'}`}</td><td><b>${eur(sale.totale)}</b></td><td>${sale.tipo === 'uscita' && !sale.annullato ? `<button type="button" class="ghost" data-return-sale="${sale.movimento_id || sale.id}">Segna reso</button>` : ''}</td></tr>`).join('')}
         </table></div>
-        <p><b>Rimanenza:</b> ${ticket.hasWeightData ? stockState(ticket.remainingKg, 'kg') : ''}${ticket.hasWeightData && ticket.hasPackageData ? ' · ' : ''}${ticket.hasPackageData ? stockState(ticket.remainingPackages, 'colli') : ''}</p>
+        <p><b>Rimanenza:</b> ${ticket.hasPackageData ? stockState(ticket.remainingPackages, 'colli') : ''}${ticket.hasWeightData && ticket.hasPackageData ? ' · ' : ''}${ticket.hasWeightData ? stockState(ticket.remainingKg, 'kg') : ''}</p>
         <p><b>Lordo ${eur(ticket.gross)}</b> · Trattenuta 10% arrotondata ${eur(ticket.deduction)} · <b>Netto ${eur(ticket.net)}</b></p>
         <div class="ticket-actions">
           <button type="button" data-print-ticket="${ticket.id}">Visualizza / stampa PDF</button>
@@ -916,7 +1019,7 @@ async function saveAccessConfig() {
 }
 
 function registro() {
-  if (!isAdmin()) return '<section class="card"><h2>Area riservata all’amministratore</h2></section>';
+  if (!isAdmin() || !adminSessionUnlocked) return '<section class="card"><h2>Area Amministrazione protetta</h2></section>';
   const entries = db.registro.slice().reverse();
   const authorized = [...new Set([...accessConfig.membri, ...accessConfig.amministratori])]
     .filter((email) => email !== OWNER_EMAIL)
@@ -1109,8 +1212,8 @@ function createTicketRecords(dateKey) {
 
 function ticketQuantityTitle(ticket) {
   const parts = [];
-  if (ticket.hasWeightData) parts.push(`${formatQty(ticket.startKg)} KG`);
   if (ticket.hasPackageData) parts.push(`${formatQty(ticket.startPackages)} COLLI`);
+  if (ticket.hasWeightData) parts.push(`${formatQty(ticket.startKg)} KG`);
   return parts.length ? `R ${parts.join(' / ')}` : 'RIMANENZA';
 }
 
@@ -1121,10 +1224,10 @@ function openTicketPreview(tickets) {
     <section class="ticket">
       <header>
         <div><small>EUROFRUTTA · PITAZZO</small></div>
-        <div class="ticket-date"><small>${esc(ticket.data)}</small></div>
+        <div class="ticket-date"><small>${esc(displayDateOnly(ticket.data, ticket.dateKey))}</small></div>
       </header>
       <div class="lot-title">${esc(ticket.prodotto)}</div>
-      <div class="lot-subtitle"><b>${esc(ticket.proprietario)}</b>${ticket.qualita?.length ? ` · ${ticket.qualita.map(esc).join(' / ')}` : ''}<br>Rimanenza iniziale: ${ticket.hasWeightData ? `<b>${formatQty(ticket.startKg)} kg</b>` : ''}${ticket.hasWeightData && ticket.hasPackageData ? ' · ' : ''}${ticket.hasPackageData ? `<b>${formatQty(ticket.startPackages)} colli</b>` : ''}</div>
+      <div class="lot-subtitle"><b>${esc(ticket.proprietario)}</b>${ticket.qualita?.length ? ` · ${ticket.qualita.map(esc).join(' / ')}` : ''}<br>Rimanenza iniziale: ${ticket.hasPackageData ? `<b>${formatQty(ticket.startPackages)} colli</b>` : ''}${ticket.hasWeightData && ticket.hasPackageData ? ' · ' : ''}${ticket.hasWeightData ? `<b>${formatQty(ticket.startKg)} kg</b>` : ''}</div>
       <table>
         <thead><tr><th>Colli</th><th>Descrizione</th><th>Peso</th><th>Prezzo</th><th>Totale</th></tr></thead>
         <tbody>${ticket.righe.map((sale) => `<tr>
@@ -1136,8 +1239,8 @@ function openTicketPreview(tickets) {
         </tr>`).join('')}</tbody>
       </table>
       <div class="totals">
-        <div class="remaining"><span>VENDUTO</span><b>${ticket.hasWeightData ? `${formatQty(ticket.soldTodayKg)} kg` : `${formatQty(ticket.soldTodayPackages)} colli`}</b><small>${ticket.hasWeightData && ticket.hasPackageData ? `${formatQty(ticket.soldTodayPackages)} colli` : ''}</small></div>
-        <div class="remaining"><span>RIMANENZA / GAP</span><b>${ticket.hasWeightData ? stockState(ticket.remainingKg, 'kg') : stockState(ticket.remainingPackages, 'colli')}</b><small>${ticket.hasWeightData && ticket.hasPackageData ? stockState(ticket.remainingPackages, 'colli') : ''}</small></div>
+        <div class="remaining"><span>VENDUTO</span><b>${ticket.hasPackageData ? `${formatQty(ticket.soldTodayPackages)} colli` : `${formatQty(ticket.soldTodayKg)} kg`}</b><small>${ticket.hasWeightData && ticket.hasPackageData ? `${formatQty(ticket.soldTodayKg)} kg` : ''}</small></div>
+        <div class="remaining"><span>RIMANENZA / GAP</span><b>${ticket.hasPackageData ? stockState(ticket.remainingPackages, 'colli') : stockState(ticket.remainingKg, 'kg')}</b><small>${ticket.hasWeightData && ticket.hasPackageData ? stockState(ticket.remainingKg, 'kg') : ''}</small></div>
         <dl>
           <dt>Totale lordo</dt><dd>${eur(ticket.gross)}</dd>
           <dt>10% arrotondato</dt><dd>− ${eur(ticket.deduction)}</dd>
@@ -1166,10 +1269,10 @@ function openTicketPreview(tickets) {
 
 async function shareTicket(ticket) {
   const quantities = [
-    ticket.hasWeightData ? stockState(ticket.remainingKg, 'kg') : '',
     ticket.hasPackageData ? stockState(ticket.remainingPackages, 'colli') : '',
+    ticket.hasWeightData ? stockState(ticket.remainingKg, 'kg') : '',
   ].filter(Boolean).join(' · ');
-  const text = `${ticket.prodotto} · ${ticket.proprietario}\nData ${ticket.data}\n${quantities}\nLordo ${eur(ticket.gross)} · 10% ${eur(ticket.deduction)} · Netto ${eur(ticket.net)}`;
+  const text = `${ticket.prodotto} · ${ticket.proprietario}\nData ${displayDateOnly(ticket.data, ticket.dateKey)}\n${quantities}\nLordo ${eur(ticket.gross)} · 10% ${eur(ticket.deduction)} · Netto ${eur(ticket.net)}`;
   if (navigator.share) {
     await navigator.share({ title: `Biglietto ${ticket.prodotto}`, text });
     return;
@@ -1371,12 +1474,46 @@ function formDataObject(form, fields) {
 
 function bind() {
   document.querySelectorAll('[data-page],[data-go]').forEach((button) => {
-    button.onclick = () => {
-      current = button.dataset.page || button.dataset.go;
+    button.onclick = async () => {
+      const destination = button.dataset.page || button.dataset.go;
+      if (destination === 'registro' && !(await unlockAdministration())) return;
+      current = destination;
       closeMobileNav();
       render();
     };
   });
+
+  const globalSearch = $('#global-search');
+  const globalSearchResultsElement = $('#global-search-results');
+  const bindGlobalSearchNavigation = () => {
+    if (!globalSearchResultsElement) return;
+    globalSearchResultsElement.onclick = (event) => {
+      const productButton = event.target.closest('[data-search-product]');
+      const clientButton = event.target.closest('[data-search-client]');
+      if (productButton) {
+        selectedProduct = productButton.dataset.searchProduct;
+        current = 'prodotti';
+        render();
+      } else if (clientButton) {
+        selectedClient = clientButton.dataset.searchClient;
+        current = 'clienti';
+        render();
+      }
+    };
+  };
+  if (globalSearch && globalSearchResultsElement) {
+    globalSearch.oninput = () => {
+      homeSearch = globalSearch.value;
+      globalSearchResultsElement.innerHTML = globalSearchResults(homeSearch);
+    };
+    $('#clear-global-search').onclick = () => {
+      homeSearch = '';
+      globalSearch.value = '';
+      globalSearchResultsElement.innerHTML = globalSearchResults('');
+      globalSearch.focus();
+    };
+    bindGlobalSearchNavigation();
+  }
 
   document.querySelectorAll('[data-open-product]').forEach((button) => {
     button.onclick = () => {
@@ -1740,7 +1877,7 @@ function startDataSubscription() {
   ensureDynamicNav();
   $('#nav').hidden = false;
   $('#user').innerHTML = `${isAdmin() ? '<span title="Amministratore">♛</span> ' : ''}<b>${esc(operatorName())}</b>${isAdmin() ? ' · Amministratore' : ' · Operatore'} <button id="out">Esci</button>`;
-  $('#out').onclick = () => signOut(auth);
+  $('#out').onclick = logout;
 
   if (unsubscribe) unsubscribe();
   unsubscribe = onSnapshot(
