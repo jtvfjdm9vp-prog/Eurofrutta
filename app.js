@@ -8,9 +8,11 @@ import {
 } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js';
 import {
   getFirestore,
+  collection,
   doc,
   getDoc,
   onSnapshot,
+  runTransaction,
   setDoc,
 } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js';
 
@@ -29,7 +31,7 @@ const store = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
 const OWNER_EMAIL = 'angysuperakab@gmail.com';
 
-let db = { clienti: [], prodotti: [], lotti: [], movimenti: [], biglietti: [], registro: [] };
+let db = { clienti: [], prodotti: [], lotti: [], movimenti: [], biglietti: [], pagamenti: [], chiusure: [], registro: [] };
 let accessConfig = { membri: [], amministratori: [] };
 let currentAccess = null;
 let currentProfile = null;
@@ -39,10 +41,15 @@ let selectedProduct = '';
 let pitazzoDate = '';
 let expandedPitLot = '';
 let ticketsDate = '';
+let closingDate = '';
 let homeSearch = '';
 let adminSessionUnlocked = false;
 let signedUser = null;
 let unsubscribe;
+let presenceUnsubscribe;
+let presenceTimer;
+let onlineUsers = [];
+let baseDb = null;
 const ADMIN_CODE_HASH = '4dd75592eec0dbdf1f491c6413c01b8573e8908b255b67c78f35f0d2bb2d4565';
 try {
   adminSessionUnlocked = sessionStorage.getItem('eurofrutta-admin-unlocked') === '1';
@@ -66,7 +73,7 @@ const esc = (value) => String(value ?? '').replace(
   })[character],
 );
 
-const empty = () => ({ clienti: [], prodotti: [], lotti: [], movimenti: [], biglietti: [], registro: [] });
+const empty = () => ({ clienti: [], prodotti: [], lotti: [], movimenti: [], biglietti: [], pagamenti: [], chiusure: [], registro: [] });
 
 function ensureAppStyles() {
   if (document.querySelector('#eurofrutta-layout-styles')) return;
@@ -98,6 +105,7 @@ function ensureAppStyles() {
     .ticket-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:16px}.ticket-card{border:1px solid #dbe4e7;border-radius:16px;background:#fff;padding:18px;box-shadow:0 8px 24px #173b4e0b}.ticket-card h3{margin:4px 0}.ticket-card .ticket-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.ticket-card .ticket-actions button{width:auto}.returned{opacity:.65;text-decoration:line-through}.return-badge{display:inline-block;padding:3px 7px;border-radius:999px;background:#fff0e8;color:#a6461c;font-size:10px;font-weight:800;text-decoration:none}
     .price-choice{display:grid;grid-template-columns:1fr 1fr;gap:7px}.price-choice label{margin:0}.price-choice input{position:absolute;opacity:0;pointer-events:none}.price-choice span{display:block;padding:11px 9px;border:1px solid #ccd8dc;border-radius:10px;text-align:center;cursor:pointer;transition:.15s ease}.price-choice input:checked+span{border-color:#16835f;background:#eaf8f2;color:#0d7252;font-weight:800}
     .variant-list{display:grid;gap:10px;margin:15px 0}.variant-row{display:grid;grid-template-columns:1.4fr 1fr 1fr auto;gap:10px;align-items:end;padding:12px;border:1px solid #dce5e7;border-radius:13px;background:#f8fbfa}.variant-row button{width:auto;min-width:44px}.variant-row:first-child [data-remove-variant]{visibility:hidden}.secondary-panel{margin-top:18px;border:1px solid #dce5e7;border-radius:14px;background:#fbfdfc}.secondary-panel summary{padding:16px 18px;cursor:pointer;font-weight:800;color:#116c50}.secondary-panel>div{padding:0 18px 18px}.quality-chip{display:inline-block;margin-top:4px;padding:3px 8px;border-radius:999px;background:#eef6f2;color:#166c51;font-size:11px;font-weight:800}.mobile-nav-toggle,.nav-scrim{display:none}
+    .presence-dot{display:inline-block;width:9px;height:9px;margin:0 7px;border-radius:50%;background:#38d37a;box-shadow:0 0 0 0 #38d37a99;animation:presencePulse 1.8s infinite;vertical-align:middle}.presence-list{display:grid;gap:9px}.presence-user{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 13px;border:1px solid #dce7e4;border-radius:12px;background:#f8fcfa}.status-ok{color:#11704f;font-weight:800}.status-missing{color:#ad3b2d;font-weight:800}.status-extra{color:#a26108;font-weight:800}.closing-row input{min-width:105px}.account-negative{color:#b23a2c}.account-positive{color:#11704f}@keyframes presencePulse{0%{box-shadow:0 0 0 0 #38d37a99}70%{box-shadow:0 0 0 7px #38d37a00}100%{box-shadow:0 0 0 0 #38d37a00}}
     .home-search{margin:22px 0;padding:22px;border:1px solid #d9e5e4;border-radius:18px;background:linear-gradient(135deg,#fff 0%,#f4fbf8 100%);box-shadow:0 9px 28px #173b4e0b}.home-search-head{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:13px}.home-search h2{margin:0;font-size:22px}.home-search-box{display:flex;align-items:center;gap:10px;border:2px solid #cbdad8;border-radius:14px;background:#fff;padding:0 12px;transition:border-color .18s ease,box-shadow .18s ease}.home-search-box:focus-within{border-color:#159268;box-shadow:0 0 0 4px #15926818}.home-search-box input{width:100%;border:0;box-shadow:none!important;background:transparent;font-size:17px}.home-search-box button{width:auto;min-width:38px;padding:7px;background:transparent;color:#647586}.search-results-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:15px}.search-result-group{padding:14px;border:1px solid #dce7e5;border-radius:14px;background:#fff}.search-result-group h3{margin:0 0 9px;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:#617386}.search-result{width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;margin:5px 0;padding:10px 11px;border:0;border-radius:10px;background:#f4f8f7;color:#173044;text-align:left}.search-result:hover{background:#e8f6f0}.search-result strong{display:block}.search-result small{display:block;color:#6b7b8d;margin-top:2px}.owner-badge{display:inline-flex;align-items:center;padding:7px 10px;border-radius:9px;background:#edf5f2;color:#154f40;font-weight:850}.inventory-product-name{font-size:16px;color:#142b3c}
     @media(max-width:900px){
       body.eurofrutta-shell{padding-left:0;overflow-x:hidden}
@@ -157,7 +165,9 @@ function ensureDynamicNav() {
     <button data-page="clienti">♙ <span>Clienti</span></button>
     <button data-page="vendite">€ <span>Vendite</span></button>
     <button data-page="biglietti">▥ <span>Biglietti</span></button>
+    <button data-page="conti">◉ <span>Conti clienti</span></button>
     <div class="nav-group">Controllo</div>
+    <button data-page="chiusura">✓ <span>Chiusura giornata</span></button>
     <button data-page="report">▥ <span>Riepilogo</span></button>
     ${isAdmin() ? '<button data-page="registro">♛ <span>Amministrazione</span></button>' : ''}`;
 
@@ -383,13 +393,14 @@ async function unlockAdministration() {
   return true;
 }
 
-function logout() {
+async function logout() {
   adminSessionUnlocked = false;
   try {
     sessionStorage.removeItem('eurofrutta-admin-unlocked');
   } catch (error) {
     // Ignora browser che non rendono disponibile sessionStorage.
   }
+  await stopPresence();
   return signOut(auth);
 }
 
@@ -413,7 +424,30 @@ function valueOrDash(value) {
 }
 
 async function save() {
-  await setDoc(doc(store, 'eurofrutta', 'dati'), db);
+  const dataRef = doc(store, 'eurofrutta', 'dati');
+  const local = JSON.parse(JSON.stringify(db));
+  const base = JSON.parse(JSON.stringify(baseDb || empty()));
+  const keys = ['clienti', 'prodotti', 'lotti', 'movimenti', 'biglietti', 'pagamenti', 'chiusure', 'registro'];
+  await runTransaction(store, async (transaction) => {
+    const snapshot = await transaction.get(dataRef);
+    const remote = snapshot.exists() ? snapshot.data() : empty();
+    const merged = {};
+    keys.forEach((key) => {
+      const baseItems = Array.isArray(base[key]) ? base[key] : [];
+      const localItems = Array.isArray(local[key]) ? local[key] : [];
+      const remoteItems = Array.isArray(remote[key]) ? remote[key] : [];
+      const localIds = new Set(localItems.map((item) => item.id));
+      const removedIds = new Set(baseItems.filter((item) => !localIds.has(item.id)).map((item) => item.id));
+      const baseMap = new Map(baseItems.map((item) => [item.id, item]));
+      const resultMap = new Map(remoteItems.filter((item) => !removedIds.has(item.id)).map((item) => [item.id, item]));
+      localItems.forEach((item) => {
+        const previous = baseMap.get(item.id);
+        if (!previous || JSON.stringify(previous) !== JSON.stringify(item)) resultMap.set(item.id, item);
+      });
+      merged[key] = [...resultMap.values()];
+    });
+    transaction.set(dataRef, merged);
+  });
 }
 
 function login() {
@@ -510,8 +544,93 @@ function render() {
   document.querySelectorAll('#nav button').forEach((button) => {
     button.classList.toggle('active', button.dataset.page === current);
   });
-  $('#app').innerHTML = ({ home, pitazzo, movimento, magazzino, prodotti, clienti, vendite, biglietti, report, registro })[current]();
+  $('#app').innerHTML = ({ home, pitazzo, movimento, magazzino, prodotti, clienti, vendite, biglietti, conti, chiusura, report, registro })[current]();
   bind();
+  renderOnlineUsers();
+}
+
+function accountForClient(clientId) {
+  const sales = db.movimenti
+    .filter((movement) => movement.tipo === 'uscita' && movement.cliente_id === clientId && !movement.annullato && ['credito', 'pagato'].includes(movement.stato_pagamento))
+    .slice()
+    .sort((a, b) => String(a.dateKey || '').localeCompare(String(b.dateKey || '')));
+  const payments = (db.pagamenti || []).filter((payment) => payment.cliente_id === clientId && !payment.annullato);
+  const purchased = roundMoney(sales.reduce((sum, sale) => sum + Number(sale.totale || 0), 0));
+  const paid = roundMoney(payments.reduce((sum, payment) => sum + Number(payment.importo || 0), 0));
+  let availablePayments = paid;
+  let oldestUnpaid = '';
+  sales.forEach((sale) => {
+    const covered = Math.min(availablePayments, Number(sale.totale || 0));
+    availablePayments -= covered;
+    if (!oldestUnpaid && Number(sale.totale || 0) - covered > 0.005) oldestUnpaid = sale.dateKey || '';
+  });
+  const balance = roundMoney(purchased - paid);
+  const days = oldestUnpaid ? Math.max(0, Math.floor((new Date(`${today()}T12:00:00`) - new Date(`${oldestUnpaid}T12:00:00`)) / 86400000)) : 0;
+  return { sales, payments, purchased, paid, balance, oldestUnpaid, days };
+}
+
+function accountBalanceHtml(account) {
+  if (account.balance > 0) return `<b class="account-negative">Da incassare ${eur(account.balance)}</b>${account.oldestUnpaid ? `<br><small>Credito aperto da ${account.days} giorni</small>` : ''}`;
+  if (account.balance < 0) return `<b class="account-positive">Credito cliente ${eur(Math.abs(account.balance))}</b>`;
+  return '<b class="account-positive">Saldato</b>';
+}
+
+function conti() {
+  const rows = db.clienti.map((client) => ({ client, account: accountForClient(client.id) }))
+    .sort((a, b) => b.account.balance - a.account.balance);
+  const totalDue = roundMoney(rows.reduce((sum, row) => sum + Math.max(0, row.account.balance), 0));
+  return `
+    <section class="pit-title"><div><p class="eyebrow">CONTI CLIENTI</p><h2>Pagamenti e crediti</h2><p>Controlla chi deve ancora pagare e da quanto tempo.</p></div><div class="date"><small>DA INCASSARE</small>${eur(totalDue)}</div></section>
+    <section class="card"><div class="table-scroll"><table>
+      <tr><th>Cliente</th><th>Acquisti</th><th>Pagamenti</th><th>Situazione</th><th></th></tr>
+      ${rows.map(({ client, account }) => `<tr><td><b>${esc(client.nome)}</b></td><td>${eur(account.purchased)}</td><td>${eur(account.paid)}</td><td>${accountBalanceHtml(account)}</td><td><button class="ghost" data-account-client="${client.id}">Apri conto</button></td></tr>`).join('') || '<tr><td colspan="5" class="empty">Nessun cliente registrato.</td></tr>'}
+    </table></div></section>`;
+}
+
+function closingStatus(diff, unit) {
+  if (Math.abs(diff) < 0.005) return '<span class="status-ok">Coincide</span>';
+  return diff < 0
+    ? `<span class="status-missing">Mancano ${formatQty(Math.abs(diff))} ${unit}</span>`
+    : `<span class="status-extra">Eccedenza ${formatQty(diff)} ${unit}</span>`;
+}
+
+function savedClosing(dateKey) {
+  return (db.chiusure || []).find((closing) => closing.dateKey === dateKey);
+}
+
+function currentClosingRows() {
+  return db.lotti.filter((lot) => Number(lot.colli_rimanenti || 0) !== 0 || Number(lot.peso_rimanente || 0) !== 0).map((lot) => ({
+    lotto_id: lot.id,
+    prodotto: name('prodotti', lot.prodotto_id),
+    proprietario: lot.proprietario || '',
+    qualita: lot.qualita || 'Standard',
+    expectedColli: roundQty(Number(lot.colli_rimanenti || 0)),
+    expectedKg: roundQty(Number(lot.peso_rimanente || 0)),
+    tracksColli: Number(lot.colli_iniziali || 0) > 0,
+    tracksKg: Number(lot.peso_iniziale || 0) > 0,
+  }));
+}
+
+function chiusura() {
+  const date = closingDate || today();
+  const closing = savedClosing(date);
+  const rows = closing?.righe || currentClosingRows();
+  return `
+    <section class="pit-simple-title"><h2>Chiusura giornata</h2><div><label>Giornata</label><input id="closing-date" type="date" value="${date}"></div></section>
+    <section class="card">
+      <div class="section-head"><div><p class="eyebrow">CONTA DI FINE GIORNATA</p><h2>Rimanenze attese e rimanenze contate</h2></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="ghost" data-print-closing="${date}" ${closing ? '' : 'disabled'}>Stampa / salva PDF</button></div></div>
+      <p class="muted">Gli operai scrivono la quantità contata. Il programma mostra subito merce mancante o in eccedenza.</p>
+      <form id="closing-form" data-date="${date}"><div class="table-scroll"><table>
+        <tr><th>Articolo</th><th>Fornitore</th><th>Pezzatura</th><th>Attesi colli</th><th>Contati colli</th><th>Attesi kg</th><th>Contati kg</th><th>Differenza</th></tr>
+        ${rows.map((row) => {
+          const actualColli = row.actualColli ?? row.expectedColli;
+          const actualKg = row.actualKg ?? row.expectedKg;
+          const status = [row.tracksColli ? closingStatus(Number(actualColli) - Number(row.expectedColli), 'colli') : '', row.tracksKg ? closingStatus(Number(actualKg) - Number(row.expectedKg), 'kg') : ''].filter(Boolean).join('<br>');
+          return `<tr class="closing-row" data-closing-lot="${row.lotto_id}"><td><b>${esc(row.prodotto)}</b></td><td>${esc(row.proprietario || '—')}</td><td>${esc(row.qualita || 'Standard')}</td><td>${row.tracksColli ? formatQty(row.expectedColli) : '—'}</td><td>${row.tracksColli ? `<input name="colli_${row.lotto_id}" type="number" step="0.01" value="${actualColli}">` : '—'}</td><td>${row.tracksKg ? formatQty(row.expectedKg) : '—'}</td><td>${row.tracksKg ? `<input name="kg_${row.lotto_id}" type="number" step="0.01" value="${actualKg}">` : '—'}</td><td>${status}</td></tr>`;
+        }).join('') || '<tr><td colspan="8" class="empty">Non ci sono rimanenze da contare.</td></tr>'}
+      </table></div><div style="margin-top:16px"><button ${rows.length ? '' : 'disabled'}>Salva chiusura</button></div></form><p id="closing-msg"></p>
+      ${closing ? `<p class="notice">Chiusura salvata da ${esc(closing.operatore || '—')} il ${esc(closing.salvataIl || '')}.</p>` : ''}
+    </section>`;
 }
 
 function searchMatches(values, query) {
@@ -626,6 +745,8 @@ function movimento() {
         <div><label>Peso (kg)</label><input name="peso" type="number" min="0" step="0.01" placeholder="0" inputmode="decimal"></div>
         <div><label>Prezzo unitario</label><input name="prezzo" required type="number" min="0" step="0.01" placeholder="0,00" inputmode="decimal"></div>
         <div><label>Calcola il prezzo</label><div class="price-choice"><label><input name="unita_prezzo" type="radio" value="kg" checked><span>Al kg</span></label><label><input name="unita_prezzo" type="radio" value="collo"><span>A collo</span></label></div></div>
+        <div><label>Pagamento</label><select name="stato_pagamento"><option value="credito">Da pagare / a credito</option><option value="pagato">Pagato subito</option></select></div>
+        <div><label>Metodo</label><select name="metodo_pagamento"><option>Contanti</option><option>Bonifico</option><option>Carta</option><option>Altro</option></select></div>
         <div><label>&nbsp;</label><button>Salva vendita</button></div>
       </form>
       ${!db.lotti.some(lotIsOpen) ? '<p class="message error">Prima registra uno scarico nella sezione Magazzino.</p>' : ''}
@@ -672,6 +793,8 @@ function pitazzo() {
         <div><label>Peso kg</label><input name="peso" type="number" min="0" step="0.01" placeholder="0" inputmode="decimal"></div>
         <div><label>Prezzo unitario</label><input name="prezzo" required type="number" min="0" step="0.01" placeholder="0,00" inputmode="decimal"></div>
         <div><label>Tipo prezzo</label><div class="price-choice"><label><input name="unita_prezzo" type="radio" value="kg" checked><span>Al kg</span></label><label><input name="unita_prezzo" type="radio" value="collo"><span>A collo</span></label></div></div>
+        <div><label>Pagamento</label><select name="stato_pagamento"><option value="credito">Da pagare / a credito</option><option value="pagato">Pagato subito</option></select></div>
+        <div><label>Metodo</label><select name="metodo_pagamento"><option>Contanti</option><option>Bonifico</option><option>Carta</option><option>Altro</option></select></div>
         <button type="submit" ${!db.lotti.some(lotIsOpen) ? 'disabled' : ''}>Salva sul pitazzo →</button>
       </form>
       <p id="pit-msg"></p>
@@ -761,6 +884,21 @@ function magazzino() {
           <div><label>&nbsp;</label><button>Registra lavorazione</button></div>
         </form>
         <p id="waste-msg"></p>
+      </div>
+    </details>
+    <details class="secondary-panel">
+      <summary>Correggi una pezzatura senza creare una falsa vendita</summary>
+      <div>
+        <p class="muted">Sposta colli o kg tra due pezzature dello stesso prodotto, per esempio da Fiorone a Doppia prima. La correzione resta nel registro.</p>
+        <form id="correction-form" class="grid">
+          <div><label>Data *</label><input name="data_movimento" required type="date" value="${today()}"></div>
+          <div><label>Da pezzatura *</label><select name="origine_id" required><option value="">— scegli —</option>${db.lotti.map((lot) => `<option value="${lot.id}">${esc(lotLabel(lot))}</option>`).join('')}</select></div>
+          <div><label>A pezzatura *</label><select name="destinazione_id" required><option value="">— scegli —</option>${db.lotti.map((lot) => `<option value="${lot.id}">${esc(lotLabel(lot))}</option>`).join('')}</select></div>
+          <div><label>Colli da spostare</label><input name="colli" type="number" min="0" step="0.01" placeholder="0"></div>
+          <div><label>Kg da spostare</label><input name="peso" type="number" min="0" step="0.01" placeholder="0"></div>
+          <div><label>Motivo</label><input name="note" placeholder="Es. pezzatura registrata male"></div>
+          <div><label>&nbsp;</label><button>Registra correzione</button></div>
+        </form><p id="correction-msg"></p>
       </div>
     </details>
     <section class="card">
@@ -883,6 +1021,7 @@ function clientHistory(clientId) {
 
 function clienti() {
   const client = db.clienti.find((item) => item.id === selectedClient);
+  const account = client ? accountForClient(client.id) : null;
 
   return `
     <section class="card">
@@ -916,6 +1055,11 @@ function clienti() {
       </table></div>
     </section>
     ${client ? `
+      <section class="stats">
+        <article class="stat"><i>€</i><div><h3>Acquisti</h3><div class="big">${eur(account.purchased)}</div><p>Vendite attive</p></div></article>
+        <article class="stat"><i>✓</i><div><h3>Pagamenti</h3><div class="big">${eur(account.paid)}</div><p>Importi incassati</p></div></article>
+        <article class="stat"><i>!</i><div><h3>Situazione</h3><div class="big">${account.balance > 0 ? eur(account.balance) : account.balance < 0 ? eur(Math.abs(account.balance)) : '€ 0.00'}</div><p>${account.balance > 0 ? `Da incassare · ${account.days} giorni` : account.balance < 0 ? 'Credito del cliente' : 'Saldato'}</p></div></article>
+      </section>
       <section class="card">
         <div class="section-head">
           <div><p class="eyebrow">SCHEDA CLIENTE</p><h2>${esc(client.nome)}</h2></div>
@@ -932,6 +1076,19 @@ function clienti() {
           <div><label>&nbsp;</label><button>Salva modifiche</button></div>
         </form>
         <p id="client-msg"></p>
+      </section>
+      <section class="card">
+        <div class="section-head"><div><p class="eyebrow">CONTO CLIENTE</p><h2>Registra un pagamento</h2></div>${accountBalanceHtml(account)}</div>
+        <form id="payment-form" data-client-id="${client.id}" class="grid">
+          <div><label>Data *</label><input name="data_pagamento" type="date" required value="${today()}"></div>
+          <div><label>Importo *</label><input name="importo" type="number" min="0.01" step="0.01" required placeholder="0,00"></div>
+          <div><label>Metodo</label><select name="metodo"><option>Contanti</option><option>Bonifico</option><option>Carta</option><option>Altro</option></select></div>
+          <div><label>Nota</label><input name="note" placeholder="Facoltativa"></div>
+          <div><label>&nbsp;</label><button>Registra pagamento</button></div>
+        </form><p id="payment-msg"></p>
+        <div class="table-scroll"><table><tr><th>Data</th><th>Importo</th><th>Metodo</th><th>Nota</th><th>Operatore</th></tr>
+          ${account.payments.slice().reverse().map((payment) => `<tr><td>${esc(displayDateOnly(payment.data, payment.dateKey))}</td><td><b>${eur(payment.importo)}</b></td><td>${esc(payment.metodo || '—')}</td><td>${esc(payment.note || '—')}</td><td>${esc(payment.operatore || '—')}</td></tr>`).join('') || '<tr><td colspan="5" class="empty">Nessun pagamento registrato.</td></tr>'}
+        </table></div>
       </section>
       ${clientHistory(client.id)}` : ''}`;
 }
@@ -1025,6 +1182,11 @@ function registro() {
     .filter((email) => email !== OWNER_EMAIL)
     .sort();
   return `
+    <section class="card">
+      <div class="section-head"><div><p class="eyebrow">PRESENZA IN TEMPO REALE</p><h2>Chi è online</h2></div><b><span class="presence-dot"></span>Aggiornamento automatico</b></div>
+      <p class="muted">Solo gli amministratori possono vedere questa lista. Gli operatori vedono soltanto il proprio pallino verde.</p>
+      <div id="online-panel">${onlineUsers.length ? '<p class="muted">Aggiornamento elenco…</p>' : '<p class="empty">Caricamento presenze…</p>'}</div>
+    </section>
     <section class="card">
       <div class="section-head">
         <div><p class="eyebrow">AREA PROTETTA</p><h2>Persone e amministratori</h2></div>
@@ -1327,8 +1489,10 @@ function addSale(form, createClientIfMissing = false) {
   }
   if (Number(lot.colli_iniziali || 0) > 0) lot.colli_rimanenti = roundQty(remainingPackages - packages);
   if (Number(lot.peso_iniziale || 0) > 0) lot.peso_rimanente = roundQty(remainingWeight - weight);
+  const movementId = id();
+  const total = roundMoney(price * (priceUnit === 'kg' ? weight : packages));
   db.movimenti.push({
-    id: id(),
+    id: movementId,
     data: formatDateKey(dateKey),
     dateKey,
     tipo: 'uscita',
@@ -1342,12 +1506,61 @@ function addSale(form, createClientIfMissing = false) {
     peso: weight,
     prezzo: price,
     unita_prezzo: priceUnit,
-    totale: roundMoney(price * (priceUnit === 'kg' ? weight : packages)),
+    totale: total,
+    stato_pagamento: form.get('stato_pagamento') === 'pagato' ? 'pagato' : 'credito',
     operatore: operatorName(),
     operatore_uid: signedUser?.uid || '',
     operatore_email: userEmail(),
   });
+  if (form.get('stato_pagamento') === 'pagato' && total > 0) {
+    if (!Array.isArray(db.pagamenti)) db.pagamenti = [];
+    db.pagamenti.push({
+      id: id(), cliente_id: client.id, movimento_id: movementId, dateKey, data: formatDateKey(dateKey),
+      importo: total, metodo: String(form.get('metodo_pagamento') || 'Contanti'), note: 'Vendita pagata subito',
+      operatore: operatorName(), operatore_uid: signedUser?.uid || '',
+    });
+  }
   audit('Vendita registrata', `${name('prodotti', lot.prodotto_id)} · ${lot.proprietario} · ${packages ? `${formatQty(packages)} colli` : ''}${packages && weight ? ' · ' : ''}${weight ? `${formatQty(weight)} kg` : ''} · prezzo a ${priceUnit} · cliente ${client.nome}`);
+}
+
+function addPayment(form, clientId) {
+  const amount = Number(form.get('importo') || 0);
+  const dateKey = String(form.get('data_pagamento') || today());
+  if (!db.clienti.some((client) => client.id === clientId)) throw new Error('Cliente non trovato.');
+  if (amount <= 0) throw new Error('Inserisci un importo maggiore di zero.');
+  if (!Array.isArray(db.pagamenti)) db.pagamenti = [];
+  db.pagamenti.push({
+    id: id(), cliente_id: clientId, dateKey, data: formatDateKey(dateKey), importo: roundMoney(amount),
+    metodo: String(form.get('metodo') || 'Contanti'), note: String(form.get('note') || '').trim(),
+    operatore: operatorName(), operatore_uid: signedUser?.uid || '',
+  });
+  audit('Pagamento cliente registrato', `${name('clienti', clientId)} · ${eur(amount)}`);
+}
+
+function addCorrection(form) {
+  const source = lotById(form.get('origine_id'));
+  const target = lotById(form.get('destinazione_id'));
+  const packages = Number(form.get('colli') || 0);
+  const weight = Number(form.get('peso') || 0);
+  const dateKey = String(form.get('data_movimento') || today());
+  if (!source || !target) throw new Error('Scegli entrambe le pezzature.');
+  if (source.id === target.id) throw new Error('Origine e destinazione devono essere diverse.');
+  if (source.prodotto_id !== target.prodotto_id) throw new Error('Puoi correggere soltanto pezzature dello stesso prodotto.');
+  if (packages <= 0 && weight <= 0) throw new Error('Inserisci i colli o i kg da spostare.');
+  if (packages > 0 && (!Number(source.colli_iniziali || 0) || !Number(target.colli_iniziali || 0))) throw new Error('Entrambe le pezzature devono tenere il conto dei colli.');
+  if (weight > 0 && (!Number(source.peso_iniziale || 0) || !Number(target.peso_iniziale || 0))) throw new Error('Entrambe le pezzature devono tenere il conto dei kg.');
+  if (packages > Number(source.colli_rimanenti || 0) || weight > Number(source.peso_rimanente || 0)) throw new Error('La quantità supera la rimanenza della pezzatura di origine.');
+  source.colli_rimanenti = roundQty(Number(source.colli_rimanenti || 0) - packages);
+  source.peso_rimanente = roundQty(Number(source.peso_rimanente || 0) - weight);
+  target.colli_rimanenti = roundQty(Number(target.colli_rimanenti || 0) + packages);
+  target.peso_rimanente = roundQty(Number(target.peso_rimanente || 0) + weight);
+  db.movimenti.push({
+    id: id(), tipo: 'rettifica', dateKey, data: formatDateKey(dateKey), prodotto_id: source.prodotto_id,
+    lotto_id: source.id, lotto_destinazione_id: target.id, proprietario: source.proprietario,
+    origine: source.qualita || 'Standard', destinazione: target.qualita || 'Standard', colli: packages, peso: weight,
+    note: String(form.get('note') || '').trim(), operatore: operatorName(), operatore_uid: signedUser?.uid || '', totale: 0,
+  });
+  audit('Correzione tra pezzature', `${name('prodotti', source.prodotto_id)} · ${source.qualita || 'Standard'} → ${target.qualita || 'Standard'} · ${formatQty(packages)} colli / ${formatQty(weight)} kg`);
 }
 
 function addLoad(form) {
@@ -1463,6 +1676,10 @@ function markSaleReturned(movementId) {
   movement.resoIl = stamp();
   movement.resoDateKey = today();
   movement.resoDa = operatorName();
+  (db.pagamenti || []).filter((payment) => payment.movimento_id === movementId).forEach((payment) => {
+    payment.annullato = true;
+    payment.annullatoIl = stamp();
+  });
   audit('Reso registrato', `${name('prodotti', movement.prodotto_id)} · ${name('clienti', movement.cliente_id)} · importo restituito ${eur(movement.totaleOriginale)}`);
   return movement.dateKey || today();
 }
@@ -1470,6 +1687,36 @@ function markSaleReturned(movementId) {
 function formDataObject(form, fields) {
   const data = new FormData(form);
   return Object.fromEntries(fields.map((field) => [field, String(data.get(field) || '').trim()]));
+}
+
+function saveClosing(form) {
+  const dateKey = form.dataset.date || today();
+  const formData = new FormData(form);
+  const rows = currentClosingRows().map((row) => ({
+    ...row,
+    actualColli: row.tracksColli ? roundQty(Number(formData.get(`colli_${row.lotto_id}`) || 0)) : 0,
+    actualKg: row.tracksKg ? roundQty(Number(formData.get(`kg_${row.lotto_id}`) || 0)) : 0,
+  }));
+  const record = { id: `chiusura-${dateKey}`, dateKey, data: formatDateKey(dateKey), salvataIl: stamp(), operatore: operatorName(), operatore_uid: signedUser?.uid || '', righe: rows };
+  if (!Array.isArray(db.chiusure)) db.chiusure = [];
+  db.chiusure = db.chiusure.filter((closing) => closing.dateKey !== dateKey).concat(record);
+  audit('Chiusura giornata salvata', `${formatDateKey(dateKey)} · ${rows.length} rimanenze controllate`);
+  return record;
+}
+
+function openClosingPreview(closing) {
+  if (!closing) throw new Error('Salva prima la chiusura della giornata.');
+  const rows = closing.righe || [];
+  const preview = window.open('', '_blank');
+  if (!preview) throw new Error('Il browser ha bloccato la finestra. Consenti i popup e riprova.');
+  const body = rows.map((row) => {
+    const diffColli = roundQty(Number(row.actualColli || 0) - Number(row.expectedColli || 0));
+    const diffKg = roundQty(Number(row.actualKg || 0) - Number(row.expectedKg || 0));
+    const difference = [row.tracksColli ? (diffColli === 0 ? 'Coincide' : `${diffColli > 0 ? '+' : ''}${formatQty(diffColli)} colli`) : '', row.tracksKg ? (diffKg === 0 ? 'Coincide' : `${diffKg > 0 ? '+' : ''}${formatQty(diffKg)} kg`) : ''].filter(Boolean).join(' / ');
+    return `<tr><td><b>${esc(row.prodotto)}</b></td><td>${esc(row.proprietario || '—')}</td><td>${esc(row.qualita || 'Standard')}</td><td>${row.tracksColli ? formatQty(row.expectedColli) : '—'}</td><td>${row.tracksColli ? formatQty(row.actualColli) : '—'}</td><td>${row.tracksKg ? formatQty(row.expectedKg) : '—'}</td><td>${row.tracksKg ? formatQty(row.actualKg) : '—'}</td><td><b>${difference}</b></td></tr>`;
+  }).join('');
+  preview.document.write(`<!doctype html><html lang="it"><head><meta charset="utf-8"><title>Chiusura ${esc(closing.data)}</title><style>@page{size:A4 landscape;margin:12mm}*{box-sizing:border-box}body{font:12px Arial;color:#172334;margin:20px}header{display:flex;justify-content:space-between;border-bottom:3px solid #147654;padding-bottom:10px;margin-bottom:18px}h1{margin:0}table{width:100%;border-collapse:collapse}th,td{border:1px solid #aeb8be;padding:8px;text-align:left}th{background:#eef4f1;font-size:10px;text-transform:uppercase}.toolbar{margin-bottom:16px}.toolbar button{padding:10px 15px;border:0;border-radius:8px;background:#147654;color:#fff;font-weight:700}@media print{.toolbar{display:none}body{margin:0}}</style></head><body><div class="toolbar"><button onclick="window.print()">Stampa / Salva PDF</button></div><header><div><small>EUROFRUTTA</small><h1>Rimanenze di fine giornata</h1></div><b>${esc(displayDateOnly(closing.data, closing.dateKey))}</b></header><table><tr><th>Articolo</th><th>Fornitore</th><th>Pezzatura</th><th>Attesi colli</th><th>Contati colli</th><th>Attesi kg</th><th>Contati kg</th><th>Differenza</th></tr>${body}</table><p>Conteggio registrato da ${esc(closing.operatore || '—')}.</p></body></html>`);
+  preview.document.close();
 }
 
 function bind() {
@@ -1597,6 +1844,24 @@ function bind() {
     };
   }
 
+  const correctionForm = $('#correction-form');
+  if (correctionForm) {
+    correctionForm.onsubmit = async (event) => {
+      event.preventDefault();
+      const message = $('#correction-msg');
+      try {
+        addCorrection(new FormData(correctionForm));
+        await save();
+        message.className = 'message';
+        message.textContent = 'Correzione salvata.';
+        render();
+      } catch (error) {
+        message.className = 'message error';
+        message.textContent = `Errore: ${error.message}`;
+      }
+    };
+  }
+
   const clientForm = $('#client-form');
   if (clientForm) {
     clientForm.onsubmit = async (event) => {
@@ -1617,6 +1882,14 @@ function bind() {
       selectedClient = button.dataset.openClient;
       render();
       $('#client-edit-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+  });
+
+  document.querySelectorAll('[data-account-client]').forEach((button) => {
+    button.onclick = () => {
+      selectedClient = button.dataset.accountClient;
+      current = 'clienti';
+      render();
     };
   });
 
@@ -1645,6 +1918,50 @@ function bind() {
       await save();
     };
   }
+
+  const paymentForm = $('#payment-form');
+  if (paymentForm) {
+    paymentForm.onsubmit = async (event) => {
+      event.preventDefault();
+      const message = $('#payment-msg');
+      try {
+        addPayment(new FormData(paymentForm), paymentForm.dataset.clientId);
+        await save();
+        render();
+      } catch (error) {
+        message.className = 'message error';
+        message.textContent = `Errore: ${error.message}`;
+      }
+    };
+  }
+
+  const closingDateInput = $('#closing-date');
+  if (closingDateInput) {
+    closingDateInput.onchange = () => {
+      closingDate = closingDateInput.value || today();
+      render();
+    };
+  }
+  const closingForm = $('#closing-form');
+  if (closingForm) {
+    closingForm.onsubmit = async (event) => {
+      event.preventDefault();
+      const message = $('#closing-msg');
+      try {
+        saveClosing(closingForm);
+        await save();
+        render();
+      } catch (error) {
+        message.className = 'message error';
+        message.textContent = `Errore: ${error.message}`;
+      }
+    };
+  }
+  document.querySelectorAll('[data-print-closing]').forEach((button) => {
+    button.onclick = () => {
+      try { openClosingPreview(savedClosing(button.dataset.printClosing)); } catch (error) { alert(`Errore: ${error.message}`); }
+    };
+  });
 
   document.querySelectorAll('.del').forEach((button) => {
     button.onclick = async () => {
@@ -1871,13 +2188,63 @@ function bind() {
   }
 }
 
+function presenceRecord(online = true) {
+  return {
+    uid: signedUser?.uid || '',
+    email: userEmail(),
+    username: operatorName(),
+    ruolo: isAdmin() ? 'amministratore' : 'operatore',
+    online,
+    aggiornato: Date.now(),
+  };
+}
+
+function renderOnlineUsers() {
+  const panel = $('#online-panel');
+  if (!panel) return;
+  const active = onlineUsers.filter((person) => person.online && Number(person.aggiornato || 0) > Date.now() - 90000);
+  panel.innerHTML = active.length ? `<div class="presence-list">${active.map((person) => `<div class="presence-user"><span><span class="presence-dot"></span><b>${esc(person.username || 'Utente')}</b><small> · ${esc(person.ruolo || 'operatore')}</small></span><small>Online adesso</small></div>`).join('')}</div>` : '<p class="empty">Nessun altro utente risulta online.</p>';
+}
+
+async function heartbeatPresence(online = true) {
+  if (!signedUser || !isAuthorized()) return;
+  try {
+    await setDoc(doc(store, 'presenze', signedUser.uid), presenceRecord(online), { merge: true });
+  } catch (error) {
+    // La presenza non deve mai bloccare il lavoro nel gestionale.
+  }
+}
+
+function startPresence() {
+  if (!signedUser) return;
+  if (presenceTimer) clearInterval(presenceTimer);
+  if (presenceUnsubscribe) presenceUnsubscribe();
+  heartbeatPresence(true);
+  presenceTimer = setInterval(() => heartbeatPresence(true), 25000);
+  if (isAdmin()) {
+    presenceUnsubscribe = onSnapshot(collection(store, 'presenze'), (snapshot) => {
+      onlineUsers = snapshot.docs.map((item) => item.data());
+      renderOnlineUsers();
+    }, () => { onlineUsers = []; renderOnlineUsers(); });
+  }
+}
+
+async function stopPresence() {
+  if (presenceTimer) clearInterval(presenceTimer);
+  presenceTimer = null;
+  if (presenceUnsubscribe) presenceUnsubscribe();
+  presenceUnsubscribe = null;
+  await heartbeatPresence(false);
+}
+
 function startDataSubscription() {
   ensureAppStyles();
   document.body.classList.add('eurofrutta-shell');
   ensureDynamicNav();
   $('#nav').hidden = false;
-  $('#user').innerHTML = `${isAdmin() ? '<span title="Amministratore">♛</span> ' : ''}<b>${esc(operatorName())}</b>${isAdmin() ? ' · Amministratore' : ' · Operatore'} <button id="out">Esci</button>`;
+  $('#user').innerHTML = `<span class="presence-dot" title="Sei online"></span>${isAdmin() ? '<span title="Amministratore">♛</span> ' : ''}<b>${esc(operatorName())}</b>${isAdmin() ? ' · Amministratore' : ' · Operatore'} <button id="out">Esci</button>`;
   $('#out').onclick = logout;
+  startPresence();
 
   if (unsubscribe) unsubscribe();
   unsubscribe = onSnapshot(
@@ -1890,8 +2257,11 @@ function startDataSubscription() {
         lotti: Array.isArray(saved.lotti) ? saved.lotti : [],
         movimenti: Array.isArray(saved.movimenti) ? saved.movimenti : [],
         biglietti: Array.isArray(saved.biglietti) ? saved.biglietti : [],
+        pagamenti: Array.isArray(saved.pagamenti) ? saved.pagamenti : [],
+        chiusure: Array.isArray(saved.chiusure) ? saved.chiusure : [],
         registro: Array.isArray(saved.registro) ? saved.registro : [],
       };
+      baseDb = JSON.parse(JSON.stringify(db));
       render();
     },
     (error) => {
@@ -1951,6 +2321,7 @@ onAuthStateChanged(auth, async (user) => {
     unsubscribe();
     unsubscribe = null;
   }
+  if (!user && (presenceTimer || presenceUnsubscribe)) await stopPresence();
   signedUser = user;
   currentProfile = null;
   currentAccess = null;
