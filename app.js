@@ -46,6 +46,7 @@ let homeSearch = '';
 let expandedHomeProduct = '';
 let editingSaleId = '';
 let editingTicketId = '';
+let pitClientDraft = { clienteNome: '', statoPagamento: 'credito', metodoPagamento: 'Contanti', righe: [] };
 let adminSessionUnlocked = false;
 let signedUser = null;
 let unsubscribe;
@@ -102,6 +103,7 @@ function ensureAppStyles() {
     .pit-product-row{width:100%;display:grid;grid-template-columns:minmax(210px,1fr) auto auto auto auto;align-items:center;gap:18px;padding:17px 18px;border:0;background:#fff;color:#172334;text-align:left;transition:background .18s ease,transform .18s ease}
     .pit-product-row:hover{background:#f1faf6;transform:translateY(-1px)}
     .pit-product-row strong{font-size:18px}.pit-product-row small{display:block;margin-top:3px;color:#718093}
+    .pit-stock-prefix{display:inline-flex;align-items:center;margin:0 9px 6px 0;padding:5px 8px;border-radius:8px;background:#e9f7f1;color:#0d7654;font-size:12px;font-weight:900;letter-spacing:.03em}.pit-live-stock{color:#11704f!important;font-weight:800}
     .pit-product-row .metric{text-align:right}.pit-product-row .chevron{color:#13845e;font-size:20px;transition:transform .2s ease}.pit-product-card.open .chevron{transform:rotate(90deg)}
     .pit-buyers{padding:0 18px 17px;animation:pitOpen .2s ease both}.pit-buyers table{margin:0}
     @keyframes pitOpen{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
@@ -111,6 +113,7 @@ function ensureAppStyles() {
     .presence-dot{display:inline-block;width:9px;height:9px;margin:0 7px;border-radius:50%;background:#38d37a;box-shadow:0 0 0 0 #38d37a99;animation:presencePulse 1.8s infinite;vertical-align:middle}.presence-list{display:grid;gap:9px}.presence-user{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 13px;border:1px solid #dce7e4;border-radius:12px;background:#f8fcfa}.status-ok{color:#11704f;font-weight:800}.status-missing{color:#ad3b2d;font-weight:800}.status-extra{color:#a26108;font-weight:800}.closing-row input{min-width:105px}.account-negative{color:#b23a2c}.account-positive{color:#11704f}@keyframes presencePulse{0%{box-shadow:0 0 0 0 #38d37a99}70%{box-shadow:0 0 0 7px #38d37a00}100%{box-shadow:0 0 0 0 #38d37a00}}
     .home-search{margin:22px 0;padding:22px;border:1px solid #d9e5e4;border-radius:18px;background:linear-gradient(135deg,#fff 0%,#f4fbf8 100%);box-shadow:0 9px 28px #173b4e0b}.home-search-head{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:13px}.home-search h2{margin:0;font-size:22px}.home-search-box{display:flex;align-items:center;gap:10px;border:2px solid #cbdad8;border-radius:14px;background:#fff;padding:0 12px;transition:border-color .18s ease,box-shadow .18s ease}.home-search-box:focus-within{border-color:#159268;box-shadow:0 0 0 4px #15926818}.home-search-box input{width:100%;border:0;box-shadow:none!important;background:transparent;font-size:17px}.home-search-box button{width:auto;min-width:38px;padding:7px;background:transparent;color:#647586}.search-results-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:15px}.search-result-group{padding:14px;border:1px solid #dce7e5;border-radius:14px;background:#fff}.search-result-group h3{margin:0 0 9px;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:#617386}.search-result{width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;margin:5px 0;padding:10px 11px;border:0;border-radius:10px;background:#f4f8f7;color:#173044;text-align:left}.search-result:hover{background:#e8f6f0}.search-result strong{display:block}.search-result small{display:block;color:#6b7b8d;margin-top:2px}.owner-badge{display:inline-flex;align-items:center;padding:7px 10px;border-radius:9px;background:#edf5f2;color:#154f40;font-weight:850}.inventory-product-name{font-size:16px;color:#142b3c}
     .market-table{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.market-product{overflow:hidden;border:1px solid #dce7e4;border-radius:15px;background:#fff}.market-product>button{width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:17px;border:0;background:#fff;color:#173044;text-align:left}.market-product>button:hover{background:#edf9f4}.market-product>button strong{display:block;font-size:20px}.market-product>button small{display:block;margin-top:4px;color:#718093}.market-lots{padding:0 13px 13px}.market-lot{display:grid;grid-template-columns:1fr auto;gap:8px;padding:10px;border-top:1px solid #e3ebe9}.market-lot b{display:block}.market-lot small{display:block;color:#718093;margin-top:3px}.stock-low{color:#a76000;font-weight:850}.stock-ended{color:#a63e31;font-weight:850}.stock-ok{color:#11704f;font-weight:850}.edit-sale{margin-top:12px;padding:14px;border:1px solid #cfe1dc;border-radius:13px;background:#f6fbf9}.edit-sale .grid{margin-top:10px}
+    .pit-client-ticket{margin-top:15px;border:2px solid #d6e2df;border-radius:16px;background:#fff;overflow:hidden}.pit-client-bar{display:grid;grid-template-columns:minmax(240px,2fr) 1fr 1fr;gap:12px;padding:16px;background:#f3f8f6;border-bottom:1px solid #dce7e4}.pit-client-bar input{font-size:18px;font-weight:800}.pit-line-form{display:grid;grid-template-columns:minmax(210px,2fr) .7fr .7fr .9fr 1.2fr 1.15fr auto;gap:10px;align-items:end;padding:16px}.pit-line-form button{white-space:nowrap}.pit-draft-wrap{padding:0 16px 16px}.pit-draft-table td,.pit-draft-table th{vertical-align:middle}.pit-draft-table button{width:auto;min-width:38px;padding:7px}.pit-ticket-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:15px 16px;border-top:1px solid #dce7e4;background:#fbfdfc}.pit-ticket-footer>div{display:flex;gap:8px;flex-wrap:wrap}.pit-ticket-total{font-size:20px;color:#0e7352}.vat-pill{display:inline-flex;padding:4px 7px;border-radius:999px;background:#edf3ff;color:#365d99;font-size:10px;font-weight:800}
     @media(max-width:900px){
       body.eurofrutta-shell{padding-left:0;overflow-x:hidden}
       body.eurofrutta-shell.nav-open{overflow:hidden}
@@ -140,6 +143,7 @@ function ensureAppStyles() {
       .ticket-grid{grid-template-columns:1fr}
       .search-results-grid{grid-template-columns:1fr}
       .variant-row{grid-template-columns:1fr 1fr}.variant-row>div:first-child{grid-column:1/-1}.variant-row button{width:100%}
+      .pit-client-bar,.pit-line-form{grid-template-columns:1fr}.pit-line-form>div:first-child{grid-column:1/-1}.pit-ticket-footer{align-items:stretch;flex-direction:column}.pit-ticket-footer>div,.pit-ticket-footer button{width:100%}
       .hero{padding:24px 18px!important}.hero-art{display:none!important}.hero-copy h2{font-size:38px!important}
     }
     @media(max-width:480px){body.eurofrutta-shell #nav{width:88vw}.ticket-card{padding:14px}.price-choice{grid-template-columns:1fr}.pit-product-row strong{font-size:16px}.home-search{padding:16px}.home-search-head{align-items:flex-start;flex-direction:column}}
@@ -319,6 +323,50 @@ function roundMoney(value) {
 
 function formatQty(value) {
   return Number(value || 0).toLocaleString('it-IT', { maximumFractionDigits: 2 });
+}
+
+function normalizeVatMode(value, legacyPercent = 0) {
+  if (value === 'aggiungi' || value === 'compresa') return value;
+  return Number(legacyPercent || 0) === 4 ? 'aggiungi' : 'nessuna';
+}
+
+function vatModeLabel(value, legacyPercent = 0) {
+  const mode = normalizeVatMode(value, legacyPercent);
+  if (mode === 'aggiungi') return 'IVA 4% aggiunta';
+  if (mode === 'compresa') return 'IVA 4% compresa';
+  return 'Senza IVA';
+}
+
+function saleAmounts(price, priceUnit, packages, weight, vatMode = 'nessuna') {
+  const base = roundMoney(Number(price || 0) * (priceUnit === 'kg' ? Number(weight || 0) : Number(packages || 0)));
+  const mode = normalizeVatMode(vatMode);
+  if (mode === 'aggiungi') {
+    const vat = roundMoney(base * 0.04);
+    return { taxable: base, vat, total: roundMoney(base + vat), vatPercent: 4, vatMode: mode };
+  }
+  if (mode === 'compresa') {
+    const taxable = roundMoney(base / 1.04);
+    const vat = roundMoney(base - taxable);
+    return { taxable, vat, total: base, vatPercent: 4, vatMode: mode };
+  }
+  return { taxable: base, vat: 0, total: base, vatPercent: 0, vatMode: 'nessuna' };
+}
+
+function pitazzoGroupStock(groupLots, dateKey) {
+  const lots = groupLots.filter(Boolean);
+  const lotIds = new Set(lots.map((lot) => lot.id));
+  const pendingRows = (pitClientDraft.righe || []).filter((row) => lotIds.has(row.lotto_id));
+  const tracksPackages = lots.some((lot) => Number(lot.colli_iniziali || 0) !== 0);
+  const unit = tracksPackages ? 'colli' : 'kg';
+  const initial = roundQty(lots.reduce((sum, lot) => sum + Number(tracksPackages ? lot.colli_iniziali : lot.peso_iniziale || 0), 0));
+  const savedRemaining = lots.reduce((sum, lot) => sum + Number(tracksPackages ? lot.colli_rimanenti : lot.peso_rimanente || 0), 0);
+  const pendingSold = pendingRows.reduce((sum, row) => sum + Number(tracksPackages ? row.colli : row.peso || 0), 0);
+  const remaining = roundQty(savedRemaining - pendingSold);
+  const isArrival = lots.some((lot) => lot.dateKey === dateKey);
+  return {
+    headline: `${isArrival ? 'N' : 'R'} ${formatQty(isArrival ? initial : remaining)} ${unit}`,
+    remaining: stockState(remaining, unit),
+  };
 }
 
 function stockState(value, unit) {
@@ -733,6 +781,16 @@ function home() {
         </svg>
       </div>
     </section>
+    <section class="card">
+      <div class="section-head">
+        <div><p class="eyebrow">TAVOLO MERCE</p><h2>Cosa abbiamo oggi</h2><p class="muted">Tocca Banane, Pesche o qualsiasi articolo per vedere subito tutte le partite disponibili.</p></div>
+        <button class="ghost" data-go="magazzino">Apri tutto il magazzino →</button>
+      </div>
+      <div class="market-table">${marketProducts.map(({ product, lots }) => {
+        const open = expandedHomeProduct === product.id;
+        return `<article class="market-product"><button type="button" data-home-product="${product.id}"><span><strong>${esc(product.nome)}</strong><small>${lots.length} ${lots.length === 1 ? 'partita disponibile' : 'partite disponibili'}</small></span><b>${open ? '⌃' : '⌄'}</b></button>${open ? `<div class="market-lots">${lots.map((lot) => `<div class="market-lot"><span><b>${esc(lot.qualita || 'Standard')} · ${esc(lot.proprietario || '—')}</b><small>${esc(partitaLabel(lot))} · arrivo ${esc(displayDateOnly(lot.dataCarico, lot.dateKey))}</small></span><span>${remainingLotQuantity(lot)}<br>${lotStatusHtml(lot)}</span></div>`).join('')}</div>` : ''}</article>`;
+      }).join('') || '<p class="empty">Nessuna merce disponibile.</p>'}</div>
+    </section>
     <section class="home-search">
       <div class="home-search-head"><div><p class="eyebrow">RICERCA RAPIDA</p><h2>Cerca in tutto Eurofrutta</h2></div><span class="muted">Prodotti · fornitori · clienti · vendite</span></div>
       <div class="home-search-box"><span aria-hidden="true">⌕</span><input id="global-search" type="search" value="${esc(homeSearch)}" placeholder="Scrivi un prodotto, un fornitore o un cliente…" autocomplete="off"><button id="clear-global-search" type="button" aria-label="Cancella ricerca">×</button></div>
@@ -743,17 +801,7 @@ function home() {
       <article class="stat"><i>◇</i><div><h3>Prodotti</h3><div class="big">${db.prodotti.length}</div><p>In catalogo</p></div></article>
       <article class="stat"><i>!</i><div><h3>Sta finendo</h3><div class="big">${lowLots.length}</div><p>Partite con poca merce rimasta</p></div></article>
     </section>
-    ${lowLots.length ? `<section class="card"><div class="section-head"><div><p class="eyebrow">AVVISO SCORTE</p><h2>Merce che sta finendo</h2></div><b class="stock-low">${lowLots.length} ${lowLots.length === 1 ? 'partita' : 'partite'}</b></div><div class="market-table">${lowLots.map((lot) => `<article class="market-lot"><span><b>${esc(name('prodotti', lot.prodotto_id))} · ${esc(lot.qualita || 'Standard')}</b><small>${esc(lot.proprietario || '—')} · ${esc(partitaLabel(lot))}</small></span><span>${remainingLotQuantity(lot)}</span></article>`).join('')}</div></section>` : ''}
-    <section class="card">
-      <div class="section-head">
-        <div><p class="eyebrow">TAVOLO MERCE</p><h2>Cosa abbiamo oggi</h2><p class="muted">Tocca Banane, Pesche o qualsiasi articolo per vedere subito tutte le partite disponibili.</p></div>
-        <button class="ghost" data-go="magazzino">Apri tutto il magazzino →</button>
-      </div>
-      <div class="market-table">${marketProducts.map(({ product, lots }) => {
-        const open = expandedHomeProduct === product.id;
-        return `<article class="market-product"><button type="button" data-home-product="${product.id}"><span><strong>${esc(product.nome)}</strong><small>${lots.length} ${lots.length === 1 ? 'partita disponibile' : 'partite disponibili'}</small></span><b>${open ? '⌃' : '⌄'}</b></button>${open ? `<div class="market-lots">${lots.map((lot) => `<div class="market-lot"><span><b>${esc(lot.qualita || 'Standard')} · ${esc(lot.proprietario || '—')}</b><small>${esc(partitaLabel(lot))} · arrivo ${esc(displayDateOnly(lot.dataCarico, lot.dateKey))}</small></span><span>${remainingLotQuantity(lot)}<br>${lotStatusHtml(lot)}</span></div>`).join('')}</div>` : ''}</article>`;
-      }).join('') || '<p class="empty">Nessuna merce disponibile.</p>'}</div>
-    </section>`;
+    ${lowLots.length ? `<section class="card"><div class="section-head"><div><p class="eyebrow">AVVISO SCORTE</p><h2>Merce che sta finendo</h2></div><b class="stock-low">${lowLots.length} ${lowLots.length === 1 ? 'partita' : 'partite'}</b></div><div class="market-table">${lowLots.map((lot) => `<article class="market-lot"><span><b>${esc(name('prodotti', lot.prodotto_id))} · ${esc(lot.qualita || 'Standard')}</b><small>${esc(lot.proprietario || '—')} · ${esc(partitaLabel(lot))}</small></span><span>${remainingLotQuantity(lot)}</span></article>`).join('')}</div></section>` : ''}`;
 }
 
 function movimento() {
@@ -772,7 +820,7 @@ function movimento() {
         <div><label>Peso (kg)</label><input name="peso" type="number" min="0" step="0.01" placeholder="0" inputmode="decimal"></div>
         <div><label>Prezzo unitario</label><input name="prezzo" required type="number" min="0" step="0.01" placeholder="0,00" inputmode="decimal"></div>
         <div><label>Calcola il prezzo</label><div class="price-choice"><label><input name="unita_prezzo" type="radio" value="kg" checked><span>Al kg</span></label><label><input name="unita_prezzo" type="radio" value="collo"><span>A collo</span></label></div></div>
-        <div><label>IVA</label><select name="iva_percentuale"><option value="0">Senza IVA</option><option value="4">Aggiungi IVA 4%</option></select></div>
+        <div><label>IVA</label><select name="iva_modalita"><option value="nessuna">Senza IVA</option><option value="aggiungi">Aggiungi IVA 4%</option><option value="compresa">Prezzo già IVA compresa</option></select></div>
         <div><label>Pagamento</label><select name="stato_pagamento"><option value="credito">Da pagare / a credito</option><option value="pagato">Pagato subito</option></select></div>
         <div><label>Metodo</label><select name="metodo_pagamento"><option>Contanti</option><option>Bonifico</option><option>Carta</option><option>Altro</option></select></div>
         <div><label>&nbsp;</label><button>Salva vendita</button></div>
@@ -802,6 +850,8 @@ function pitazzo() {
     return `${name('prodotti', leftLot?.prodotto_id)} ${leftLot?.proprietario || ''}`.localeCompare(`${name('prodotti', rightLot?.prodotto_id)} ${rightLot?.proprietario || ''}`, 'it');
   });
   const activeDaily = daily.filter((movement) => !movement.annullato);
+  const draftRows = Array.isArray(pitClientDraft.righe) ? pitClientDraft.righe : [];
+  const draftTotal = roundMoney(draftRows.reduce((sum, row) => sum + Number(row.totale || 0), 0));
 
   return `
     <section class="pit-simple-title">
@@ -811,21 +861,26 @@ function pitazzo() {
     <section class="pit-entry">
       <div class="quick-head">
         <div class="quick-icon">▤</div>
-        <div><h3>Inserimento rapido</h3><p>Scrivi cliente e articolo, poi scegli il suggerimento.</p></div>
+        <div><h3>Biglietto cliente</h3><p>Scrivi il cliente una sola volta, poi aggiungi tutte le righe della sua spesa.</p></div>
       </div>
-      <form id="pit-form" class="pit-form" novalidate>
-        <input name="data_movimento" type="hidden" value="${date}">
-        <div><label>Cliente</label><input name="cliente_nome" required list="client-suggestions" autocomplete="off" placeholder="Scrivi il cliente…">${clientSuggestions()}</div>
+      <div class="pit-client-ticket">
+        <div class="pit-client-bar">
+          <div><label>Cliente *</label><input id="pit-client-name" value="${esc(pitClientDraft.clienteNome)}" required list="client-suggestions" autocomplete="off" placeholder="Scrivi il cliente…">${clientSuggestions()}</div>
+          <div><label>Pagamento</label><select id="pit-payment-status"><option value="credito" ${pitClientDraft.statoPagamento !== 'pagato' ? 'selected' : ''}>Da pagare / a credito</option><option value="pagato" ${pitClientDraft.statoPagamento === 'pagato' ? 'selected' : ''}>Pagato subito</option></select></div>
+          <div><label>Metodo</label><select id="pit-payment-method"><option ${pitClientDraft.metodoPagamento === 'Contanti' ? 'selected' : ''}>Contanti</option><option ${pitClientDraft.metodoPagamento === 'Bonifico' ? 'selected' : ''}>Bonifico</option><option ${pitClientDraft.metodoPagamento === 'Carta' ? 'selected' : ''}>Carta</option><option ${pitClientDraft.metodoPagamento === 'Altro' ? 'selected' : ''}>Altro</option></select></div>
+        </div>
+        <form id="pit-line-form" class="pit-line-form" novalidate>
         <div><label>Articolo / provenienza</label><input name="lotto_nome" required list="lot-suggestions" autocomplete="off" placeholder="Scrivi l’articolo…">${lotSuggestions()}</div>
         <div><label>Colli</label><input name="colli" type="number" min="0" step="0.01" placeholder="0" inputmode="decimal"></div>
         <div><label>Peso kg</label><input name="peso" type="number" min="0" step="0.01" placeholder="0" inputmode="decimal"></div>
         <div><label>Prezzo unitario</label><input name="prezzo" required type="number" min="0" step="0.01" placeholder="0,00" inputmode="decimal"></div>
         <div><label>Tipo prezzo</label><div class="price-choice"><label><input name="unita_prezzo" type="radio" value="kg" checked><span>Al kg</span></label><label><input name="unita_prezzo" type="radio" value="collo"><span>A collo</span></label></div></div>
-        <div><label>IVA</label><select name="iva_percentuale"><option value="0">Senza IVA</option><option value="4">Aggiungi IVA 4%</option></select></div>
-        <div><label>Pagamento</label><select name="stato_pagamento"><option value="credito">Da pagare / a credito</option><option value="pagato">Pagato subito</option></select></div>
-        <div><label>Metodo</label><select name="metodo_pagamento"><option>Contanti</option><option>Bonifico</option><option>Carta</option><option>Altro</option></select></div>
-        <button type="submit" ${!db.lotti.some(lotIsOpen) ? 'disabled' : ''}>Salva sul pitazzo →</button>
-      </form>
+        <div><label>IVA della riga</label><select name="iva_modalita"><option value="nessuna">Senza IVA</option><option value="aggiungi">Aggiungi IVA 4%</option><option value="compresa">IVA già compresa</option></select></div>
+        <button type="submit" ${!db.lotti.some(lotIsOpen) ? 'disabled' : ''}>+ Aggiungi riga</button>
+        </form>
+        ${draftRows.length ? `<div class="pit-draft-wrap"><div class="table-scroll"><table class="pit-draft-table"><tr><th>Colli / kg</th><th>Articolo</th><th>Prezzo</th><th>IVA</th><th>Totale</th><th></th></tr>${draftRows.map((row) => `<tr><td><b>${row.colli ? `${formatQty(row.colli)} colli` : ''}${row.colli && row.peso ? '<br>' : ''}${row.peso ? `${formatQty(row.peso)} kg` : ''}</b></td><td><b>${esc(row.articolo)}</b><br><small>${esc(row.proprietario)} · ${esc(row.qualita || 'Standard')}</small></td><td>${eur(row.prezzo)} / ${row.unita_prezzo === 'collo' ? 'collo' : 'kg'}</td><td><span class="vat-pill">${esc(vatModeLabel(row.iva_modalita))}</span></td><td><b>${eur(row.totale)}</b></td><td><button type="button" class="ghost" data-remove-pit-row="${row.id}" aria-label="Elimina riga">×</button></td></tr>`).join('')}</table></div></div>` : '<p class="empty" style="margin:12px 16px">Aggiungi il primo articolo al biglietto.</p>'}
+        <div class="pit-ticket-footer"><b class="pit-ticket-total">Totale biglietto: ${eur(draftTotal)}</b><div><button type="button" class="ghost" data-clear-pit-draft ${draftRows.length ? '' : 'disabled'}>Svuota</button><button type="button" id="save-pit-ticket" ${draftRows.length ? '' : 'disabled'}>Registra tutto sul Pitazzo →</button></div></div>
+      </div>
       <p id="pit-msg"></p>
       <p class="muted">Se il cliente non esiste ancora, verrà creato automaticamente con il nome scritto. Potrai completare la sua scheda in seguito.</p>
       ${!db.lotti.some(lotIsOpen) ? '<p class="message error">Non ci sono lotti disponibili. Registra prima uno scarico in Magazzino.</p>' : ''}
@@ -850,9 +905,10 @@ function pitazzo() {
         const total = activeSales.reduce((sum, movement) => sum + Number(movement.totale || 0), 0);
         const open = expandedPitLot === groupId;
         const qualities = [...new Set(groupLots.map((lot) => lot.qualita).filter((value) => value && value !== 'Standard'))];
+        const stock = pitazzoGroupStock(groupLots.length ? groupLots : [firstLot], date);
         return `<article class="pit-product-card ${open ? 'open' : ''}">
           <button type="button" class="pit-product-row" data-expand-lot="${groupId}">
-            <span><strong>${esc(name('prodotti', firstLot?.prodotto_id))} · ${esc(firstLot?.proprietario || '—')}</strong><small>${activeSales.length} ${activeSales.length === 1 ? 'registrazione' : 'registrazioni'} · clicca per i dettagli</small>${qualities.length ? `<span class="quality-chip">${qualities.map(esc).join(' · ')}</span>` : ''}</span>
+            <span><span class="pit-stock-prefix">${esc(stock.headline)}</span><strong>${esc(name('prodotti', firstLot?.prodotto_id))} · ${esc(firstLot?.proprietario || '—')}</strong><small class="pit-live-stock">Rimanenza aggiornata: ${esc(stock.remaining)}</small><small>${activeSales.length} ${activeSales.length === 1 ? 'registrazione' : 'registrazioni'} · clicca per i dettagli</small>${qualities.length ? `<span class="quality-chip">${qualities.map(esc).join(' · ')}</span>` : ''}</span>
             <span class="metric"><b>${formatQty(packages)} colli</b><small>venduti</small></span>
             <span class="metric"><b>${formatQty(weight)} kg</b><small>venduti</small></span>
             <span class="metric"><b>${eur(total)}</b><small>importo</small></span>
@@ -865,6 +921,75 @@ function pitazzo() {
         </article>`;
       }).join('') || '<p class="empty">Nessun articolo registrato nella giornata scelta.</p>'}</div>
     </section>`;
+}
+
+function addPitDraftRow(form) {
+  const clientName = String($('#pit-client-name')?.value || '').trim();
+  const lot = findLotByText(form.get('lotto_nome'));
+  const packages = Number(form.get('colli') || 0);
+  const weight = Number(form.get('peso') || 0);
+  const price = Number(form.get('prezzo') || 0);
+  const priceUnit = form.get('unita_prezzo') === 'collo' ? 'collo' : 'kg';
+  const vatMode = normalizeVatMode(form.get('iva_modalita'));
+  if (clientName.length < 2) throw new Error('Scrivi prima il nome del cliente in alto.');
+  if (!lot) throw new Error('Scegli l’articolo dai suggerimenti.');
+  if (packages < 0 || weight < 0) throw new Error('Colli e kg non possono essere negativi.');
+  if (packages <= 0 && weight <= 0) throw new Error('Inserisci i colli venduti, i kg oppure entrambi.');
+  if (Number(lot.colli_iniziali || 0) > 0 && packages <= 0) throw new Error('Questa partita richiede anche i colli.');
+  if (Number(lot.peso_iniziale || 0) > 0 && weight <= 0) throw new Error('Questa partita richiede anche i kg.');
+  if (priceUnit === 'kg' && weight <= 0) throw new Error('Per il prezzo al kg devi inserire i kg venduti.');
+  if (priceUnit === 'collo' && packages <= 0) throw new Error('Per il prezzo a collo devi inserire i colli venduti.');
+  const amounts = saleAmounts(price, priceUnit, packages, weight, vatMode);
+  pitClientDraft = {
+    clienteNome: clientName,
+    statoPagamento: $('#pit-payment-status')?.value === 'pagato' ? 'pagato' : 'credito',
+    metodoPagamento: String($('#pit-payment-method')?.value || 'Contanti'),
+    righe: [...(pitClientDraft.righe || []), {
+      id: id(),
+      lotto_id: lot.id,
+      articolo: name('prodotti', lot.prodotto_id),
+      proprietario: lot.proprietario || '',
+      qualita: lot.qualita || 'Standard',
+      colli: packages,
+      peso: weight,
+      prezzo: price,
+      unita_prezzo: priceUnit,
+      iva_modalita: vatMode,
+      imponibile: amounts.taxable,
+      iva: amounts.vat,
+      totale: amounts.total,
+    }],
+  };
+}
+
+function commitPitClientDraft(dateKey) {
+  const rows = Array.isArray(pitClientDraft.righe) ? pitClientDraft.righe : [];
+  if (!rows.length) throw new Error('Aggiungi almeno un articolo al biglietto.');
+  if (String(pitClientDraft.clienteNome || '').trim().length < 2) throw new Error('Scrivi il nome del cliente.');
+  const backup = JSON.parse(JSON.stringify(db));
+  const results = [];
+  try {
+    rows.forEach((row) => {
+      const values = {
+        lotto_id: row.lotto_id,
+        cliente_nome: pitClientDraft.clienteNome,
+        colli: row.colli,
+        peso: row.peso,
+        prezzo: row.prezzo,
+        unita_prezzo: row.unita_prezzo,
+        iva_modalita: row.iva_modalita,
+        stato_pagamento: pitClientDraft.statoPagamento,
+        metodo_pagamento: pitClientDraft.metodoPagamento,
+        data_movimento: dateKey,
+      };
+      results.push(addSale({ get: (key) => values[key] }, true));
+    });
+  } catch (error) {
+    db = backup;
+    throw error;
+  }
+  pitClientDraft = { clienteNome: '', statoPagamento: 'credito', metodoPagamento: 'Contanti', righe: [] };
+  return results;
 }
 
 function magazzino() {
@@ -1195,7 +1320,7 @@ function biglietti() {
         <p class="muted">${esc(ticketScaricoLabel(ticket))} · ${ticketQuantityTitle(ticket)}${ticket.qualita?.length ? ` · ${ticket.qualita.map(esc).join(' / ')}` : ''}</p>
         <div class="table-scroll"><table>
           <tr><th>Colli</th><th>Descrizione</th><th>Peso</th><th>Prezzo</th><th>Totale</th></tr>
-          ${printRows.map((sale) => `<tr class="${sale.annullato ? 'returned' : ''}"><td>${Number(sale.colli || 0) ? formatQty(sale.colli) : '—'}</td><td><b>${esc(sale.descrizione || 'Standard')}</b>${sale.annullato ? '<br><span class="return-badge">RESO</span>' : ''}${sale.iva_percentuale ? `<br><small>IVA ${sale.iva_percentuale}%: ${eur(sale.iva)}</small>` : ''}</td><td>${Number(sale.peso || 0) ? `${formatQty(sale.peso)} kg` : '—'}</td><td>${sale.tipo === 'scarto' ? '—' : `${eur(sale.prezzo)} / ${sale.unita_prezzo === 'kg' ? 'kg' : 'collo'}`}</td><td><b>${eur(sale.totale)}</b></td></tr>`).join('') || '<tr><td colspan="5" class="empty">Nessuna riga nel biglietto.</td></tr>'}
+          ${printRows.map((sale) => `<tr class="${sale.annullato ? 'returned' : ''}"><td>${Number(sale.colli || 0) ? formatQty(sale.colli) : '—'}</td><td><b>${esc(sale.descrizione || 'Standard')}</b>${sale.annullato ? '<br><span class="return-badge">RESO</span>' : ''}${sale.iva_percentuale ? `<br><small>${esc(vatModeLabel(sale.iva_modalita, sale.iva_percentuale))}: ${eur(sale.iva)}</small>` : ''}</td><td>${Number(sale.peso || 0) ? `${formatQty(sale.peso)} kg` : '—'}</td><td>${sale.tipo === 'scarto' ? '—' : `${eur(sale.prezzo)} / ${sale.unita_prezzo === 'kg' ? 'kg' : 'collo'}`}</td><td><b>${eur(sale.totale)}</b></td></tr>`).join('') || '<tr><td colspan="5" class="empty">Nessuna riga nel biglietto.</td></tr>'}
         </table></div>
         <p><b>Rimanenza:</b> ${ticket.hasPackageData ? stockState(ticket.remainingPackages, 'colli') : ''}${ticket.hasWeightData && ticket.hasPackageData ? ' · ' : ''}${ticket.hasWeightData ? stockState(ticket.remainingKg, 'kg') : ''}</p>
         <p><b>Lordo ${eur(ticket.gross)}</b> · ${Number(ticket.commissionPercent ?? 10) ? `Trattenuta ${Number(ticket.commissionPercent ?? 10)}% arrotondata ${eur(ticket.deduction)}` : 'Nessuna trattenuta'} · <b>Netto ${eur(ticket.net)}</b></p>
@@ -1224,6 +1349,7 @@ function biglietti() {
 function saleEditForm(movementId) {
   const sale = db.movimenti.find((movement) => movement.id === movementId && movement.tipo === 'uscita');
   if (!sale) return '';
+  const vatMode = normalizeVatMode(sale.iva_modalita, sale.iva_percentuale);
   return `<form id="sale-edit-form" class="edit-sale" data-sale-id="${sale.id}">
     <div class="section-head"><div><p class="eyebrow">MODIFICA COLLEGATA</p><h3>Correggi la vendita</h3><p class="muted">Magazzino, conto cliente e biglietti verranno ricalcolati insieme.</p></div><button type="button" class="ghost" data-cancel-sale-edit>Annulla</button></div>
     <div class="grid">
@@ -1234,7 +1360,7 @@ function saleEditForm(movementId) {
       <div><label>Kg</label><input name="peso" type="number" min="0" step="0.01" value="${Number(sale.peso || 0)}"></div>
       <div><label>Prezzo unitario</label><input name="prezzo" type="number" min="0" step="0.01" required value="${Number(sale.prezzo || 0)}"></div>
       <div><label>Tipo prezzo</label><select name="unita_prezzo"><option value="kg" ${sale.unita_prezzo !== 'collo' ? 'selected' : ''}>Al kg</option><option value="collo" ${sale.unita_prezzo === 'collo' ? 'selected' : ''}>A collo</option></select></div>
-      <div><label>IVA</label><select name="iva_percentuale"><option value="0" ${Number(sale.iva_percentuale || 0) !== 4 ? 'selected' : ''}>Senza IVA</option><option value="4" ${Number(sale.iva_percentuale || 0) === 4 ? 'selected' : ''}>IVA 4%</option></select></div>
+      <div><label>IVA</label><select name="iva_modalita"><option value="nessuna" ${vatMode === 'nessuna' ? 'selected' : ''}>Senza IVA</option><option value="aggiungi" ${vatMode === 'aggiungi' ? 'selected' : ''}>Aggiungi IVA 4%</option><option value="compresa" ${vatMode === 'compresa' ? 'selected' : ''}>Prezzo già IVA compresa</option></select></div>
       <div><label>&nbsp;</label><button>Salva tutte le correzioni</button></div>
     </div><p id="sale-edit-msg"></p>
   </form>`;
@@ -1250,7 +1376,7 @@ function editSale(form) {
   const weight = Number(data.get('peso') || 0);
   const price = Number(data.get('prezzo') || 0);
   const priceUnit = data.get('unita_prezzo') === 'collo' ? 'collo' : 'kg';
-  const vatPercent = Number(data.get('iva_percentuale')) === 4 ? 4 : 0;
+  const vatMode = normalizeVatMode(data.get('iva_modalita'), data.get('iva_percentuale'));
   if (!oldLot || !newLot) throw new Error('Partita non trovata.');
   if (packages <= 0 && weight <= 0) throw new Error('Inserisci colli o kg.');
   if (Number(newLot.colli_iniziali || 0) > 0 && packages <= 0) throw new Error('Questa partita richiede i colli.');
@@ -1261,21 +1387,20 @@ function editSale(form) {
   if (Number(newLot.colli_iniziali || 0) > 0) newLot.colli_rimanenti = roundQty(Number(newLot.colli_rimanenti || 0) - packages);
   if (Number(newLot.peso_iniziale || 0) > 0) newLot.peso_rimanente = roundQty(Number(newLot.peso_rimanente || 0) - weight);
 
-  const taxable = roundMoney(price * (priceUnit === 'kg' ? weight : packages));
-  const vat = roundMoney(taxable * vatPercent / 100);
-  const total = roundMoney(taxable + vat);
+  const amounts = saleAmounts(price, priceUnit, packages, weight, vatMode);
   const oldDate = sale.dateKey;
   Object.assign(sale, {
     dateKey: String(data.get('data_movimento') || today()), data: formatDateKey(String(data.get('data_movimento') || today())),
     gruppo_id: lotGroupId(newLot), lotto_id: newLot.id, prodotto_id: newLot.prodotto_id,
     proprietario: newLot.proprietario, partita: partitaLabel(newLot), qualita: newLot.qualita || 'Standard',
     cliente_id: String(data.get('cliente_id') || ''), colli: packages, peso: weight, prezzo: price,
-    unita_prezzo: priceUnit, imponibile: taxable, iva_percentuale: vatPercent, iva: vat, totale: total,
+    unita_prezzo: priceUnit, imponibile: amounts.taxable, iva_modalita: amounts.vatMode,
+    iva_percentuale: amounts.vatPercent, iva: amounts.vat, totale: amounts.total,
     modificatoIl: stamp(), modificatoDa: operatorName(),
   });
   const linkedPayment = (db.pagamenti || []).find((payment) => payment.movimento_id === sale.id && !payment.annullato);
-  if (linkedPayment) Object.assign(linkedPayment, { cliente_id: sale.cliente_id, dateKey: sale.dateKey, data: sale.data, importo: total });
-  audit('Vendita modificata', `${name('prodotti', sale.prodotto_id)} · ${partitaLabel(newLot)} · ${name('clienti', sale.cliente_id)} · ${eur(total)}`);
+  if (linkedPayment) Object.assign(linkedPayment, { cliente_id: sale.cliente_id, dateKey: sale.dateKey, data: sale.data, importo: amounts.total });
+  audit('Vendita modificata', `${name('prodotti', sale.prodotto_id)} · ${partitaLabel(newLot)} · ${name('clienti', sale.cliente_id)} · ${eur(amounts.total)}`);
   return [...new Set([oldDate, sale.dateKey])];
 }
 
@@ -1480,6 +1605,7 @@ function createTicketRecords(dateKey) {
         prezzo: Number(row.prezzo || 0),
         unita_prezzo: row.unita_prezzo || (Number(row.peso || 0) > 0 ? 'kg' : 'collo'),
         imponibile: Number(row.imponibile ?? row.totale ?? 0),
+        iva_modalita: normalizeVatMode(row.iva_modalita, row.iva_percentuale),
         iva_percentuale: Number(row.iva_percentuale || 0),
         iva: Number(row.iva || 0),
         totale: Number(row.totale || 0),
@@ -1518,7 +1644,7 @@ function ticketPrintRows(ticket) {
       grouped.set(`singola-${row.id}`, { ...row });
       return;
     }
-    const key = [row.qualita || 'Standard', Number(row.prezzo || 0), row.unita_prezzo || 'kg', Number(row.iva_percentuale || 0)].join('|');
+    const key = [row.qualita || 'Standard', Number(row.prezzo || 0), row.unita_prezzo || 'kg', normalizeVatMode(row.iva_modalita, row.iva_percentuale)].join('|');
     if (!grouped.has(key)) grouped.set(key, { ...row, colli: 0, peso: 0, imponibile: 0, iva: 0, totale: 0 });
     const item = grouped.get(key);
     item.colli += Number(row.colli || 0);
@@ -1608,7 +1734,7 @@ function openTicketPreview(tickets) {
         <thead><tr><th>Colli</th><th>Descrizione</th><th>Peso</th><th>Prezzo</th><th>Totale</th></tr></thead>
         <tbody>${ticketPrintRows(ticket).map((sale) => `<tr>
           <td>${Number(sale.colli || 0) ? formatQty(sale.colli) : '—'}</td>
-          <td>${esc(sale.descrizione || 'Standard')}${sale.annullato ? '<br><b class="returned-label">RESO — IMPORTO ANNULLATO</b>' : ''}${sale.iva_percentuale ? `<br><small>IVA ${sale.iva_percentuale}%</small>` : ''}</td>
+          <td>${esc(sale.descrizione || 'Standard')}${sale.annullato ? '<br><b class="returned-label">RESO — IMPORTO ANNULLATO</b>' : ''}${sale.iva_percentuale ? `<br><small>${esc(vatModeLabel(sale.iva_modalita, sale.iva_percentuale))}</small>` : ''}</td>
           <td>${Number(sale.peso || 0) ? `${formatQty(sale.peso)} kg` : '—'}</td>
           <td>${sale.tipo === 'scarto' ? '—' : `${eur(sale.prezzo)} / ${sale.unita_prezzo === 'kg' ? 'kg' : 'collo'}`}</td>
           <td><b>${eur(sale.totale)}</b></td>
@@ -1673,7 +1799,7 @@ function addSale(form, createClientIfMissing = false) {
   const packages = Number(form.get('colli') || 0);
   const weight = Number(form.get('peso') || 0);
   const priceUnit = form.get('unita_prezzo') === 'collo' ? 'collo' : 'kg';
-  const vatPercent = Number(form.get('iva_percentuale')) === 4 ? 4 : 0;
+  const vatMode = normalizeVatMode(form.get('iva_modalita'), form.get('iva_percentuale'));
   const dateKey = String(form.get('data_movimento') || today());
   const remainingPackages = Number(lot.colli_rimanenti || 0);
   const remainingWeight = Number(lot.peso_rimanente || 0);
@@ -1707,9 +1833,7 @@ function addSale(form, createClientIfMissing = false) {
   if (Number(lot.colli_iniziali || 0) > 0) lot.colli_rimanenti = roundQty(remainingPackages - packages);
   if (Number(lot.peso_iniziale || 0) > 0) lot.peso_rimanente = roundQty(remainingWeight - weight);
   const movementId = id();
-  const taxable = roundMoney(price * (priceUnit === 'kg' ? weight : packages));
-  const vat = roundMoney(taxable * vatPercent / 100);
-  const total = roundMoney(taxable + vat);
+  const amounts = saleAmounts(price, priceUnit, packages, weight, vatMode);
   db.movimenti.push({
     id: movementId,
     data: formatDateKey(dateKey),
@@ -1726,26 +1850,27 @@ function addSale(form, createClientIfMissing = false) {
     peso: weight,
     prezzo: price,
     unita_prezzo: priceUnit,
-    imponibile: taxable,
-    iva_percentuale: vatPercent,
-    iva: vat,
-    totale: total,
+    imponibile: amounts.taxable,
+    iva_modalita: amounts.vatMode,
+    iva_percentuale: amounts.vatPercent,
+    iva: amounts.vat,
+    totale: amounts.total,
     stato_pagamento: form.get('stato_pagamento') === 'pagato' ? 'pagato' : 'credito',
     operatore: operatorName(),
     operatore_uid: signedUser?.uid || '',
     operatore_email: userEmail(),
   });
-  if (form.get('stato_pagamento') === 'pagato' && total > 0) {
+  if (form.get('stato_pagamento') === 'pagato' && amounts.total > 0) {
     if (!Array.isArray(db.pagamenti)) db.pagamenti = [];
     db.pagamenti.push({
       id: id(), cliente_id: client.id, movimento_id: movementId, dateKey, data: formatDateKey(dateKey),
-      importo: total, metodo: String(form.get('metodo_pagamento') || 'Contanti'), note: 'Vendita pagata subito',
+      importo: amounts.total, metodo: String(form.get('metodo_pagamento') || 'Contanti'), note: 'Vendita pagata subito',
       operatore: operatorName(), operatore_uid: signedUser?.uid || '',
     });
   }
   const finished = lotStatus(lot) === 'terminata';
   if (finished) lot.terminatoIl = stamp();
-  audit('Vendita registrata', `${name('prodotti', lot.prodotto_id)} · ${lot.proprietario} · ${partitaLabel(lot)} · ${packages ? `${formatQty(packages)} colli` : ''}${packages && weight ? ' · ' : ''}${weight ? `${formatQty(weight)} kg` : ''} · prezzo a ${priceUnit} · IVA ${vatPercent}% · cliente ${client.nome}${finished ? ' · PARTITA TERMINATA' : ''}`);
+  audit('Vendita registrata', `${name('prodotti', lot.prodotto_id)} · ${lot.proprietario} · ${partitaLabel(lot)} · ${packages ? `${formatQty(packages)} colli` : ''}${packages && weight ? ' · ' : ''}${weight ? `${formatQty(weight)} kg` : ''} · prezzo a ${priceUnit} · ${vatModeLabel(amounts.vatMode)} · cliente ${client.nome}${finished ? ' · PARTITA TERMINATA' : ''}`);
   return { finished, partita: partitaLabel(lot), dateKey };
 }
 
@@ -2236,20 +2361,14 @@ function bind() {
     };
   }
 
-  const pitForm = $('#pit-form');
-  if (pitForm) {
-    pitForm.onsubmit = async (event) => {
+  const pitLineForm = $('#pit-line-form');
+  if (pitLineForm) {
+    pitLineForm.onsubmit = (event) => {
       event.preventDefault();
-      const form = new FormData(pitForm);
       const message = $('#pit-msg');
       try {
-        message.className = 'message';
-        message.textContent = 'Salvataggio…';
-        const result = addSale(form, true);
-        pitazzoDate = String(form.get('data_movimento') || today());
-        await save();
+        addPitDraftRow(new FormData(pitLineForm));
         render();
-        if (result.finished) alert(`Partita ${result.partita} terminata. Ora puoi generare il biglietto della giornata.`);
       } catch (error) {
         message.className = 'message error';
         message.textContent = `Errore: ${error.message}`;
@@ -2257,18 +2376,60 @@ function bind() {
     };
   }
 
+  const savePitTicket = $('#save-pit-ticket');
+  if (savePitTicket) {
+    savePitTicket.onclick = async () => {
+      const message = $('#pit-msg');
+      const dbBackup = JSON.parse(JSON.stringify(db));
+      const draftBackup = JSON.parse(JSON.stringify(pitClientDraft));
+      try {
+        pitClientDraft.clienteNome = String($('#pit-client-name')?.value || pitClientDraft.clienteNome).trim();
+        pitClientDraft.statoPagamento = $('#pit-payment-status')?.value === 'pagato' ? 'pagato' : 'credito';
+        pitClientDraft.metodoPagamento = String($('#pit-payment-method')?.value || 'Contanti');
+        message.className = 'message';
+        message.textContent = 'Registrazione del biglietto…';
+        const results = commitPitClientDraft(pitazzoDate || today());
+        await save();
+        render();
+        const finished = results.filter((result) => result.finished).map((result) => result.partita);
+        if (finished.length) alert(`Partita terminata: ${finished.join(', ')}. Ora puoi generare i biglietti della giornata.`);
+      } catch (error) {
+        db = dbBackup;
+        pitClientDraft = draftBackup;
+        message.className = 'message error';
+        message.textContent = `Errore: ${error.message}`;
+      }
+    };
+  }
+
+  document.querySelectorAll('[data-remove-pit-row]').forEach((button) => {
+    button.onclick = () => {
+      pitClientDraft.righe = (pitClientDraft.righe || []).filter((row) => row.id !== button.dataset.removePitRow);
+      render();
+    };
+  });
+
+  $('[data-clear-pit-draft]')?.addEventListener('click', () => {
+    if (pitClientDraft.righe?.length && !confirm('Svuotare tutte le righe del biglietto cliente?')) return;
+    pitClientDraft = { clienteNome: '', statoPagamento: 'credito', metodoPagamento: 'Contanti', righe: [] };
+    render();
+  });
+
   document.querySelectorAll('[data-client]').forEach((button) => {
     button.onclick = () => {
       const client = db.clienti.find((item) => item.id === button.dataset.client);
-      const input = $('#pit-form [name="cliente_nome"]');
-      if (client && input) input.value = client.nome;
+      const input = $('#pit-client-name');
+      if (client && input) {
+        input.value = client.nome;
+        pitClientDraft.clienteNome = client.nome;
+      }
     };
   });
 
   document.querySelectorAll('[data-lot]').forEach((button) => {
     button.onclick = () => {
       const lot = lotById(button.dataset.lot);
-      const input = $('#pit-form [name="lotto_nome"]');
+      const input = $('#pit-line-form [name="lotto_nome"]');
       if (lot && input) input.value = lotSearchName(lot);
     };
   });
