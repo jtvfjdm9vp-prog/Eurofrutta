@@ -63,6 +63,8 @@ let unsubscribe;
 let presenceUnsubscribe;
 let presenceTimer;
 let onlineUsers = [];
+let presenceSessionActive = false;
+let presenceLifecycleBound = false;
 let baseDb = null;
 const ADMIN_CODE_HASH = '4dd75592eec0dbdf1f491c6413c01b8573e8908b255b67c78f35f0d2bb2d4565';
 try {
@@ -120,9 +122,9 @@ function ensureAppStyles() {
     .ticket-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:16px}.ticket-card{border:1px solid #dbe4e7;border-radius:16px;background:#fff;padding:18px;box-shadow:0 8px 24px #173b4e0b}.ticket-card h3{margin:4px 0}.ticket-card .ticket-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.ticket-card .ticket-actions button{width:auto}.returned{opacity:.65;text-decoration:line-through}.return-badge{display:inline-block;padding:3px 7px;border-radius:999px;background:#fff0e8;color:#a6461c;font-size:10px;font-weight:800;text-decoration:none}
     .price-choice{display:grid;grid-template-columns:1fr 1fr;gap:7px}.price-choice label{margin:0}.price-choice input{position:absolute;opacity:0;pointer-events:none}.price-choice span{display:block;padding:11px 9px;border:1px solid #ccd8dc;border-radius:10px;text-align:center;cursor:pointer;transition:.15s ease}.price-choice input:checked+span{border-color:#16835f;background:#eaf8f2;color:#0d7252;font-weight:800}
     .variant-list{display:grid;gap:10px;margin:15px 0}.variant-row{display:grid;grid-template-columns:1.4fr 1fr 1fr auto;gap:10px;align-items:end;padding:12px;border:1px solid #dce5e7;border-radius:13px;background:#f8fbfa}.variant-row button{width:auto;min-width:44px}.variant-row:first-child [data-remove-variant]{visibility:hidden}.secondary-panel{margin-top:18px;border:1px solid #dce5e7;border-radius:14px;background:#fbfdfc}.secondary-panel summary{padding:16px 18px;cursor:pointer;font-weight:800;color:#116c50}.secondary-panel>div{padding:0 18px 18px}.quality-chip{display:inline-block;margin-top:4px;padding:3px 8px;border-radius:999px;background:#eef6f2;color:#166c51;font-size:11px;font-weight:800}.mobile-nav-toggle,.nav-scrim{display:none}
-    .presence-dot{display:inline-block;width:9px;height:9px;margin:0 7px;border-radius:50%;background:#38d37a;box-shadow:0 0 0 0 #38d37a99;animation:presencePulse 1.8s infinite;vertical-align:middle}.presence-list{display:grid;gap:9px}.presence-user{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 13px;border:1px solid #dce7e4;border-radius:12px;background:#f8fcfa}.status-ok{color:#11704f;font-weight:800}.status-missing{color:#ad3b2d;font-weight:800}.status-extra{color:#a26108;font-weight:800}.closing-row input{min-width:105px}.account-negative{color:#b23a2c}.account-positive{color:#11704f}@keyframes presencePulse{0%{box-shadow:0 0 0 0 #38d37a99}70%{box-shadow:0 0 0 7px #38d37a00}100%{box-shadow:0 0 0 0 #38d37a00}}
+    .presence-dot{display:inline-block;width:9px;height:9px;margin:0 7px;border-radius:50%;background:#38d37a;box-shadow:0 0 0 0 #38d37a99;animation:presencePulse 1.8s infinite;vertical-align:middle}.presence-dot.offline{background:#e45445;box-shadow:none;animation:none}.presence-list{display:grid;gap:9px}.presence-user{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 14px;border:1px solid #dce7e4;border-radius:12px;background:#f8fcfa}.presence-user.offline{border-color:#efd8d4;background:#fff9f8}.presence-person{display:flex;align-items:center;min-width:0}.presence-person>span:last-child{min-width:0}.presence-person b,.presence-person small{display:block}.presence-person small{margin-top:2px;color:#718093}.presence-times{display:grid;gap:2px;flex:0 0 auto;text-align:right}.presence-times b{font-size:12px}.presence-times small{color:#718093;font-size:11px}.presence-online{color:#11704f}.presence-offline{color:#b33d31}.status-ok{color:#11704f;font-weight:800}.status-missing{color:#ad3b2d;font-weight:800}.status-extra{color:#a26108;font-weight:800}.closing-row input{min-width:105px}.account-negative{color:#b23a2c}.account-positive{color:#11704f}@keyframes presencePulse{0%{box-shadow:0 0 0 0 #38d37a99}70%{box-shadow:0 0 0 7px #38d37a00}100%{box-shadow:0 0 0 0 #38d37a00}}
     .home-welcome{position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(250px,360px) minmax(0,1fr);align-items:center;gap:32px;margin:0 0 18px;padding:25px 32px;border:0;border-radius:26px;background:linear-gradient(125deg,#102d3f 0%,#105947 52%,#1f9d69 100%);box-shadow:0 18px 45px #10283b24;overflow:hidden}.home-welcome::before,.home-welcome::after{content:'';position:absolute;z-index:-1;border-radius:50%;filter:blur(2px)}.home-welcome::before{width:330px;height:330px;right:-95px;top:-190px;background:#bdf58b2c}.home-welcome::after{width:220px;height:220px;left:27%;bottom:-185px;background:#ffffff14}.home-brand-logo{display:grid;place-items:center;min-height:116px;padding:0;background:transparent}.home-brand-logo img{display:block;width:100%;height:auto;max-height:128px;object-fit:contain;filter:drop-shadow(0 10px 18px #071b2560)}.home-greeting .eyebrow{color:#a8efcf}.home-greeting h1{margin:4px 0 7px;color:#fff;font-size:clamp(29px,3.3vw,45px);line-height:1.04}.home-greeting h1 em{color:#c7ffad;font-style:normal}.home-greeting p:last-child{margin:0;color:#deefe9;font-size:15px}.home-market-card{padding:22px!important}.home-market-card .section-head{margin-bottom:14px}.home-market-card .section-head h2{margin-bottom:0}.home-market-card .home-market-grid{grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:10px}.home-market-card .market-product>button{padding:14px}.home-market-card .market-product>button strong{font-size:18px}.home-market-card .market-product>button small{font-size:12px}.home-top-actions{display:flex;align-items:center;justify-content:flex-end;gap:9px;flex-wrap:wrap}.home-compact-search{position:relative;display:flex;align-items:center;gap:7px;width:min(285px,42vw);min-width:210px;border:1px solid #c8d8d4;border-radius:11px;background:#fff;padding:0 9px;transition:border-color .18s ease,box-shadow .18s ease}.home-compact-search:focus-within{border-color:#159268;box-shadow:0 0 0 4px #15926816}.home-compact-search input{width:100%;min-height:40px;padding:7px 0;border:0;box-shadow:none!important;background:transparent;font-size:13px}.home-compact-search button{width:auto;min-width:30px;min-height:30px;padding:3px;background:transparent;color:#647586}.home-search-results{margin:13px 0 4px;padding:13px;border:1px solid #d9e5e4;border-radius:14px;background:#f6fbf9}.home-search-results:empty{display:none}.search-results-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.search-result-group{padding:14px;border:1px solid #dce7e5;border-radius:14px;background:#fff}.search-result-group h3{margin:0 0 9px;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:#617386}.search-result{width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;margin:5px 0;padding:10px 11px;border:0;border-radius:10px;background:#f4f8f7;color:#173044;text-align:left}.search-result:hover{background:#e8f6f0}.search-result strong{display:block}.search-result small{display:block;color:#6b7b8d;margin-top:2px}.owner-badge{display:inline-flex;align-items:center;padding:7px 10px;border-radius:9px;background:#edf5f2;color:#154f40;font-weight:850}.inventory-product-name{font-size:16px;color:#142b3c}
-    .market-table{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.market-product{overflow:hidden;border:1px solid #dce7e4;border-radius:15px;background:#fff}.market-product>button{width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:17px;border:0;background:#fff;color:#173044;text-align:left}.market-product>button:hover{background:#edf9f4}.market-product>button strong{display:block;font-size:20px}.market-product>button small{display:block;margin-top:4px;color:#718093}.market-lots{padding:0 13px 13px}.market-lot{display:grid;grid-template-columns:1fr auto;gap:8px;padding:10px;border-top:1px solid #e3ebe9}.market-lot b{display:block}.market-lot small{display:block;color:#718093;margin-top:3px}.market-arrival-qty{color:#102d3f;font-size:15px}.home-price-history{margin:4px 13px 13px;border:1px solid #d7e5e1;border-radius:12px;background:#f5faf8;overflow:hidden}.home-price-history>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;list-style:none;color:#173044;font-size:13px;font-weight:850;text-transform:uppercase;letter-spacing:.07em;cursor:pointer;transition:background .16s ease}.home-price-history>summary::-webkit-details-marker{display:none}.home-price-history>summary:hover{background:#e9f6f1}.home-price-history>summary::after{content:'+';display:grid;place-items:center;flex:0 0 auto;width:25px;height:25px;border-radius:50%;background:#fff;color:#0d7252;font-size:18px;line-height:1}.home-price-history[open]>summary::after{content:'−'}.home-price-panel{padding:0 12px 12px}.home-price-list{display:grid;gap:7px}.home-price-row{display:grid;grid-template-columns:minmax(105px,auto) minmax(0,1fr);align-items:start;gap:6px 12px;padding:10px;border-radius:9px;background:#fff}.home-price-row>strong{color:#0d7252;white-space:nowrap}.home-price-row span,.home-price-row small{min-width:0}.home-price-row span b,.home-price-row span small{display:block;overflow-wrap:anywhere}.home-price-row span small{margin-top:3px;color:#718093;white-space:normal}.home-price-row>small{grid-column:1/-1;color:#718093;text-align:left}.pit-waste-summary{color:#a55c09!important;font-weight:850}.pit-waste-row{background:#fff8eb}.waste-badge{display:inline-flex;padding:4px 7px;border-radius:999px;background:#fff0d5;color:#9a5600;font-size:10px;font-weight:850}.stock-low{color:#a76000;font-weight:850}.stock-ended{color:#a63e31;font-weight:850}.stock-ok{color:#11704f;font-weight:850}.edit-sale{margin-top:12px;padding:14px;border:1px solid #cfe1dc;border-radius:13px;background:#f6fbf9}.edit-sale .grid{margin-top:10px}
+    .market-table{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.market-product{overflow:hidden;border:1px solid #dce7e4;border-radius:15px;background:#fff}.market-product>button{width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:17px;border:0;background:#fff;color:#173044;text-align:left}.market-product>button:hover{background:#edf9f4}.market-product>button strong{display:block;font-size:20px}.market-product>button small{display:block;margin-top:4px;color:#718093}.market-lots{padding:0 13px 13px}.market-lot{display:grid;grid-template-columns:1fr auto;gap:8px;padding:10px;border-top:1px solid #e3ebe9}.market-lot b{display:block}.market-lot small{display:block;color:#718093;margin-top:3px}.market-arrival-qty{color:#102d3f;font-size:15px}.home-price-history{margin:4px 13px 13px;border:1px solid #d7e5e1;border-radius:12px;background:#f5faf8;overflow:hidden}.home-price-history>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;list-style:none;color:#173044;font-size:12px;font-weight:850;text-transform:uppercase;letter-spacing:.055em;cursor:pointer;transition:background .16s ease}.home-price-history>summary::-webkit-details-marker{display:none}.home-price-history>summary:hover{background:#e9f6f1}.home-price-history>summary::after{content:'+';display:grid;place-items:center;flex:0 0 auto;width:25px;height:25px;border-radius:50%;background:#fff;color:#0d7252;font-size:18px;line-height:1}.home-price-history[open]>summary::after{content:'−'}.home-price-panel{padding:0 10px 10px}.home-price-list{display:grid;gap:8px}.home-price-row{display:grid;gap:4px;min-width:0;padding:10px;border:1px solid #e2ebe8;border-radius:10px;background:#fff;box-shadow:0 3px 10px #173b4e08}.home-price-head{display:grid;gap:2px;min-width:0}.home-price-head strong{color:#0d7252;font-size:14px;line-height:1.25;white-space:normal}.home-price-head time{color:#718093;font-size:10px;font-weight:700}.home-price-client{display:block;min-width:0;color:#1a3142;font-size:12px;line-height:1.3;white-space:normal;word-break:normal}.home-price-detail{display:block;min-width:0;color:#718093;font-size:11px;line-height:1.35;white-space:normal;word-break:normal}.pit-waste-summary{color:#a55c09!important;font-weight:850}.pit-waste-row{background:#fff8eb}.waste-badge{display:inline-flex;padding:4px 7px;border-radius:999px;background:#fff0d5;color:#9a5600;font-size:10px;font-weight:850}.stock-low{color:#a76000;font-weight:850}.stock-ended{color:#a63e31;font-weight:850}.stock-ok{color:#11704f;font-weight:850}.edit-sale{margin-top:12px;padding:14px;border:1px solid #cfe1dc;border-radius:13px;background:#f6fbf9}.edit-sale .grid{margin-top:10px}
     .pit-client-ticket{margin-top:15px;border:2px solid #d6e2df;border-radius:16px;background:#fff;overflow:hidden}.pit-client-bar{display:grid;grid-template-columns:minmax(240px,2fr) 1fr 1fr;gap:12px;padding:16px;background:#f3f8f6;border-bottom:1px solid #dce7e4}.pit-client-bar input{font-size:18px;font-weight:800}.pit-client-label-row{display:flex;align-items:center;justify-content:space-between;gap:10px}.pit-client-label-row button{width:auto;min-height:30px;padding:5px 9px;font-size:11px}.pit-line-form{display:grid;grid-template-columns:minmax(210px,2fr) .7fr .7fr .9fr 1.2fr 1.15fr auto;gap:10px;align-items:end;padding:16px}.pit-line-form button{white-space:nowrap}.pit-keyboard-hint{margin:-3px 16px 13px;padding:9px 11px;border-radius:10px;background:#eef7f3;color:#47675e;font-size:12px}.pit-keyboard-hint kbd{display:inline-block;padding:2px 6px;border:1px solid #c6d8d2;border-bottom-width:2px;border-radius:5px;background:#fff;color:#244c40;font:700 11px/1.3 system-ui}.pit-product-search-wrap{position:relative}.pit-product-results{position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:30;max-height:320px;overflow:auto;padding:7px;border:1px solid #cbdad8;border-radius:12px;background:#fff;box-shadow:0 16px 35px #10283b2b}.pit-product-results:empty{display:none}.pit-product-option{width:100%;display:flex;justify-content:space-between;align-items:center;gap:10px;margin:3px 0;padding:10px;border:0;border-radius:9px;background:#f4f8f7;color:#183044;text-align:left}.pit-product-option:hover,.pit-product-option:focus,.pit-product-option:focus-visible{background:#e6f6ef;outline:3px solid #1592683b}.pit-product-option strong,.pit-product-option small{display:block}.pit-product-option small{margin-top:2px;color:#718093}.pit-product-option>span:last-child{color:#0d7252;text-align:right;font-size:11px;font-weight:800}.pit-draft-wrap{padding:0 16px 16px}.pit-draft-table td,.pit-draft-table th{vertical-align:middle}.pit-draft-table button{width:auto;min-width:38px;padding:7px}.pit-ticket-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:15px 16px;border-top:1px solid #dce7e4;background:#fbfdfc}.pit-ticket-footer>div{display:flex;gap:8px;flex-wrap:wrap}.pit-ticket-total{font-size:20px;color:#0e7352}.vat-pill{display:inline-flex;padding:4px 7px;border-radius:999px;background:#edf3ff;color:#365d99;font-size:10px;font-weight:800}.pit-last-ticket{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:14px;padding:14px 16px;border:1px solid #aedcc9;border-radius:13px;background:#eaf8f2}.pit-last-ticket strong,.pit-last-ticket small{display:block}.pit-last-ticket small{margin-top:3px;color:#547065}.pit-last-ticket button{width:auto}.client-ticket-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}.client-ticket-card{padding:15px;border:1px solid #d9e5e2;border-radius:14px;background:#fbfdfc}.client-ticket-card h3{margin:2px 0 5px}.client-ticket-card p{margin:4px 0}.client-ticket-card button{width:100%;margin-top:10px}.danger-zone{border-color:#efb6ad!important;background:linear-gradient(135deg,#fffafa,#fff4f1)!important}.danger-zone button{background:#b43227}.danger-zone button:hover{background:#92271f}
     .return-modal-backdrop{position:fixed;inset:0;z-index:2500;display:grid;place-items:center;padding:20px;background:#071923a8;backdrop-filter:blur(5px)}.return-modal{width:min(720px,100%);max-height:92dvh;overflow:auto;padding:24px;border:1px solid #ffffff78;border-radius:20px;background:#fff;box-shadow:0 28px 90px #06172180}.return-modal h2{margin:3px 0 8px}.return-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:17px 0;padding:14px;border:1px solid #cce2db;border-radius:14px;background:#f1faf6}.return-summary div{min-width:0}.return-summary small,.return-summary b{display:block}.return-summary small{margin-bottom:3px;color:#68798b;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}.return-summary b{overflow:hidden;text-overflow:ellipsis}.return-preview{margin:14px 0;padding:13px;border-radius:12px;background:#eaf8f2;color:#145c47;font-weight:750}.return-preview.error{background:#fff0ed;color:#a23e30}.return-actions{display:flex;justify-content:flex-end;gap:9px;flex-wrap:wrap;margin-top:16px}.return-actions button{width:auto}.return-all{margin-top:8px;width:auto!important}.return-history{margin:10px 0;padding-left:20px;color:#5f7082;font-size:13px}
     @media(max-width:900px){
@@ -154,10 +156,10 @@ function ensureAppStyles() {
       .ticket-grid{grid-template-columns:1fr}
       .search-results-grid{grid-template-columns:1fr}
       .variant-row{grid-template-columns:1fr 1fr}.variant-row>div:first-child{grid-column:1/-1}.variant-row button{width:100%}
-      .pit-client-bar,.pit-line-form{grid-template-columns:1fr}.pit-line-form>div:first-child{grid-column:1/-1}.pit-product-results{position:static;margin-top:6px;max-height:240px}.pit-ticket-footer,.pit-last-ticket{align-items:stretch;flex-direction:column}.pit-ticket-footer>div,.pit-ticket-footer button,.pit-last-ticket button{width:100%}.return-summary{grid-template-columns:1fr}.return-modal{padding:18px}.return-actions{flex-direction:column-reverse}.return-actions button{width:100%}
+      .pit-client-bar,.pit-line-form{grid-template-columns:1fr}.pit-line-form>div:first-child{grid-column:1/-1}.pit-product-results{position:static;margin-top:6px;max-height:240px}.pit-ticket-footer,.pit-last-ticket{align-items:stretch;flex-direction:column}.pit-ticket-footer>div,.pit-ticket-footer button,.pit-last-ticket button{width:100%}.return-summary{grid-template-columns:1fr}.return-modal{padding:18px}.return-actions{flex-direction:column-reverse}.return-actions button{width:100%}.presence-user{align-items:flex-start}.presence-times{text-align:right}
       .home-welcome{grid-template-columns:1fr;gap:12px;padding:20px}.home-brand-logo{min-height:0;padding:0}.home-brand-logo img{max-width:360px;max-height:108px}.home-greeting{text-align:center}.home-market-card .home-market-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.home-top-actions{width:100%;justify-content:stretch}.home-compact-search{width:100%;min-width:0}.home-top-actions>button{width:100%}
     }
-    @media(max-width:480px){body.eurofrutta-shell #nav{width:88vw}.ticket-card{padding:14px}.price-choice{grid-template-columns:1fr}.pit-product-row strong{font-size:16px}.home-welcome{padding:16px}.home-brand-logo img{max-height:86px}.home-greeting h1{font-size:29px}.home-market-card{padding:15px!important}.home-market-card .home-market-grid{grid-template-columns:1fr}.home-price-row{grid-template-columns:1fr}.home-price-row>*{grid-column:1!important}.home-price-row>small{text-align:left}}
+    @media(max-width:480px){body.eurofrutta-shell #nav{width:88vw}.ticket-card{padding:14px}.price-choice{grid-template-columns:1fr}.pit-product-row strong{font-size:16px}.home-welcome{padding:16px}.home-brand-logo img{max-height:86px}.home-greeting h1{font-size:29px}.home-market-card{padding:15px!important}.home-market-card .home-market-grid{grid-template-columns:1fr}.presence-user{display:grid;gap:8px}.presence-times{text-align:left;padding-left:23px}}
   `;
   document.head.appendChild(style);
 }
@@ -380,10 +382,11 @@ function homeProductPrices(productId, limit = 6) {
   return `<div class="home-price-list">${rows.map((movement) => {
     const lot = lotById(movement.lotto_id);
     const quality = lot?.qualita && lot.qualita !== 'Standard' ? lot.qualita : '';
-    const description = [quality, movement.proprietario || lot?.proprietario, name('clienti', movement.cliente_id)]
+    const client = name('clienti', movement.cliente_id);
+    const description = [quality, movement.proprietario || lot?.proprietario, partitaLabel(lot)]
       .filter((value) => value && value !== '—')
       .join(' · ');
-    return `<div class="home-price-row"><strong>${eur(movement.prezzo)} / ${movement.unita_prezzo === 'collo' ? 'collo' : 'kg'}</strong><span><b>${esc(description || 'Vendita registrata')}</b><small>${esc(partitaLabel(lot))}</small></span><small>${esc(displayDateOnly(movement.data, movement.dateKey))}</small></div>`;
+    return `<article class="home-price-row"><div class="home-price-head"><strong>${eur(movement.prezzo)} / ${movement.unita_prezzo === 'collo' ? 'collo' : 'kg'}</strong><time>${esc(displayDateOnly(movement.data, movement.dateKey))}</time></div><b class="home-price-client">Cliente: ${esc(client)}</b><small class="home-price-detail">${esc(description || 'Vendita registrata')}</small></article>`;
   }).join('')}</div>`;
 }
 
@@ -1667,8 +1670,8 @@ function registro() {
     .sort();
   return `
     <section class="card">
-      <div class="section-head"><div><p class="eyebrow">PRESENZA IN TEMPO REALE</p><h2>Chi è online</h2></div><b><span class="presence-dot"></span>Aggiornamento automatico</b></div>
-      <p class="muted">Solo gli amministratori possono vedere questa lista. Gli operatori vedono soltanto il proprio pallino verde.</p>
+      <div class="section-head"><div><p class="eyebrow">PRESENZA IN TEMPO REALE</p><h2>Presenze operatori</h2></div><b><span class="presence-dot"></span>Aggiornamento automatico</b></div>
+      <p class="muted">Verde significa online, rosso significa offline. L’uscita viene rilevata anche quando si chiude direttamente la finestra; se il browser interrompe l’ultimo invio, lo stato diventa rosso automaticamente entro circa un minuto.</p>
       <div id="online-panel">${onlineUsers.length ? '<p class="muted">Aggiornamento elenco…</p>' : '<p class="empty">Caricamento presenze…</p>'}</div>
     </section>
     <section class="card">
@@ -3301,39 +3304,99 @@ function bind() {
   }
 }
 
-function presenceRecord(online = true) {
-  return {
+const PRESENCE_TIMEOUT_MS = 65000;
+
+function presenceRecord(online = true, transition = 'heartbeat') {
+  const now = Date.now();
+  const record = {
     uid: signedUser?.uid || '',
     email: userEmail(),
     username: operatorName(),
     ruolo: isAdmin() ? 'amministratore' : 'operatore',
     online,
-    aggiornato: Date.now(),
+    aggiornato: now,
   };
+  if (transition === 'enter') record.ultimo_accesso = now;
+  if (transition === 'exit') record.ultima_uscita = now;
+  return record;
+}
+
+function presenceDateTime(value) {
+  const numericValue = Number(value || 0);
+  if (!numericValue) return '—';
+  return new Date(numericValue).toLocaleString('it-IT', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function presenceIsOnline(person) {
+  return Boolean(person?.online) && Number(person?.aggiornato || 0) > Date.now() - PRESENCE_TIMEOUT_MS;
 }
 
 function renderOnlineUsers() {
   const panel = $('#online-panel');
   if (!panel) return;
-  const active = onlineUsers.filter((person) => person.online && Number(person.aggiornato || 0) > Date.now() - 90000);
-  panel.innerHTML = active.length ? `<div class="presence-list">${active.map((person) => `<div class="presence-user"><span><span class="presence-dot"></span><b>${esc(person.username || 'Utente')}</b><small> · ${esc(person.ruolo || 'operatore')}</small></span><small>Online adesso</small></div>`).join('')}</div>` : '<p class="empty">Nessun altro utente risulta online.</p>';
+  const people = onlineUsers.slice().sort((first, second) => {
+    const onlineDifference = Number(presenceIsOnline(second)) - Number(presenceIsOnline(first));
+    return onlineDifference || Number(second.aggiornato || 0) - Number(first.aggiornato || 0);
+  });
+  panel.innerHTML = people.length ? `<div class="presence-list">${people.map((person) => {
+    const online = presenceIsOnline(person);
+    const lastExit = person.ultima_uscita || (!online ? person.aggiornato : 0);
+    return `<div class="presence-user${online ? '' : ' offline'}"><span class="presence-person"><span class="presence-dot${online ? '' : ' offline'}"></span><span><b>${esc(person.username || 'Utente')}</b><small>${esc(person.ruolo || 'operatore')}</small></span></span><span class="presence-times"><b class="${online ? 'presence-online' : 'presence-offline'}">${online ? 'Online adesso' : 'Offline'}</b><small>Entrato: ${esc(presenceDateTime(person.ultimo_accesso))}</small><small>Uscito: ${esc(presenceDateTime(lastExit))}</small></span></div>`;
+  }).join('')}</div>` : '<p class="empty">Nessuna presenza ancora registrata.</p>';
 }
 
-async function heartbeatPresence(online = true) {
+async function heartbeatPresence(online = true, transition = 'heartbeat') {
   if (!signedUser || !isAuthorized()) return;
   try {
-    await setDoc(doc(store, 'presenze', signedUser.uid), presenceRecord(online), { merge: true });
+    await setDoc(doc(store, 'presenze', signedUser.uid), presenceRecord(online, transition), { merge: true });
   } catch (error) {
     // La presenza non deve mai bloccare il lavoro nel gestionale.
   }
+}
+
+function markPresenceEntered() {
+  if (!signedUser || !isAuthorized()) return Promise.resolve();
+  if (presenceSessionActive) return heartbeatPresence(true);
+  presenceSessionActive = true;
+  return heartbeatPresence(true, 'enter');
+}
+
+function markPresenceExited() {
+  if (!signedUser || !isAuthorized() || !presenceSessionActive) return Promise.resolve();
+  presenceSessionActive = false;
+  return heartbeatPresence(false, 'exit');
+}
+
+function bindPresenceLifecycle() {
+  if (presenceLifecycleBound) return;
+  presenceLifecycleBound = true;
+  const announceExit = () => { void markPresenceExited(); };
+  window.addEventListener('pagehide', announceExit);
+  window.addEventListener('beforeunload', announceExit);
+  window.addEventListener('pageshow', () => {
+    if (signedUser && isAuthorized()) void markPresenceEntered();
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && signedUser && isAuthorized()) void markPresenceEntered();
+  });
 }
 
 function startPresence() {
   if (!signedUser) return;
   if (presenceTimer) clearInterval(presenceTimer);
   if (presenceUnsubscribe) presenceUnsubscribe();
-  heartbeatPresence(true);
-  presenceTimer = setInterval(() => heartbeatPresence(true), 25000);
+  bindPresenceLifecycle();
+  void markPresenceEntered();
+  presenceTimer = setInterval(() => {
+    if (!document.hidden) void heartbeatPresence(true);
+    renderOnlineUsers();
+  }, 25000);
   if (isAdmin()) {
     presenceUnsubscribe = onSnapshot(collection(store, 'presenze'), (snapshot) => {
       onlineUsers = snapshot.docs.map((item) => item.data());
@@ -3347,7 +3410,7 @@ async function stopPresence() {
   presenceTimer = null;
   if (presenceUnsubscribe) presenceUnsubscribe();
   presenceUnsubscribe = null;
-  await heartbeatPresence(false);
+  await markPresenceExited();
 }
 
 function startDataSubscription() {
