@@ -14,6 +14,7 @@ import {
   onSnapshot,
   runTransaction,
   setDoc,
+  deleteDoc,
 } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js';
 
 const firebaseConfig = {
@@ -126,6 +127,7 @@ function ensureAppStyles() {
     .home-welcome{position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(250px,360px) minmax(0,1fr);align-items:center;gap:32px;margin:0 0 18px;padding:25px 32px;border:0;border-radius:26px;background:linear-gradient(125deg,#102d3f 0%,#105947 52%,#1f9d69 100%);box-shadow:0 18px 45px #10283b24;overflow:hidden}.home-welcome::before,.home-welcome::after{content:'';position:absolute;z-index:-1;border-radius:50%;filter:blur(2px)}.home-welcome::before{width:330px;height:330px;right:-95px;top:-190px;background:#bdf58b2c}.home-welcome::after{width:220px;height:220px;left:27%;bottom:-185px;background:#ffffff14}.home-brand-logo{position:relative;display:grid;place-items:center;min-height:116px;padding:0;background:transparent}.home-brand-logo img{display:block;width:106%;height:auto;max-height:138px;object-fit:contain;filter:drop-shadow(0 10px 18px #071b2548);transform:translateY(4px);-webkit-mask-image:linear-gradient(to bottom,transparent 0%,#000 7%,#000 76%,rgba(0,0,0,.92) 84%,rgba(0,0,0,.55) 92%,transparent 100%);mask-image:linear-gradient(to bottom,transparent 0%,#000 7%,#000 76%,rgba(0,0,0,.92) 84%,rgba(0,0,0,.55) 92%,transparent 100%)}.home-brand-logo::after{content:'';position:absolute;inset:-16px -24px;pointer-events:none;background:radial-gradient(ellipse at center,transparent 55%,#103e3c20 76%,#103e3c52 100%);filter:blur(8px)}.home-greeting .eyebrow{color:#a8efcf}.home-greeting h1{margin:4px 0 7px;color:#fff;font-size:clamp(29px,3.3vw,45px);line-height:1.04}.home-greeting h1 em{color:#c7ffad;font-style:normal}.home-greeting p:last-child{margin:0;color:#deefe9;font-size:15px}.home-market-card{padding:22px!important}.home-market-card .section-head{margin-bottom:14px}.home-market-card .section-head h2{margin-bottom:0}.home-market-card .home-market-grid{grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:10px}.home-market-card .market-product>button{padding:14px}.home-market-card .market-product>button strong{font-size:18px}.home-market-card .market-product>button small{font-size:12px}.home-top-actions{display:flex;align-items:center;justify-content:flex-end;gap:9px;flex-wrap:wrap}.home-compact-search{position:relative;display:flex;align-items:center;gap:7px;width:min(285px,42vw);min-width:210px;border:1px solid #c8d8d4;border-radius:11px;background:#fff;padding:0 9px;transition:border-color .18s ease,box-shadow .18s ease}.home-compact-search:focus-within{border-color:#159268;box-shadow:0 0 0 4px #15926816}.home-compact-search input{width:100%;min-height:40px;padding:7px 0;border:0;box-shadow:none!important;background:transparent;font-size:13px}.home-compact-search button{width:auto;min-width:30px;min-height:30px;padding:3px;background:transparent;color:#647586}.home-search-results{margin:13px 0 4px;padding:13px;border:1px solid #d9e5e4;border-radius:14px;background:#f6fbf9}.home-search-results:empty{display:none}.search-results-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.search-result-group{padding:14px;border:1px solid #dce7e5;border-radius:14px;background:#fff}.search-result-group h3{margin:0 0 9px;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:#617386}.search-result{width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;margin:5px 0;padding:10px 11px;border:0;border-radius:10px;background:#f4f8f7;color:#173044;text-align:left}.search-result:hover{background:#e8f6f0}.search-result strong{display:block}.search-result small{display:block;color:#6b7b8d;margin-top:2px}.owner-badge{display:inline-flex;align-items:center;padding:7px 10px;border-radius:9px;background:#edf5f2;color:#154f40;font-weight:850}.inventory-product-name{font-size:16px;color:#142b3c}
     .market-table{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.market-product{overflow:hidden;border:1px solid #dce7e4;border-radius:15px;background:#fff}.market-product>button{width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:17px;border:0;background:#fff;color:#173044;text-align:left}.market-product>button:hover{background:#edf9f4}.market-product>button strong{display:block;font-size:20px}.market-product>button small{display:block;margin-top:4px;color:#718093}.market-lots{padding:0 13px 13px}.market-lot{display:grid;grid-template-columns:1fr auto;gap:8px;padding:10px;border-top:1px solid #e3ebe9}.market-lot b{display:block}.market-lot small{display:block;color:#718093;margin-top:3px}.market-arrival-qty{color:#102d3f;font-size:15px}.home-price-history{margin:4px 13px 13px;border:1px solid #d7e5e1;border-radius:12px;background:#f5faf8;overflow:hidden}.home-price-history>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;list-style:none;color:#173044;font-size:12px;font-weight:850;text-transform:uppercase;letter-spacing:.055em;cursor:pointer;transition:background .16s ease}.home-price-history>summary::-webkit-details-marker{display:none}.home-price-history>summary:hover{background:#e9f6f1}.home-price-history>summary::after{content:'+';display:grid;place-items:center;flex:0 0 auto;width:25px;height:25px;border-radius:50%;background:#fff;color:#0d7252;font-size:18px;line-height:1}.home-price-history[open]>summary::after{content:'−'}.home-price-panel{padding:0 10px 10px}.home-price-list{display:grid;gap:8px}.home-price-row{display:grid;gap:4px;min-width:0;padding:10px;border:1px solid #e2ebe8;border-radius:10px;background:#fff;box-shadow:0 3px 10px #173b4e08}.home-price-head{display:grid;gap:2px;min-width:0}.home-price-head strong{color:#0d7252;font-size:14px;line-height:1.25;white-space:normal}.home-price-head time{color:#718093;font-size:10px;font-weight:700}.home-price-client{display:block;min-width:0;color:#1a3142;font-size:12px;line-height:1.3;white-space:normal;word-break:normal}.home-price-detail{display:block;min-width:0;color:#718093;font-size:11px;line-height:1.35;white-space:normal;word-break:normal}.pit-waste-summary{color:#a55c09!important;font-weight:850}.pit-waste-row{background:#fff8eb}.waste-badge{display:inline-flex;padding:4px 7px;border-radius:999px;background:#fff0d5;color:#9a5600;font-size:10px;font-weight:850}.stock-low{color:#a76000;font-weight:850}.stock-ended{color:#a63e31;font-weight:850}.stock-ok{color:#11704f;font-weight:850}.edit-sale{margin-top:12px;padding:14px;border:1px solid #cfe1dc;border-radius:13px;background:#f6fbf9}.edit-sale .grid{margin-top:10px}
     .pit-client-ticket{margin-top:15px;border:2px solid #d6e2df;border-radius:16px;background:#fff;overflow:hidden}.pit-client-bar{display:grid;grid-template-columns:minmax(240px,2fr) 1fr 1fr;gap:12px;padding:16px;background:#f3f8f6;border-bottom:1px solid #dce7e4}.pit-client-bar input{font-size:18px;font-weight:800}.pit-client-label-row{display:flex;align-items:center;justify-content:space-between;gap:10px}.pit-client-label-row button{width:auto;min-height:30px;padding:5px 9px;font-size:11px}.pit-line-form{display:grid;grid-template-columns:minmax(210px,2fr) .7fr .7fr .9fr 1.2fr 1.15fr auto;gap:10px;align-items:end;padding:16px}.pit-line-form button{white-space:nowrap}.pit-keyboard-hint{margin:-3px 16px 13px;padding:9px 11px;border-radius:10px;background:#eef7f3;color:#47675e;font-size:12px}.pit-keyboard-hint kbd{display:inline-block;padding:2px 6px;border:1px solid #c6d8d2;border-bottom-width:2px;border-radius:5px;background:#fff;color:#244c40;font:700 11px/1.3 system-ui}.pit-product-search-wrap{position:relative}.pit-product-results{position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:30;max-height:320px;overflow:auto;padding:7px;border:1px solid #cbdad8;border-radius:12px;background:#fff;box-shadow:0 16px 35px #10283b2b}.pit-product-results:empty{display:none}.pit-product-option{width:100%;display:flex;justify-content:space-between;align-items:center;gap:10px;margin:3px 0;padding:10px;border:0;border-radius:9px;background:#f4f8f7;color:#183044;text-align:left}.pit-product-option:hover,.pit-product-option:focus,.pit-product-option:focus-visible{background:#e6f6ef;outline:3px solid #1592683b}.pit-product-option strong,.pit-product-option small{display:block}.pit-product-option small{margin-top:2px;color:#718093}.pit-product-option>span:last-child{color:#0d7252;text-align:right;font-size:11px;font-weight:800}.pit-draft-wrap{padding:0 16px 16px}.pit-draft-table td,.pit-draft-table th{vertical-align:middle}.pit-draft-table button{width:auto;min-width:38px;padding:7px}.pit-ticket-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:15px 16px;border-top:1px solid #dce7e4;background:#fbfdfc}.pit-ticket-footer>div{display:flex;gap:8px;flex-wrap:wrap}.pit-ticket-total{font-size:20px;color:#0e7352}.vat-pill{display:inline-flex;padding:4px 7px;border-radius:999px;background:#edf3ff;color:#365d99;font-size:10px;font-weight:800}.pit-last-ticket{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:14px;padding:14px 16px;border:1px solid #aedcc9;border-radius:13px;background:#eaf8f2}.pit-last-ticket strong,.pit-last-ticket small{display:block}.pit-last-ticket small{margin-top:3px;color:#547065}.pit-last-ticket button{width:auto}.client-ticket-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}.client-ticket-card{padding:15px;border:1px solid #d9e5e2;border-radius:14px;background:#fbfdfc}.client-ticket-card h3{margin:2px 0 5px}.client-ticket-card p{margin:4px 0}.client-ticket-card button{width:100%;margin-top:10px}.danger-zone{border-color:#efb6ad!important;background:linear-gradient(135deg,#fffafa,#fff4f1)!important}.danger-zone button{background:#b43227}.danger-zone button:hover{background:#92271f}
+    .carry-forward-list{display:grid;gap:9px;margin:15px 0}.carry-forward-row{display:grid;grid-template-columns:minmax(220px,1fr) auto;align-items:center;gap:14px;padding:13px 15px;border:1px solid #d8e5e1;border-radius:13px;background:#f8fcfa}.carry-forward-row strong,.carry-forward-row small{display:block}.carry-forward-row small{margin-top:3px;color:#718093}.carry-toggle{display:flex;align-items:center;gap:9px;margin:0;padding:8px 10px;border:1px solid #cddbd7;border-radius:10px;background:#fff;color:#234638;font-weight:800;cursor:pointer}.carry-toggle input{width:19px;height:19px;min-height:0;accent-color:#13845e}.carico-card{border-color:#c9dfd7!important;background:linear-gradient(145deg,#fff,#f1faf6)!important}.carico-check{display:flex;justify-content:flex-end;margin-top:12px;color:#126f51;font-size:14px;font-weight:850}.owner-action{width:auto!important;padding:8px 11px!important;background:#b43227!important;color:#fff!important}.iva-choice{display:flex;align-items:center;gap:9px;margin:0;padding:11px;border:1px solid #cddbd7;border-radius:10px;background:#fff;font-weight:750}.iva-choice input{width:18px;height:18px;min-height:0;accent-color:#13845e}
     .return-modal-backdrop{position:fixed;inset:0;z-index:2500;display:grid;place-items:center;padding:20px;background:#071923a8;backdrop-filter:blur(5px)}.return-modal{width:min(720px,100%);max-height:92dvh;overflow:auto;padding:24px;border:1px solid #ffffff78;border-radius:20px;background:#fff;box-shadow:0 28px 90px #06172180}.return-modal h2{margin:3px 0 8px}.return-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:17px 0;padding:14px;border:1px solid #cce2db;border-radius:14px;background:#f1faf6}.return-summary div{min-width:0}.return-summary small,.return-summary b{display:block}.return-summary small{margin-bottom:3px;color:#68798b;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}.return-summary b{overflow:hidden;text-overflow:ellipsis}.return-preview{margin:14px 0;padding:13px;border-radius:12px;background:#eaf8f2;color:#145c47;font-weight:750}.return-preview.error{background:#fff0ed;color:#a23e30}.return-actions{display:flex;justify-content:flex-end;gap:9px;flex-wrap:wrap;margin-top:16px}.return-actions button{width:auto}.return-all{margin-top:8px;width:auto!important}.return-history{margin:10px 0;padding-left:20px;color:#5f7082;font-size:13px}
     @media(max-width:900px){
       body.eurofrutta-shell{padding-left:0;overflow-x:hidden}
@@ -158,6 +160,7 @@ function ensureAppStyles() {
       .variant-row{grid-template-columns:1fr 1fr}.variant-row>div:first-child{grid-column:1/-1}.variant-row button{width:100%}
       .pit-client-bar,.pit-line-form{grid-template-columns:1fr}.pit-line-form>div:first-child{grid-column:1/-1}.pit-product-results{position:static;margin-top:6px;max-height:240px}.pit-ticket-footer,.pit-last-ticket{align-items:stretch;flex-direction:column}.pit-ticket-footer>div,.pit-ticket-footer button,.pit-last-ticket button{width:100%}.return-summary{grid-template-columns:1fr}.return-modal{padding:18px}.return-actions{flex-direction:column-reverse}.return-actions button{width:100%}.presence-user{align-items:flex-start}.presence-times{text-align:right}
       .home-welcome{grid-template-columns:1fr;gap:12px;padding:20px}.home-brand-logo{min-height:0;padding:0}.home-brand-logo img{max-width:360px;max-height:108px}.home-greeting{text-align:center}.home-market-card .home-market-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.home-top-actions{width:100%;justify-content:stretch}.home-compact-search{width:100%;min-width:0}.home-top-actions>button{width:100%}
+      .carry-forward-row{grid-template-columns:1fr}.carry-toggle,.carico-check{justify-content:flex-start}
     }
     @media(max-width:480px){body.eurofrutta-shell #nav{width:88vw}.ticket-card{padding:14px}.price-choice{grid-template-columns:1fr}.pit-product-row strong{font-size:16px}.home-welcome{padding:16px}.home-brand-logo img{max-height:86px}.home-greeting h1{font-size:29px}.home-market-card{padding:15px!important}.home-market-card .home-market-grid{grid-template-columns:1fr}.presence-user{display:grid;gap:8px}.presence-times{text-align:left;padding-left:23px}}
   `;
@@ -502,6 +505,17 @@ function formatDateKey(dateKey) {
   return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : String(dateKey || '');
 }
 
+function shiftDateKey(dateKey, days = 1) {
+  const parts = String(dateKey || '').split('-').map(Number);
+  if (parts.length !== 3 || parts.some((part) => !Number.isFinite(part))) return today();
+  const date = new Date(parts[0], parts[1] - 1, parts[2] + days, 12, 0, 0);
+  return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-');
+}
+
+function ticketDateKey(movement) {
+  return String(movement?.biglietto_date || movement?.dateKey || '');
+}
+
 function displayDateOnly(value, dateKey = '') {
   if (dateKey) return formatDateKey(dateKey);
   const text = String(value || '').trim();
@@ -540,6 +554,10 @@ function dayGreeting(date = new Date()) {
 function isAdmin(user = signedUser) {
   const email = userEmail(user);
   return email === OWNER_EMAIL || currentAccess?.ruolo === 'amministratore';
+}
+
+function isOwner(user = signedUser) {
+  return userEmail(user) === OWNER_EMAIL;
 }
 
 function isAuthorized(user = signedUser) {
@@ -1524,15 +1542,41 @@ function dailyClientTickets(dateKey) {
     .sort((left, right) => left.cliente.nome.localeCompare(right.cliente.nome, 'it'));
 }
 
+function caricoRows(tickets) {
+  return tickets.map((ticket) => ({
+    id: ticket.id,
+    articolo: `${ticket.prodotto} · ${ticket.proprietario}`,
+    vendita: roundMoney(ticket.gross || 0),
+    iva: roundMoney(ticket.ivaDifference || 0),
+    base: roundMoney(ticket.baseGross ?? ticket.gross ?? 0),
+    provvigione: roundMoney(ticket.deduction || 0),
+    netto: roundMoney(ticket.net || 0),
+  }));
+}
+
+function caricoTotals(rows) {
+  return rows.reduce((totals, row) => ({
+    vendita: roundMoney(totals.vendita + row.vendita),
+    iva: roundMoney(totals.iva + row.iva),
+    base: roundMoney(totals.base + row.base),
+    provvigione: roundMoney(totals.provvigione + row.provvigione),
+    netto: roundMoney(totals.netto + row.netto),
+  }), { vendita: 0, iva: 0, base: 0, provvigione: 0, netto: 0 });
+}
+
 function biglietti() {
   const date = ticketsDate || today();
+  const tomorrow = shiftDateKey(date, 1);
   const clientTickets = dailyClientTickets(date);
+  const candidates = dailyTicketData(date);
   const tickets = (Array.isArray(db.biglietti) ? db.biglietti : [])
     .filter((ticket) => ticket.dateKey === date)
     .slice()
     .sort((a, b) => String(a.prodotto).localeCompare(String(b.prodotto), 'it'));
   const gross = tickets.reduce((sum, ticket) => sum + Number(ticket.gross || 0), 0);
   const net = tickets.reduce((sum, ticket) => sum + Number(ticket.net || 0), 0);
+  const loadRows = caricoRows(tickets);
+  const loadTotals = caricoTotals(loadRows);
 
   return `
     <section class="pit-simple-title">
@@ -1546,16 +1590,34 @@ function biglietti() {
       </div>
       ${clientTickets.length ? `<div class="client-ticket-grid">${clientTickets.map((ticket) => `<article class="client-ticket-card"><p class="eyebrow">CLIENTE</p><h3>${esc(ticket.cliente.nome)}</h3><p>${ticket.rows.length} ${ticket.rows.length === 1 ? 'articolo registrato' : 'articoli registrati'}</p><p><b>Totale ${eur(ticket.totale)}</b></p><button type="button" data-print-client-ticket="${ticket.clientId}" data-ticket-date="${date}">Visualizza / stampa</button></article>`).join('')}</div>` : '<p class="empty">Nessuna vendita cliente registrata in questa giornata.</p>'}
     </section>
-    <section class="card">
+    <form id="ticket-carry-form" class="card">
       <div class="section-head">
-        <div><p class="eyebrow">BIGLIETTI MERCE / FORNITORI · ${esc(formatDateKey(date))}</p><h2>${tickets.length} ${tickets.length === 1 ? 'biglietto' : 'biglietti'} salvati</h2></div>
+        <div><p class="eyebrow">BIGLIETTI MERCE / FORNITORI · ${esc(formatDateKey(date))}</p><h2>${tickets.length} ${tickets.length === 1 ? 'biglietto' : 'biglietti'} salvati</h2><p class="muted">Spunta soltanto gli articoli che non vuoi chiudere oggi: verranno riportati al ${esc(formatDateKey(tomorrow))}.</p></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button type="button" data-generate-day="${date}">Genera / aggiorna</button>
+          <button type="submit" data-generate-day="${date}">Genera / aggiorna</button>
           <button type="button" class="ghost" data-print-day="${date}" ${tickets.length ? '' : 'disabled'}>Visualizza e stampa tutti</button>
         </div>
       </div>
+      ${candidates.length ? `<div class="carry-forward-list">${candidates.map((candidate) => {
+        const quantity = [
+          candidate.soldTodayPackages ? `${formatQty(candidate.soldTodayPackages)} colli` : '',
+          candidate.soldTodayKg ? `${formatQty(candidate.soldTodayKg)} kg` : '',
+        ].filter(Boolean).join(' · ') || 'Solo lavorati / scartati';
+        return `<label class="carry-forward-row"><span><strong>${esc(candidate.product)} · ${esc(candidate.owner)}</strong><small>${esc(quantity)} · vendite ${eur(candidate.gross)}</small></span><span class="carry-toggle"><input type="checkbox" name="riporta" value="${esc(candidate.groupId)}"> Riporta a domani</span></label>`;
+      }).join('')}</div>` : '<p class="empty">Non ci sono articoli da chiudere o riportare per questa data.</p>'}
       <p id="ticket-msg"></p>
-      ${tickets.length ? `<p class="notice">Totale lordo ${eur(gross)} · Totale netto ${eur(net)}. I biglietti restano salvati e puoi riaprirli quando vuoi.</p>` : '<p class="empty">Non ci sono ancora biglietti per questa data. Premi “Genera / aggiorna”.</p>'}
+      ${tickets.length ? `<p class="notice">Totale vendite ${eur(gross)} · Totale netto ${eur(net)}. I biglietti restano salvati e puoi riaprirli quando vuoi.</p>` : '<p class="empty">Non ci sono ancora biglietti per questa data. Premi “Genera / aggiorna”.</p>'}
+    </form>
+    <section class="card carico-card">
+      <div class="section-head">
+        <div><p class="eyebrow">CARICO · ${esc(formatDateKey(date))}</p><h2>Fatturato, IVA e provvigioni</h2><p class="muted">Una riga per ogni biglietto generato. L’IVA separata compare soltanto nei padronali o quando scegli tu di separarla.</p></div>
+        <button type="button" class="ghost" data-print-carico="${date}" ${loadRows.length ? '' : 'disabled'}>Visualizza / stampa Carico</button>
+      </div>
+      ${loadRows.length ? `<div class="table-scroll"><table>
+        <tr><th>Articolo</th><th>Totale vendite</th><th>IVA separata</th><th>Base biglietto</th><th>Provvigione</th><th>Netto</th></tr>
+        ${loadRows.map((row) => `<tr><td><b>${esc(row.articolo)}</b></td><td>${eur(row.vendita)}</td><td>${row.iva ? eur(row.iva) : '—'}</td><td>${eur(row.base)}</td><td>${row.provvigione ? eur(row.provvigione) : '—'}</td><td><b>${eur(row.netto)}</b></td></tr>`).join('')}
+        <tr><th>TOTALI</th><th>${eur(loadTotals.vendita)}</th><th>${eur(loadTotals.iva)}</th><th>${eur(loadTotals.base)}</th><th>${eur(loadTotals.provvigione)}</th><th>${eur(loadTotals.netto)}</th></tr>
+      </table></div><div class="carico-check">${eur(loadTotals.vendita)} − ${eur(loadTotals.iva)} − ${eur(loadTotals.provvigione)} = ${eur(loadTotals.netto)}</div>` : '<p class="empty">Il Carico apparirà qui appena generi i biglietti della giornata.</p>'}
     </section>
     <section class="ticket-grid">${tickets.map((ticket) => {
       const printRows = ticketPrintRows(ticket);
@@ -1570,14 +1632,14 @@ function biglietti() {
         <p class="muted">${esc(ticketScaricoLabel(ticket))} · ${ticketQuantityTitle(ticket)}${ticket.qualita?.length ? ` · ${ticket.qualita.map(esc).join(' / ')}` : ''}</p>
         <div class="table-scroll"><table>
           <tr><th>Colli</th><th>Descrizione</th><th>Peso</th><th>Prezzo</th><th>Totale</th></tr>
-          ${printRows.map((sale) => `<tr class="${sale.annullato ? 'returned' : ''}"><td>${Number(sale.colli || 0) ? formatQty(sale.colli) : '—'}</td><td><b>${esc(sale.descrizione || 'Standard')}</b>${sale.annullato ? '<br><span class="return-badge">RESO</span>' : ''}${sale.iva_percentuale ? `<br><small>${esc(vatModeLabel(sale.iva_modalita, sale.iva_percentuale))}: ${eur(sale.iva)}</small>` : ''}</td><td>${Number(sale.peso || 0) ? `${formatQty(sale.peso)} kg` : '—'}</td><td>${sale.tipo === 'scarto' ? '—' : `${eur(sale.prezzo)} / ${sale.unita_prezzo === 'kg' ? 'kg' : 'collo'}`}</td><td><b>${sale.tipo === 'scarto' ? '—' : eur(sale.totale)}</b></td></tr>`).join('') || '<tr><td colspan="5" class="empty">Nessuna riga nel biglietto.</td></tr>'}
+          ${printRows.map((sale) => `<tr class="${sale.annullato ? 'returned' : ''}"><td>${Number(sale.colli || 0) ? formatQty(sale.colli) : '—'}</td><td><b>${esc(sale.descrizione || 'Standard')}</b>${sale.annullato ? '<br><span class="return-badge">RESO</span>' : ''}${sale.iva_percentuale ? `<br><small>${esc(vatModeLabel(sale.iva_modalita, sale.iva_percentuale))}: ${eur(sale.iva)}</small>` : ''}</td><td>${Number(sale.peso || 0) ? `${formatQty(sale.peso)} kg` : '—'}</td><td>${sale.tipo === 'scarto' ? '—' : `${eur(sale.prezzo)} / ${sale.unita_prezzo === 'kg' ? 'kg' : 'collo'}`}</td><td><b>${sale.tipo === 'scarto' ? '—' : eur(ticketRowTotal(ticket, sale))}</b></td></tr>`).join('') || '<tr><td colspan="5" class="empty">Nessuna riga nel biglietto.</td></tr>'}
         </table></div>
         <p><b>Rimanenza:</b> ${ticket.hasPackageData ? stockState(ticket.remainingPackages, 'colli') : ''}${ticket.hasWeightData && ticket.hasPackageData ? ' · ' : ''}${ticket.hasWeightData ? stockState(ticket.remainingKg, 'kg') : ''}</p>
-        <p><b>Lordo ${eur(ticket.gross)}</b> · ${Number(ticket.commissionPercent ?? 10) ? `Trattenuta ${Number(ticket.commissionPercent ?? 10)}% arrotondata ${eur(ticket.deduction)}` : 'Nessuna trattenuta'} · <b>Netto ${eur(ticket.net)}</b></p>
+        <p><b>Vendite Pitazzo ${eur(ticket.gross)}</b>${Number(ticket.ivaDifference || 0) ? ` · IVA separata ${eur(ticket.ivaDifference)} · Base ${eur(ticket.baseGross)}` : ''} · ${Number(ticket.commissionPercent ?? 10) ? `Trattenuta ${Number(ticket.commissionPercent ?? 10)}% arrotondata ${eur(ticket.deduction)}` : 'Nessuna trattenuta'} · <b>Netto ${eur(ticket.net)}</b></p>
         <div class="ticket-actions">
           <button type="button" data-print-ticket="${ticket.id}">Visualizza / stampa PDF</button>
           <button type="button" class="ghost" data-share-ticket="${ticket.id}">Condividi</button>
-          <button type="button" class="ghost" data-edit-ticket="${ticket.id}">Tipo e trattenuta</button>
+          <button type="button" class="ghost" data-edit-ticket="${ticket.id}">Tipo, IVA e trattenuta</button>
         </div>
         ${editingTicketId === ticket.id ? ticketSettingsForm(ticket) : ''}
         <details class="edit-sale" ${openedSale ? 'open' : ''}>
@@ -1639,6 +1701,8 @@ function editSale(form) {
 
   const amounts = saleAmounts(price, priceUnit, packages, weight, vatMode);
   const oldDate = sale.dateKey;
+  const oldTicketDate = ticketDateKey(sale);
+  const wasCarriedForward = oldTicketDate && oldTicketDate !== oldDate;
   Object.assign(sale, {
     dateKey: String(data.get('data_movimento') || today()), data: formatDateKey(String(data.get('data_movimento') || today())),
     gruppo_id: lotGroupId(newLot), lotto_id: newLot.id, prodotto_id: newLot.prodotto_id,
@@ -1648,10 +1712,11 @@ function editSale(form) {
     iva_percentuale: amounts.vatPercent, iva: amounts.vat, totale: amounts.total,
     modificatoIl: stamp(), modificatoDa: operatorName(),
   });
+  if (!wasCarriedForward) sale.biglietto_date = sale.dateKey;
   const linkedPayment = (db.pagamenti || []).find((payment) => payment.movimento_id === sale.id && !payment.annullato);
   if (linkedPayment) Object.assign(linkedPayment, { cliente_id: sale.cliente_id, dateKey: sale.dateKey, data: sale.data, importo: amounts.total });
   audit('Vendita modificata', `${name('prodotti', sale.prodotto_id)} · ${partitaLabel(newLot)} · ${name('clienti', sale.cliente_id)} · ${eur(amounts.total)}`);
-  return [...new Set([oldDate, sale.dateKey])];
+  return [...new Set([oldDate, sale.dateKey, oldTicketDate, ticketDateKey(sale)].filter(Boolean))];
 }
 
 async function saveAccessConfig() {
@@ -1660,6 +1725,25 @@ async function saveAccessConfig() {
     amministratori: [...new Set(accessConfig.amministratori.map((email) => String(email).toLowerCase()))],
   };
   await setDoc(doc(store, 'eurofrutta', 'config'), accessConfig);
+}
+
+async function removeAccessAccount(emailValue) {
+  if (!isOwner() || !adminSessionUnlocked) throw new Error('Solo il proprietario assoluto può rimuovere un accesso.');
+  const email = String(emailValue || '').trim().toLowerCase();
+  if (!email || email === OWNER_EMAIL) throw new Error('Il proprietario assoluto non può essere eliminato.');
+  const code = window.prompt(`Inserisci il codice amministrazione per rimuovere ${email}`);
+  if (code === null) return false;
+  if (await sha256(code) !== ADMIN_CODE_HASH) throw new Error('Codice amministrazione errato.');
+  if (!window.confirm(`Vuoi davvero togliere a ${email} l’accesso a Eurofrutta?`)) return false;
+
+  const wasAdmin = accessConfig.amministratori.includes(email);
+  accessConfig.membri = accessConfig.membri.filter((item) => item !== email);
+  accessConfig.amministratori = accessConfig.amministratori.filter((item) => item !== email);
+  await deleteDoc(doc(store, 'accessi', email));
+  await saveAccessConfig();
+  audit(wasAdmin ? 'Amministratore rimosso' : 'Operatore rimosso', email);
+  await save();
+  return true;
 }
 
 function registro() {
@@ -1677,7 +1761,7 @@ function registro() {
     <section class="card">
       <div class="section-head">
         <div><p class="eyebrow">AREA PROTETTA</p><h2>Persone e amministratori</h2></div>
-        <b>♛ ${esc(operatorName())} · Amministratore</b>
+        <b>♛ ${esc(operatorName())} · ${isOwner() ? 'Proprietario assoluto' : 'Amministratore'}</b>
       </div>
       <p class="muted">Aggiungi prima l’email Google della persona. Al primo accesso sceglierà il proprio nome utente fisso e vedrà gli stessi dati condivisi.</p>
       <div class="grid">
@@ -1694,9 +1778,9 @@ function registro() {
       </div>
       <p id="access-msg"></p>
       <div class="table-scroll"><table>
-        <tr><th>Account Google autorizzato</th><th>Ruolo</th></tr>
-        <tr><td>${OWNER_EMAIL}</td><td><b>♛ Proprietario</b></td></tr>
-        ${authorized.map((email) => `<tr><td>${esc(email)}</td><td>${accessConfig.amministratori.includes(email) ? '<b>♛ Amministratore</b>' : 'Operatore'}</td></tr>`).join('')}
+        <tr><th>Account Google autorizzato</th><th>Ruolo</th><th>Gestione</th></tr>
+        <tr><td>${OWNER_EMAIL}</td><td><b>♛ Proprietario assoluto</b></td><td>Protetto</td></tr>
+        ${authorized.map((email) => `<tr><td>${esc(email)}</td><td>${accessConfig.amministratori.includes(email) ? '<b>♛ Amministratore</b>' : 'Operatore'}</td><td>${isOwner() ? `<button type="button" class="owner-action" data-remove-access="${esc(email)}">Rimuovi accesso</button>` : 'Solo il proprietario'}</td></tr>`).join('')}
       </table></div>
     </section>
     ${userEmail() === OWNER_EMAIL ? `<section class="card danger-zone">
@@ -1740,7 +1824,7 @@ function report() {
 
 function dailyTicketData(dateKey) {
   const dayRows = db.movimenti.filter((movement) => (
-    ['uscita', 'scarto'].includes(movement.tipo) && movement.dateKey === dateKey
+    ['uscita', 'scarto'].includes(movement.tipo) && ticketDateKey(movement) === dateKey
   ));
   const groups = new Map();
 
@@ -1762,10 +1846,12 @@ function dailyTicketData(dateKey) {
     };
     const lots = lotsInGroup(key).length ? lotsInGroup(key) : [firstLot];
     const lotIds = new Set(lots.map((lot) => lot.id));
+    const currentRowIds = new Set(rows.map((movement) => movement.id));
     const previousRows = db.movimenti.filter((movement) => (
       ['uscita', 'scarto'].includes(movement.tipo)
       && lotIds.has(movement.lotto_id)
       && movement.dateKey < dateKey
+      && !currentRowIds.has(movement.id)
       && !movement.annullato
     ));
     const activeRows = rows.filter((movement) => !movement.annullato);
@@ -1784,8 +1870,21 @@ function dailyTicketData(dateKey) {
     const startPackages = recordedInitialPackages > 0 ? recordedInitialPackages - usedBeforePackages : soldTodayPackages + wasteTodayPackages;
     const gross = roundMoney(activeSales.reduce((sum, movement) => sum + Number(movement.totale || 0), 0));
     const commissionPercent = [0, 10, 12].includes(Number(firstLot.provvigione_percentuale)) ? Number(firstLot.provvigione_percentuale) : 10;
-    const net = commissionPercent ? roundMoney(Math.round((gross * (1 - commissionPercent / 100) + Number.EPSILON) * 2) / 2) : gross;
-    const deduction = roundMoney(gross - net);
+    const separateIva = commissionPercent === 12 || Boolean(firstLot.separa_iva);
+    const taxableTotal = roundMoney(activeSales.reduce((sum, movement) => sum + Number(movement.imponibile ?? movement.totale ?? 0), 0));
+    const baseGross = separateIva ? taxableTotal : gross;
+    const ivaDifference = separateIva ? roundMoney(gross - baseGross) : 0;
+    let deduction = 0;
+    let net = baseGross;
+    if (commissionPercent) {
+      if (separateIva) {
+        deduction = roundMoney(Math.round(baseGross * commissionPercent / 100));
+        net = roundMoney(baseGross - deduction);
+      } else {
+        net = roundMoney(Math.round((baseGross * (1 - commissionPercent / 100) + Number.EPSILON) * 2) / 2);
+        deduction = roundMoney(baseGross - net);
+      }
+    }
 
     return {
       lot: firstLot,
@@ -1807,11 +1906,40 @@ function dailyTicketData(dateKey) {
       hasPackageData: recordedInitialPackages > 0 || soldTodayPackages > 0 || wasteTodayPackages > 0,
       hasWeightData: recordedInitialKg > 0 || soldTodayKg > 0 || wasteTodayKg > 0,
       gross,
+      baseGross,
+      ivaDifference,
+      separateIva,
       commissionPercent,
       deduction,
       net,
     };
   });
+}
+
+function movementTicketGroupId(movement) {
+  const lot = lotById(movement?.lotto_id);
+  return movement?.gruppo_id || lotGroupId(lot) || movement?.lotto_id || `${movement?.prodotto_id || 'prodotto'}-${movement?.proprietario || 'senza-provenienza'}`;
+}
+
+function applyCarryForward(dateKey, groupIds) {
+  const selected = new Set(groupIds || []);
+  const tomorrow = shiftDateKey(dateKey, 1);
+  let moved = 0;
+  db.movimenti.forEach((movement) => {
+    if (!['uscita', 'scarto'].includes(movement.tipo) || ticketDateKey(movement) !== dateKey) return;
+    if (selected.has(movementTicketGroupId(movement))) {
+      movement.biglietto_date = tomorrow;
+      movement.riportato_da = movement.riportato_da || dateKey;
+      movement.riportatoIl = stamp();
+      movement.riportatoDa = operatorName();
+      moved += 1;
+    } else {
+      movement.biglietto_date = dateKey;
+    }
+  });
+  db.biglietti = db.biglietti.filter((ticket) => ticket.dateKey !== dateKey && (!moved || ticket.dateKey !== tomorrow));
+  if (moved) audit('Articoli riportati a domani', `${formatDateKey(dateKey)} → ${formatDateKey(tomorrow)} · ${selected.size} articoli · ${moved} righe`);
+  return { tomorrow, moved };
 }
 
 function createTicketRecords(dateKey) {
@@ -1840,6 +1968,9 @@ function createTicketRecords(dateKey) {
     hasPackageData: ticket.hasPackageData,
     hasWeightData: ticket.hasWeightData,
     gross: ticket.gross,
+    baseGross: ticket.baseGross,
+    ivaDifference: ticket.ivaDifference,
+    separateIva: ticket.separateIva,
     commissionPercent: ticket.commissionPercent,
     partita: partitaLabel(ticket.lot),
     deduction: ticket.deduction,
@@ -1919,12 +2050,16 @@ function ticketPrintRows(ticket) {
   }));
 }
 
+function ticketRowTotal(ticket, row) {
+  return Number(ticket?.separateIva ? (row?.imponibile ?? row?.totale ?? 0) : (row?.totale ?? 0));
+}
+
 function ticketLinkedSales(ticket) {
   const groupId = ticket.gruppo_id || lotGroupId(lotById(ticket.lotto_id));
   const rowIds = new Set((ticket.righe || []).map((row) => row.movimento_id || row.id).filter(Boolean));
   return db.movimenti.filter((movement) => (
     movement.tipo === 'uscita'
-    && movement.dateKey === ticket.dateKey
+    && ticketDateKey(movement) === ticket.dateKey
     && (rowIds.has(movement.id) || (groupId && (movement.gruppo_id || lotGroupId(lotById(movement.lotto_id))) === groupId))
   ));
 }
@@ -1947,8 +2082,8 @@ function ticketScaricoLabel(ticket) {
 function ticketSettingsForm(ticket) {
   const percentage = Number(ticket.commissionPercent ?? 10);
   return `<form id="ticket-settings-form" class="edit-sale" data-ticket-id="${ticket.id}">
-    <div class="section-head"><div><p class="eyebrow">TIPO BIGLIETTO</p><h3>Modifica trattenuta</h3><p class="muted">La scelta viene salvata anche nell’arrivo collegato.</p></div><button type="button" class="ghost" data-cancel-ticket-edit>Annulla</button></div>
-    <div class="grid"><div><label>Tipo</label><select name="provvigione_percentuale"><option value="0" ${percentage === 0 ? 'selected' : ''}>Normale · nessuna trattenuta</option><option value="10" ${percentage === 10 ? 'selected' : ''}>Normale · trattenuta 10%</option><option value="12" ${percentage === 12 ? 'selected' : ''}>Padronale · provvigione 12%</option></select></div><div><label>&nbsp;</label><button>Salva e ricalcola</button></div></div>
+    <div class="section-head"><div><p class="eyebrow">TIPO BIGLIETTO</p><h3>Modifica IVA e trattenuta</h3><p class="muted">La scelta viene salvata anche nell’arrivo collegato. Nei padronali l’IVA è sempre separata e il 12% viene arrotondato all’euro.</p></div><button type="button" class="ghost" data-cancel-ticket-edit>Annulla</button></div>
+    <div class="grid"><div><label>Tipo</label><select name="provvigione_percentuale"><option value="0" ${percentage === 0 ? 'selected' : ''}>Normale · nessuna trattenuta</option><option value="10" ${percentage === 10 ? 'selected' : ''}>Normale · trattenuta 10%</option><option value="12" ${percentage === 12 ? 'selected' : ''}>Padronale · provvigione 12%</option></select></div><label class="iva-choice"><input type="checkbox" name="separa_iva" ${ticket.separateIva ? 'checked' : ''}> Separa l’IVA nel Carico e calcola la provvigione sulla base senza IVA</label><div><label>&nbsp;</label><button>Salva e ricalcola</button></div></div>
     <p id="ticket-settings-msg"></p>
   </form>`;
 }
@@ -1956,7 +2091,9 @@ function ticketSettingsForm(ticket) {
 function updateTicketSettings(form) {
   const ticket = db.biglietti.find((item) => item.id === form.dataset.ticketId);
   if (!ticket) throw new Error('Biglietto non trovato.');
-  const percentage = Number(new FormData(form).get('provvigione_percentuale'));
+  const formData = new FormData(form);
+  const percentage = Number(formData.get('provvigione_percentuale'));
+  const separateIva = percentage === 12 || formData.has('separa_iva');
   if (![0, 10, 12].includes(percentage)) throw new Error('Scegli 0%, 10% oppure 12%.');
   const groupId = ticket.gruppo_id || lotGroupId(lotById(ticket.lotto_id));
   let lots = groupId ? lotsInGroup(groupId) : [];
@@ -1964,16 +2101,18 @@ function updateTicketSettings(form) {
   lots.forEach((lot) => {
     lot.provvigione_percentuale = percentage;
     lot.conto_commissione = percentage === 12;
+    lot.separa_iva = separateIva;
     lot.modificatoIl = stamp();
     lot.modificatoDa = operatorName();
   });
   ticketLinkedSales(ticket).forEach((sale) => {
     sale.provvigione_percentuale = percentage;
+    sale.separa_iva = separateIva;
   });
   const dateKey = ticket.dateKey;
   db.biglietti = db.biglietti.filter((item) => item.dateKey !== dateKey);
   createTicketRecords(dateKey);
-  audit('Tipo biglietto modificato', `${ticket.prodotto} · ${ticket.proprietario} · ${ticketTypeLabel({ commissionPercent: percentage })}`);
+  audit('Tipo biglietto modificato', `${ticket.prodotto} · ${ticket.proprietario} · ${ticketTypeLabel({ commissionPercent: percentage })}${separateIva ? ' · IVA separata' : ''}`);
   return dateKey;
 }
 
@@ -1995,14 +2134,15 @@ function openTicketPreview(tickets) {
           <td>${esc(sale.descrizione || 'Standard')}${sale.annullato ? '<br><b class="returned-label">RESO — IMPORTO ANNULLATO</b>' : ''}${sale.iva_percentuale ? `<br><small>${esc(vatModeLabel(sale.iva_modalita, sale.iva_percentuale))}</small>` : ''}</td>
           <td>${Number(sale.peso || 0) ? `${formatQty(sale.peso)} kg` : '—'}</td>
           <td>${sale.tipo === 'scarto' ? '—' : `${eur(sale.prezzo)} / ${sale.unita_prezzo === 'kg' ? 'kg' : 'collo'}`}</td>
-          <td><b>${sale.tipo === 'scarto' ? '—' : eur(sale.totale)}</b></td>
+          <td><b>${sale.tipo === 'scarto' ? '—' : eur(ticketRowTotal(ticket, sale))}</b></td>
         </tr>`).join('')}</tbody>
       </table>
       <div class="totals">
         <div class="remaining"><span>VENDUTO</span><b>${ticket.hasPackageData ? `${formatQty(ticket.soldTodayPackages)} colli` : `${formatQty(ticket.soldTodayKg)} kg`}</b><small>${ticket.hasWeightData && ticket.hasPackageData ? `${formatQty(ticket.soldTodayKg)} kg` : ''}</small></div>
         <div class="remaining"><span>RIMANENZA</span><b>${ticket.hasPackageData ? stockState(ticket.remainingPackages, 'colli') : stockState(ticket.remainingKg, 'kg')}</b><small>${ticket.hasWeightData && ticket.hasPackageData ? stockState(ticket.remainingKg, 'kg') : ''}</small></div>
         <dl>
-          <dt>Totale lordo</dt><dd>${eur(ticket.gross)}</dd>
+          <dt>Totale vendite</dt><dd>${eur(ticket.gross)}</dd>
+          ${Number(ticket.ivaDifference || 0) ? `<dt>IVA separata</dt><dd>− ${eur(ticket.ivaDifference)}</dd><dt>Base biglietto</dt><dd>${eur(ticket.baseGross)}</dd>` : ''}
           <dt>${Number(ticket.commissionPercent ?? 10) ? `${Number(ticket.commissionPercent ?? 10)}% arrotondato` : 'Nessuna trattenuta'}</dt><dd>− ${eur(ticket.deduction)}</dd>
           <dt class="net">TOTALE NETTO</dt><dd class="net">${eur(ticket.net)}</dd>
         </dl>
@@ -2025,6 +2165,29 @@ function openTicketPreview(tickets) {
   preview.document.close();
   preview.focus();
   return tickets.length;
+}
+
+function openCaricoPreview(dateKey, tickets) {
+  const rows = caricoRows(tickets);
+  if (!rows.length) throw new Error('Non ci sono righe nel Carico per questa giornata.');
+  const totals = caricoTotals(rows);
+  const preview = window.open('', '_blank');
+  if (!preview) throw new Error('Il browser ha bloccato la finestra. Consenti i popup e riprova.');
+  preview.document.open();
+  preview.document.write(`<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Carico Eurofrutta ${esc(formatDateKey(dateKey))}</title><style>
+    @page{size:A4 portrait;margin:12mm}*{box-sizing:border-box}body{margin:0;background:#eef3f1;color:#162b3b;font-family:Arial,sans-serif}.toolbar{position:sticky;top:0;z-index:2;display:flex;justify-content:center;gap:10px;padding:14px;background:#15354b}.toolbar button{border:0;border-radius:9px;padding:11px 18px;font-weight:800;cursor:pointer}.toolbar .print{background:#2fb579;color:#fff}.sheet{width:210mm;min-height:297mm;margin:18px auto;padding:16mm;background:#fff;box-shadow:0 8px 30px #10263824}.head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;padding-bottom:10px;border-bottom:3px solid #173b4d}.eyebrow{margin:0;color:#17805c;font-size:11px;font-weight:900;letter-spacing:.16em}.head h1{margin:4px 0 0;font-size:30px}.date{text-align:right;font-weight:800}table{width:100%;margin-top:22px;border-collapse:collapse;font-size:12px}th,td{border:1px solid #aab9b5;padding:9px 7px;text-align:right;vertical-align:top}th{background:#edf4f1;font-size:10px;text-transform:uppercase;letter-spacing:.05em}th:first-child,td:first-child{text-align:left}.totals th{background:#173b4d;color:#fff}.formula{margin:18px 0 0 auto;padding:13px 16px;border:2px solid #159268;border-radius:12px;background:#eef9f4;text-align:right;font-size:17px;font-weight:900}.note{margin-top:18px;color:#657687;font-size:11px}@media(max-width:760px){.sheet{width:100%;min-height:0;margin:0;padding:18px}.head{display:grid}.date{text-align:left}.scroll{overflow-x:auto}table{min-width:760px}.formula{text-align:left;font-size:14px}}@media print{body{background:#fff}.toolbar{display:none}.sheet{width:auto;min-height:0;margin:0;padding:0;box-shadow:none}}
+  </style></head><body><div class="toolbar"><button class="print" onclick="window.print()">Stampa / Salva PDF</button><button onclick="window.close()">Chiudi</button></div><main class="sheet">
+    <header class="head"><div><p class="eyebrow">EUROFRUTTA</p><h1>Carico giornaliero</h1></div><div class="date">${esc(formatDateKey(dateKey))}</div></header>
+    <div class="scroll"><table><thead><tr><th>Articolo</th><th>Totale vendite</th><th>IVA separata</th><th>Base biglietto</th><th>Provvigione</th><th>Netto</th></tr></thead><tbody>
+      ${rows.map((row) => `<tr><td><b>${esc(row.articolo)}</b></td><td>${eur(row.vendita)}</td><td>${row.iva ? eur(row.iva) : '—'}</td><td>${eur(row.base)}</td><td>${row.provvigione ? eur(row.provvigione) : '—'}</td><td><b>${eur(row.netto)}</b></td></tr>`).join('')}
+      <tr class="totals"><th>TOTALI</th><th>${eur(totals.vendita)}</th><th>${eur(totals.iva)}</th><th>${eur(totals.base)}</th><th>${eur(totals.provvigione)}</th><th>${eur(totals.netto)}</th></tr>
+    </tbody></table></div>
+    <div class="formula">${eur(totals.vendita)} − ${eur(totals.iva)} − ${eur(totals.provvigione)} = ${eur(totals.netto)}</div>
+    <p class="note">L’IVA separata è la differenza tra il totale effettivamente venduto nel Pitazzo e la base del biglietto. La provvigione è calcolata sulla base senza IVA quando il biglietto è padronale o quando questa opzione è stata selezionata.</p>
+  </main></body></html>`);
+  preview.document.close();
+  preview.focus();
+  return rows.length;
 }
 
 function openClientTicketPreview(tickets) {
@@ -2067,7 +2230,10 @@ async function shareTicket(ticket) {
   ].filter(Boolean).join(' · ');
   const percentage = Number(ticket.commissionPercent ?? 10);
   const deductionText = percentage ? `${percentage}% ${eur(ticket.deduction)}` : 'nessuna trattenuta';
-  const text = `${ticket.prodotto} · ${ticket.proprietario}\nData ${displayDateOnly(ticket.data, ticket.dateKey)}\n${ticketTypeLabel(ticket)}\n${quantities}\nLordo ${eur(ticket.gross)} · ${deductionText} · Netto ${eur(ticket.net)}`;
+  const ivaText = Number(ticket.ivaDifference || 0)
+    ? `\nVendite Pitazzo ${eur(ticket.gross)} · IVA separata ${eur(ticket.ivaDifference)} · Base biglietto ${eur(ticket.baseGross)}`
+    : `\nTotale vendite ${eur(ticket.gross)}`;
+  const text = `${ticket.prodotto} · ${ticket.proprietario}\nData ${displayDateOnly(ticket.data, ticket.dateKey)}\n${ticketTypeLabel(ticket)}\n${quantities}${ivaText}\n${deductionText} · Netto ${eur(ticket.net)}`;
   if (navigator.share) {
     await navigator.share({ title: `Biglietto ${ticket.prodotto}`, text });
     return;
@@ -2440,7 +2606,7 @@ function applySaleReturn(form) {
 
   const returnedText = [result.returnedPackages ? `${formatQty(result.returnedPackages)} colli` : '', result.returnedWeight ? `${formatQty(result.returnedWeight)} kg` : ''].filter(Boolean).join(' · ');
   audit(result.full ? 'Reso completo' : 'Reso parziale', `${name('prodotti', movement.prodotto_id)} · cliente ${name('clienti', movement.cliente_id)} · ${returnedText} · ${accountAction === 'rimborso' ? `rimborsati ${eur(result.refund)}` : `credito ridotto di ${eur(result.refund)}`}`);
-  return movement.dateKey || today();
+  return ticketDateKey(movement) || movement.dateKey || today();
 }
 
 function formDataObject(form, fields) {
@@ -3014,7 +3180,8 @@ function bind() {
   }
 
   document.querySelectorAll('[data-generate-day]').forEach((button) => {
-    button.onclick = async () => {
+    button.onclick = async (event) => {
+      event.preventDefault();
       const dateKey = button.dataset.generateDay || pitazzoDate || ticketsDate || today();
       const message = $('#ticket-msg');
       try {
@@ -3022,11 +3189,23 @@ function bind() {
           message.className = 'message';
           message.textContent = 'Generazione e salvataggio…';
         }
-        const records = createTicketRecords(dateKey);
+        const carryForm = button.closest('#ticket-carry-form');
+        let carryResult = { moved: 0, tomorrow: shiftDateKey(dateKey, 1) };
+        if (carryForm) {
+          const selectedGroups = [...carryForm.querySelectorAll('input[name="riporta"]:checked')]
+            .map((input) => input.value)
+            .filter(Boolean);
+          carryResult = applyCarryForward(dateKey, selectedGroups);
+        }
+        if (dailyTicketData(dateKey).length) createTicketRecords(dateKey);
+        else db.biglietti = db.biglietti.filter((ticket) => ticket.dateKey !== dateKey);
         await save();
         ticketsDate = dateKey;
         current = 'biglietti';
         render();
+        if (carryResult.moved) {
+          alert(`Biglietti aggiornati. Gli articoli selezionati sono stati riportati al ${formatDateKey(carryResult.tomorrow)}.`);
+        }
       } catch (error) {
         if (message) {
           message.className = 'message error';
@@ -3070,6 +3249,18 @@ function bind() {
       const tickets = db.biglietti.filter((ticket) => ticket.dateKey === button.dataset.printDay);
       try {
         openTicketPreview(tickets);
+      } catch (error) {
+        alert(`Errore: ${error.message}`);
+      }
+    };
+  });
+
+  document.querySelectorAll('[data-print-carico]').forEach((button) => {
+    button.onclick = () => {
+      const dateKey = button.dataset.printCarico || ticketsDate || today();
+      const tickets = db.biglietti.filter((ticket) => ticket.dateKey === dateKey);
+      try {
+        openCaricoPreview(dateKey, tickets);
       } catch (error) {
         alert(`Errore: ${error.message}`);
       }
@@ -3280,6 +3471,32 @@ function bind() {
       }
     };
   }
+
+  document.querySelectorAll('[data-remove-access]').forEach((button) => {
+    button.onclick = async () => {
+      const message = $('#access-msg');
+      button.disabled = true;
+      try {
+        if (!(await removeAccessAccount(button.dataset.removeAccess))) {
+          button.disabled = false;
+          return;
+        }
+        if (message) {
+          message.className = 'message';
+          message.textContent = 'Accesso rimosso. La persona non potrà più entrare nel gestionale.';
+        }
+        render();
+      } catch (error) {
+        button.disabled = false;
+        if (message) {
+          message.className = 'message error';
+          message.textContent = `Errore: ${error.message}`;
+        } else {
+          alert(`Errore: ${error.message}`);
+        }
+      }
+    };
+  });
 
   const resetAllButton = $('[data-reset-all]');
   if (resetAllButton) {
