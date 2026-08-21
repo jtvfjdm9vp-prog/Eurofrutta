@@ -121,9 +121,9 @@ function ensureAppStyles() {
     .price-choice{display:grid;grid-template-columns:1fr 1fr;gap:7px}.price-choice label{margin:0}.price-choice input{position:absolute;opacity:0;pointer-events:none}.price-choice span{display:block;padding:11px 9px;border:1px solid #ccd8dc;border-radius:10px;text-align:center;cursor:pointer;transition:.15s ease}.price-choice input:checked+span{border-color:#16835f;background:#eaf8f2;color:#0d7252;font-weight:800}
     .variant-list{display:grid;gap:10px;margin:15px 0}.variant-row{display:grid;grid-template-columns:1.4fr 1fr 1fr auto;gap:10px;align-items:end;padding:12px;border:1px solid #dce5e7;border-radius:13px;background:#f8fbfa}.variant-row button{width:auto;min-width:44px}.variant-row:first-child [data-remove-variant]{visibility:hidden}.secondary-panel{margin-top:18px;border:1px solid #dce5e7;border-radius:14px;background:#fbfdfc}.secondary-panel summary{padding:16px 18px;cursor:pointer;font-weight:800;color:#116c50}.secondary-panel>div{padding:0 18px 18px}.quality-chip{display:inline-block;margin-top:4px;padding:3px 8px;border-radius:999px;background:#eef6f2;color:#166c51;font-size:11px;font-weight:800}.mobile-nav-toggle,.nav-scrim{display:none}
     .presence-dot{display:inline-block;width:9px;height:9px;margin:0 7px;border-radius:50%;background:#38d37a;box-shadow:0 0 0 0 #38d37a99;animation:presencePulse 1.8s infinite;vertical-align:middle}.presence-list{display:grid;gap:9px}.presence-user{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 13px;border:1px solid #dce7e4;border-radius:12px;background:#f8fcfa}.status-ok{color:#11704f;font-weight:800}.status-missing{color:#ad3b2d;font-weight:800}.status-extra{color:#a26108;font-weight:800}.closing-row input{min-width:105px}.account-negative{color:#b23a2c}.account-positive{color:#11704f}@keyframes presencePulse{0%{box-shadow:0 0 0 0 #38d37a99}70%{box-shadow:0 0 0 7px #38d37a00}100%{box-shadow:0 0 0 0 #38d37a00}}
-    .home-welcome{display:grid;grid-template-columns:minmax(260px,370px) minmax(0,1fr);align-items:center;gap:28px;margin:0 0 18px;padding:18px 28px;border:1px solid #d8e5e1;border-radius:20px;background:linear-gradient(125deg,#fff 0%,#f1faf6 58%,#e5f6ee 100%);box-shadow:0 12px 34px #173b4e0d;overflow:hidden}.home-brand-logo{display:grid;place-items:center;min-height:122px;padding:8px 14px;border-radius:15px;background:#fff}.home-brand-logo img{display:block;width:100%;height:auto;max-height:132px;object-fit:contain}.home-greeting h1{margin:4px 0 5px;color:#14283a;font-size:clamp(29px,3.3vw,45px);line-height:1.04}.home-greeting h1 em{color:#11815d;font-style:normal}.home-greeting p:last-child{margin:0;color:#6d7d8f;font-size:15px}.home-market-card{padding:22px!important}.home-market-card .section-head{margin-bottom:14px}.home-market-card .section-head h2{margin-bottom:0}.home-market-card .home-market-grid{grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:10px}.home-market-card .market-product>button{padding:14px}.home-market-card .market-product>button strong{font-size:18px}.home-market-card .market-product>button small{font-size:12px}.home-search{margin:18px 0;padding:22px;border:1px solid #d9e5e4;border-radius:18px;background:linear-gradient(135deg,#fff 0%,#f4fbf8 100%);box-shadow:0 9px 28px #173b4e0b}.home-search-head{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:13px}.home-search h2{margin:0;font-size:22px}.home-search-box{display:flex;align-items:center;gap:10px;border:2px solid #cbdad8;border-radius:14px;background:#fff;padding:0 12px;transition:border-color .18s ease,box-shadow .18s ease}.home-search-box:focus-within{border-color:#159268;box-shadow:0 0 0 4px #15926818}.home-search-box input{width:100%;border:0;box-shadow:none!important;background:transparent;font-size:17px}.home-search-box button{width:auto;min-width:38px;padding:7px;background:transparent;color:#647586}.search-results-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:15px}.search-result-group{padding:14px;border:1px solid #dce7e5;border-radius:14px;background:#fff}.search-result-group h3{margin:0 0 9px;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:#617386}.search-result{width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;margin:5px 0;padding:10px 11px;border:0;border-radius:10px;background:#f4f8f7;color:#173044;text-align:left}.search-result:hover{background:#e8f6f0}.search-result strong{display:block}.search-result small{display:block;color:#6b7b8d;margin-top:2px}.owner-badge{display:inline-flex;align-items:center;padding:7px 10px;border-radius:9px;background:#edf5f2;color:#154f40;font-weight:850}.inventory-product-name{font-size:16px;color:#142b3c}
+    .home-welcome{position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(250px,360px) minmax(0,1fr);align-items:center;gap:32px;margin:0 0 18px;padding:25px 32px;border:0;border-radius:26px;background:linear-gradient(125deg,#102d3f 0%,#105947 52%,#1f9d69 100%);box-shadow:0 18px 45px #10283b24;overflow:hidden}.home-welcome::before,.home-welcome::after{content:'';position:absolute;z-index:-1;border-radius:50%;filter:blur(2px)}.home-welcome::before{width:330px;height:330px;right:-95px;top:-190px;background:#bdf58b2c}.home-welcome::after{width:220px;height:220px;left:27%;bottom:-185px;background:#ffffff14}.home-brand-logo{display:grid;place-items:center;min-height:116px;padding:0;background:transparent}.home-brand-logo img{display:block;width:100%;height:auto;max-height:128px;object-fit:contain;filter:drop-shadow(0 10px 18px #071b2560)}.home-greeting .eyebrow{color:#a8efcf}.home-greeting h1{margin:4px 0 7px;color:#fff;font-size:clamp(29px,3.3vw,45px);line-height:1.04}.home-greeting h1 em{color:#c7ffad;font-style:normal}.home-greeting p:last-child{margin:0;color:#deefe9;font-size:15px}.home-market-card{padding:22px!important}.home-market-card .section-head{margin-bottom:14px}.home-market-card .section-head h2{margin-bottom:0}.home-market-card .home-market-grid{grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:10px}.home-market-card .market-product>button{padding:14px}.home-market-card .market-product>button strong{font-size:18px}.home-market-card .market-product>button small{font-size:12px}.home-top-actions{display:flex;align-items:center;justify-content:flex-end;gap:9px;flex-wrap:wrap}.home-compact-search{position:relative;display:flex;align-items:center;gap:7px;width:min(285px,42vw);min-width:210px;border:1px solid #c8d8d4;border-radius:11px;background:#fff;padding:0 9px;transition:border-color .18s ease,box-shadow .18s ease}.home-compact-search:focus-within{border-color:#159268;box-shadow:0 0 0 4px #15926816}.home-compact-search input{width:100%;min-height:40px;padding:7px 0;border:0;box-shadow:none!important;background:transparent;font-size:13px}.home-compact-search button{width:auto;min-width:30px;min-height:30px;padding:3px;background:transparent;color:#647586}.home-search-results{margin:13px 0 4px;padding:13px;border:1px solid #d9e5e4;border-radius:14px;background:#f6fbf9}.home-search-results:empty{display:none}.search-results-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.search-result-group{padding:14px;border:1px solid #dce7e5;border-radius:14px;background:#fff}.search-result-group h3{margin:0 0 9px;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:#617386}.search-result{width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;margin:5px 0;padding:10px 11px;border:0;border-radius:10px;background:#f4f8f7;color:#173044;text-align:left}.search-result:hover{background:#e8f6f0}.search-result strong{display:block}.search-result small{display:block;color:#6b7b8d;margin-top:2px}.owner-badge{display:inline-flex;align-items:center;padding:7px 10px;border-radius:9px;background:#edf5f2;color:#154f40;font-weight:850}.inventory-product-name{font-size:16px;color:#142b3c}
     .market-table{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.market-product{overflow:hidden;border:1px solid #dce7e4;border-radius:15px;background:#fff}.market-product>button{width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:17px;border:0;background:#fff;color:#173044;text-align:left}.market-product>button:hover{background:#edf9f4}.market-product>button strong{display:block;font-size:20px}.market-product>button small{display:block;margin-top:4px;color:#718093}.market-lots{padding:0 13px 13px}.market-lot{display:grid;grid-template-columns:1fr auto;gap:8px;padding:10px;border-top:1px solid #e3ebe9}.market-lot b{display:block}.market-lot small{display:block;color:#718093;margin-top:3px}.market-arrival-qty{color:#102d3f;font-size:15px}.home-price-history{margin:4px 13px 13px;border:1px solid #d7e5e1;border-radius:12px;background:#f5faf8;overflow:hidden}.home-price-history>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;list-style:none;color:#173044;font-size:13px;font-weight:850;text-transform:uppercase;letter-spacing:.07em;cursor:pointer;transition:background .16s ease}.home-price-history>summary::-webkit-details-marker{display:none}.home-price-history>summary:hover{background:#e9f6f1}.home-price-history>summary::after{content:'+';display:grid;place-items:center;flex:0 0 auto;width:25px;height:25px;border-radius:50%;background:#fff;color:#0d7252;font-size:18px;line-height:1}.home-price-history[open]>summary::after{content:'−'}.home-price-panel{padding:0 12px 12px}.home-price-list{display:grid;gap:7px}.home-price-row{display:grid;grid-template-columns:minmax(105px,auto) minmax(0,1fr);align-items:start;gap:6px 12px;padding:10px;border-radius:9px;background:#fff}.home-price-row>strong{color:#0d7252;white-space:nowrap}.home-price-row span,.home-price-row small{min-width:0}.home-price-row span b,.home-price-row span small{display:block;overflow-wrap:anywhere}.home-price-row span small{margin-top:3px;color:#718093;white-space:normal}.home-price-row>small{grid-column:1/-1;color:#718093;text-align:left}.pit-waste-summary{color:#a55c09!important;font-weight:850}.pit-waste-row{background:#fff8eb}.waste-badge{display:inline-flex;padding:4px 7px;border-radius:999px;background:#fff0d5;color:#9a5600;font-size:10px;font-weight:850}.stock-low{color:#a76000;font-weight:850}.stock-ended{color:#a63e31;font-weight:850}.stock-ok{color:#11704f;font-weight:850}.edit-sale{margin-top:12px;padding:14px;border:1px solid #cfe1dc;border-radius:13px;background:#f6fbf9}.edit-sale .grid{margin-top:10px}
-    .pit-client-ticket{margin-top:15px;border:2px solid #d6e2df;border-radius:16px;background:#fff;overflow:hidden}.pit-client-bar{display:grid;grid-template-columns:minmax(240px,2fr) 1fr 1fr;gap:12px;padding:16px;background:#f3f8f6;border-bottom:1px solid #dce7e4}.pit-client-bar input{font-size:18px;font-weight:800}.pit-client-label-row{display:flex;align-items:center;justify-content:space-between;gap:10px}.pit-client-label-row button{width:auto;min-height:30px;padding:5px 9px;font-size:11px}.pit-line-form{display:grid;grid-template-columns:minmax(210px,2fr) .7fr .7fr .9fr 1.2fr 1.15fr auto;gap:10px;align-items:end;padding:16px}.pit-line-form button{white-space:nowrap}.pit-keyboard-hint{margin:-3px 16px 13px;padding:9px 11px;border-radius:10px;background:#eef7f3;color:#47675e;font-size:12px}.pit-keyboard-hint kbd{display:inline-block;padding:2px 6px;border:1px solid #c6d8d2;border-bottom-width:2px;border-radius:5px;background:#fff;color:#244c40;font:700 11px/1.3 system-ui}.pit-product-search-wrap{position:relative}.pit-product-results{position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:30;max-height:320px;overflow:auto;padding:7px;border:1px solid #cbdad8;border-radius:12px;background:#fff;box-shadow:0 16px 35px #10283b2b}.pit-product-results:empty{display:none}.pit-product-option{width:100%;display:flex;justify-content:space-between;align-items:center;gap:10px;margin:3px 0;padding:10px;border:0;border-radius:9px;background:#f4f8f7;color:#183044;text-align:left}.pit-product-option:hover,.pit-product-option:focus,.pit-product-option:focus-visible{background:#e6f6ef;outline:3px solid #1592683b}.pit-product-option strong,.pit-product-option small{display:block}.pit-product-option small{margin-top:2px;color:#718093}.pit-product-option>span:last-child{color:#0d7252;text-align:right;font-size:11px;font-weight:800}.pit-draft-wrap{padding:0 16px 16px}.pit-draft-table td,.pit-draft-table th{vertical-align:middle}.pit-draft-table button{width:auto;min-width:38px;padding:7px}.pit-ticket-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:15px 16px;border-top:1px solid #dce7e4;background:#fbfdfc}.pit-ticket-footer>div{display:flex;gap:8px;flex-wrap:wrap}.pit-ticket-total{font-size:20px;color:#0e7352}.vat-pill{display:inline-flex;padding:4px 7px;border-radius:999px;background:#edf3ff;color:#365d99;font-size:10px;font-weight:800}.pit-last-ticket{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:14px;padding:14px 16px;border:1px solid #aedcc9;border-radius:13px;background:#eaf8f2}.pit-last-ticket strong,.pit-last-ticket small{display:block}.pit-last-ticket small{margin-top:3px;color:#547065}.pit-last-ticket button{width:auto}.client-ticket-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}.client-ticket-card{padding:15px;border:1px solid #d9e5e2;border-radius:14px;background:#fbfdfc}.client-ticket-card h3{margin:2px 0 5px}.client-ticket-card p{margin:4px 0}.client-ticket-card button{width:100%;margin-top:10px}
+    .pit-client-ticket{margin-top:15px;border:2px solid #d6e2df;border-radius:16px;background:#fff;overflow:hidden}.pit-client-bar{display:grid;grid-template-columns:minmax(240px,2fr) 1fr 1fr;gap:12px;padding:16px;background:#f3f8f6;border-bottom:1px solid #dce7e4}.pit-client-bar input{font-size:18px;font-weight:800}.pit-client-label-row{display:flex;align-items:center;justify-content:space-between;gap:10px}.pit-client-label-row button{width:auto;min-height:30px;padding:5px 9px;font-size:11px}.pit-line-form{display:grid;grid-template-columns:minmax(210px,2fr) .7fr .7fr .9fr 1.2fr 1.15fr auto;gap:10px;align-items:end;padding:16px}.pit-line-form button{white-space:nowrap}.pit-keyboard-hint{margin:-3px 16px 13px;padding:9px 11px;border-radius:10px;background:#eef7f3;color:#47675e;font-size:12px}.pit-keyboard-hint kbd{display:inline-block;padding:2px 6px;border:1px solid #c6d8d2;border-bottom-width:2px;border-radius:5px;background:#fff;color:#244c40;font:700 11px/1.3 system-ui}.pit-product-search-wrap{position:relative}.pit-product-results{position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:30;max-height:320px;overflow:auto;padding:7px;border:1px solid #cbdad8;border-radius:12px;background:#fff;box-shadow:0 16px 35px #10283b2b}.pit-product-results:empty{display:none}.pit-product-option{width:100%;display:flex;justify-content:space-between;align-items:center;gap:10px;margin:3px 0;padding:10px;border:0;border-radius:9px;background:#f4f8f7;color:#183044;text-align:left}.pit-product-option:hover,.pit-product-option:focus,.pit-product-option:focus-visible{background:#e6f6ef;outline:3px solid #1592683b}.pit-product-option strong,.pit-product-option small{display:block}.pit-product-option small{margin-top:2px;color:#718093}.pit-product-option>span:last-child{color:#0d7252;text-align:right;font-size:11px;font-weight:800}.pit-draft-wrap{padding:0 16px 16px}.pit-draft-table td,.pit-draft-table th{vertical-align:middle}.pit-draft-table button{width:auto;min-width:38px;padding:7px}.pit-ticket-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:15px 16px;border-top:1px solid #dce7e4;background:#fbfdfc}.pit-ticket-footer>div{display:flex;gap:8px;flex-wrap:wrap}.pit-ticket-total{font-size:20px;color:#0e7352}.vat-pill{display:inline-flex;padding:4px 7px;border-radius:999px;background:#edf3ff;color:#365d99;font-size:10px;font-weight:800}.pit-last-ticket{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:14px;padding:14px 16px;border:1px solid #aedcc9;border-radius:13px;background:#eaf8f2}.pit-last-ticket strong,.pit-last-ticket small{display:block}.pit-last-ticket small{margin-top:3px;color:#547065}.pit-last-ticket button{width:auto}.client-ticket-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}.client-ticket-card{padding:15px;border:1px solid #d9e5e2;border-radius:14px;background:#fbfdfc}.client-ticket-card h3{margin:2px 0 5px}.client-ticket-card p{margin:4px 0}.client-ticket-card button{width:100%;margin-top:10px}.danger-zone{border-color:#efb6ad!important;background:linear-gradient(135deg,#fffafa,#fff4f1)!important}.danger-zone button{background:#b43227}.danger-zone button:hover{background:#92271f}
     .return-modal-backdrop{position:fixed;inset:0;z-index:2500;display:grid;place-items:center;padding:20px;background:#071923a8;backdrop-filter:blur(5px)}.return-modal{width:min(720px,100%);max-height:92dvh;overflow:auto;padding:24px;border:1px solid #ffffff78;border-radius:20px;background:#fff;box-shadow:0 28px 90px #06172180}.return-modal h2{margin:3px 0 8px}.return-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:17px 0;padding:14px;border:1px solid #cce2db;border-radius:14px;background:#f1faf6}.return-summary div{min-width:0}.return-summary small,.return-summary b{display:block}.return-summary small{margin-bottom:3px;color:#68798b;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}.return-summary b{overflow:hidden;text-overflow:ellipsis}.return-preview{margin:14px 0;padding:13px;border-radius:12px;background:#eaf8f2;color:#145c47;font-weight:750}.return-preview.error{background:#fff0ed;color:#a23e30}.return-actions{display:flex;justify-content:flex-end;gap:9px;flex-wrap:wrap;margin-top:16px}.return-actions button{width:auto}.return-all{margin-top:8px;width:auto!important}.return-history{margin:10px 0;padding-left:20px;color:#5f7082;font-size:13px}
     @media(max-width:900px){
       body.eurofrutta-shell{padding-left:0;overflow-x:hidden}
@@ -155,9 +155,9 @@ function ensureAppStyles() {
       .search-results-grid{grid-template-columns:1fr}
       .variant-row{grid-template-columns:1fr 1fr}.variant-row>div:first-child{grid-column:1/-1}.variant-row button{width:100%}
       .pit-client-bar,.pit-line-form{grid-template-columns:1fr}.pit-line-form>div:first-child{grid-column:1/-1}.pit-product-results{position:static;margin-top:6px;max-height:240px}.pit-ticket-footer,.pit-last-ticket{align-items:stretch;flex-direction:column}.pit-ticket-footer>div,.pit-ticket-footer button,.pit-last-ticket button{width:100%}.return-summary{grid-template-columns:1fr}.return-modal{padding:18px}.return-actions{flex-direction:column-reverse}.return-actions button{width:100%}
-      .home-welcome{grid-template-columns:1fr;gap:12px;padding:16px}.home-brand-logo{min-height:0;padding:7px 12px}.home-brand-logo img{max-width:360px;max-height:108px}.home-greeting{text-align:center}.home-market-card .home-market-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .home-welcome{grid-template-columns:1fr;gap:12px;padding:20px}.home-brand-logo{min-height:0;padding:0}.home-brand-logo img{max-width:360px;max-height:108px}.home-greeting{text-align:center}.home-market-card .home-market-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.home-top-actions{width:100%;justify-content:stretch}.home-compact-search{width:100%;min-width:0}.home-top-actions>button{width:100%}
     }
-    @media(max-width:480px){body.eurofrutta-shell #nav{width:88vw}.ticket-card{padding:14px}.price-choice{grid-template-columns:1fr}.pit-product-row strong{font-size:16px}.home-welcome{padding:13px}.home-brand-logo img{max-height:86px}.home-greeting h1{font-size:29px}.home-market-card{padding:15px!important}.home-market-card .home-market-grid{grid-template-columns:1fr}.home-search{padding:16px}.home-search-head{align-items:flex-start;flex-direction:column}.home-price-row{grid-template-columns:1fr}.home-price-row>*{grid-column:1!important}.home-price-row>small{text-align:left}}
+    @media(max-width:480px){body.eurofrutta-shell #nav{width:88vw}.ticket-card{padding:14px}.price-choice{grid-template-columns:1fr}.pit-product-row strong{font-size:16px}.home-welcome{padding:16px}.home-brand-logo img{max-height:86px}.home-greeting h1{font-size:29px}.home-market-card{padding:15px!important}.home-market-card .home-market-grid{grid-template-columns:1fr}.home-price-row{grid-template-columns:1fr}.home-price-row>*{grid-column:1!important}.home-price-row>small{text-align:left}}
   `;
   document.head.appendChild(style);
 }
@@ -453,7 +453,7 @@ function pitazzoGroupStock(groupLots, dateKey) {
 
 function stockState(value, unit) {
   const amount = roundQty(value);
-  if (amount < 0) return `GAP −${formatQty(Math.abs(amount))} ${unit}`;
+  if (amount < 0) return `−${formatQty(Math.abs(amount))} ${unit}`;
   if (amount === 0) return 'Terminata';
   return `R ${formatQty(amount)} ${unit}`;
 }
@@ -469,7 +469,7 @@ function loadVariantRow(quality = '', packages = '', weight = '') {
 
 function stockStateHtml(value, unit) {
   const amount = roundQty(value);
-  if (amount < 0) return `<span class="warn"><b>GAP −${formatQty(Math.abs(amount))} ${unit}</b></span>`;
+  if (amount < 0) return `<span class="warn"><b>−${formatQty(Math.abs(amount))} ${unit}</b></span>`;
   if (amount === 0) return '<span class="stock-ended"><b>Terminata</b></span>';
   return `<span class="pit-money"><b>R ${formatQty(amount)} ${unit}</b></span>`;
 }
@@ -577,6 +577,36 @@ async function logout() {
   }
   await stopPresence();
   return signOut(auth);
+}
+
+async function resetAllBusinessData() {
+  if (userEmail() !== OWNER_EMAIL || !adminSessionUnlocked) throw new Error('Solo il proprietario può azzerare i dati.');
+  const code = window.prompt('Inserisci il codice amministrazione per azzerare tutti i dati');
+  if (code === null) return false;
+  if (await sha256(code) !== ADMIN_CODE_HASH) throw new Error('Codice amministrazione errato.');
+  if (!window.confirm('Confermi? Verranno eliminati clienti, prodotti, scarichi, vendite, biglietti, pagamenti e registro. Gli account autorizzati resteranno attivi.')) return false;
+
+  const cleanData = empty();
+  await setDoc(doc(store, 'eurofrutta', 'dati'), cleanData);
+  db = JSON.parse(JSON.stringify(cleanData));
+  baseDb = JSON.parse(JSON.stringify(cleanData));
+  selectedClient = '';
+  selectedProduct = '';
+  expandedPitLot = '';
+  expandedHomeProduct = '';
+  editingSaleId = '';
+  editingTicketId = '';
+  returningSaleId = '';
+  homeSearch = '';
+  lastPitClientTicket = null;
+  pitClientDraft = {
+    clienteNome: '',
+    statoPagamento: 'credito',
+    metodoPagamento: 'Contanti',
+    ivaModalita: 'nessuna',
+    righe: [],
+  };
+  return true;
 }
 
 function audit(action, detail) {
@@ -764,10 +794,10 @@ function conti() {
 }
 
 function closingStatus(diff, unit) {
-  if (Math.abs(diff) < 0.005) return '<span class="status-ok">GAP 0</span>';
+  if (Math.abs(diff) < 0.005) return '<span class="status-ok">0</span>';
   return diff < 0
-    ? `<span class="status-missing">GAP −${formatQty(Math.abs(diff))} ${unit}</span>`
-    : `<span class="status-extra">GAP +${formatQty(diff)} ${unit}</span>`;
+    ? `<span class="status-missing">−${formatQty(Math.abs(diff))} ${unit}</span>`
+    : `<span class="status-extra">+${formatQty(diff)} ${unit}</span>`;
 }
 
 function savedClosing(dateKey) {
@@ -842,8 +872,6 @@ function globalSearchResults(rawQuery) {
 
 function home() {
   const openLots = db.lotti.filter(lotIsOpen);
-  const availableArticles = new Set(openLots.map((lot) => `${lot.prodotto_id}::${normalized(lot.proprietario)}`)).size;
-  const lowLots = openLots.filter((lot) => lotStatus(lot) === 'bassa');
   const marketProducts = db.prodotti.map((product) => ({
     product,
     lots: openLots.filter((lot) => lot.prodotto_id === product.id),
@@ -863,25 +891,18 @@ function home() {
     <section class="card home-market-card">
       <div class="section-head">
         <div><p class="eyebrow">TAVOLO MERCE</p><h2>Cosa abbiamo oggi</h2></div>
-        <button class="ghost" data-go="magazzino">Apri tutto il magazzino →</button>
+        <div class="home-top-actions">
+          <div class="home-compact-search"><span aria-hidden="true">⌕</span><input id="global-search" type="search" value="${esc(homeSearch)}" placeholder="Cerca prodotto, fornitore, cliente…" autocomplete="off"><button id="clear-global-search" type="button" aria-label="Cancella ricerca">×</button></div>
+          <button class="ghost" data-go="magazzino">Apri magazzino →</button>
+        </div>
       </div>
       <div class="market-table home-market-grid">${marketProducts.map(({ product, lots }) => {
         const open = expandedHomeProduct === product.id;
         const summary = homeProductStockSummary(product, lots);
         return `<article class="market-product"><button type="button" data-home-product="${product.id}" aria-expanded="${open}"><span><strong>${esc(summary.headline)}</strong><small>${esc(summary.detail)}</small></span><b>${open ? '⌃' : '⌄'}</b></button>${open ? `<div class="market-lots">${lots.map((lot) => `<div class="market-lot"><span><span class="market-arrival-qty">${initialLotQuantity(lot)}</span><b>${esc(lot.qualita || 'Standard')} · ${esc(lot.proprietario || '—')}</b><small>${esc(partitaLabel(lot))}</small></span><span>${remainingLotQuantity(lot)}<br>${lotStatusHtml(lot)}</span></div>`).join('')}</div><details class="home-price-history"><summary>Ultimi prezzi praticati</summary><div class="home-price-panel">${homeProductPrices(product.id)}</div></details>` : ''}</article>`;
       }).join('') || '<p class="empty">Nessuna merce disponibile.</p>'}</div>
-    </section>
-    <section class="home-search">
-      <div class="home-search-head"><div><p class="eyebrow">RICERCA RAPIDA</p><h2>Cerca in tutto Eurofrutta</h2></div><span class="muted">Prodotti · fornitori · clienti · vendite</span></div>
-      <div class="home-search-box"><span aria-hidden="true">⌕</span><input id="global-search" type="search" value="${esc(homeSearch)}" placeholder="Scrivi un prodotto, un fornitore o un cliente…" autocomplete="off"><button id="clear-global-search" type="button" aria-label="Cancella ricerca">×</button></div>
-      <div id="global-search-results">${globalSearchResults(homeSearch)}</div>
-    </section>
-    <section class="stats">
-      <article class="stat"><i>▦</i><div><h3>Magazzino</h3><div class="big">${availableArticles}</div><p>Rimanenze divise per articolo</p></div></article>
-      <article class="stat"><i>◇</i><div><h3>Prodotti</h3><div class="big">${db.prodotti.length}</div><p>In catalogo</p></div></article>
-      <article class="stat"><i>!</i><div><h3>Sta finendo</h3><div class="big">${lowLots.length}</div><p>Partite con poca merce rimasta</p></div></article>
-    </section>
-    ${lowLots.length ? `<section class="card"><div class="section-head"><div><p class="eyebrow">AVVISO SCORTE</p><h2>Merce che sta finendo</h2></div><b class="stock-low">${lowLots.length} ${lowLots.length === 1 ? 'partita' : 'partite'}</b></div><div class="market-table">${lowLots.map((lot) => `<article class="market-lot"><span><b>${esc(name('prodotti', lot.prodotto_id))} · ${esc(lot.qualita || 'Standard')}</b><small>${esc(lot.proprietario || '—')} · ${esc(partitaLabel(lot))}</small></span><span>${remainingLotQuantity(lot)}</span></article>`).join('')}</div></section>` : ''}`;
+      <div id="global-search-results" class="home-search-results">${homeSearch.trim() ? globalSearchResults(homeSearch) : ''}</div>
+    </section>`;
 }
 
 function movimento() {
@@ -956,9 +977,9 @@ function pitazzo() {
         </div>
         <form id="pit-line-form" class="pit-line-form" novalidate>
         <div><label>Cerca articolo / provenienza</label><div class="pit-product-search-wrap"><input id="pit-product-search" name="lotto_nome" required autocomplete="off" placeholder="Scrivi prodotto, qualità o fornitore…"><div id="pit-product-results" class="pit-product-results"></div></div></div>
-        <div><label>Colli</label><input name="colli" type="number" min="0" step="0.01" placeholder="0" inputmode="decimal"></div>
-        <div><label>Peso kg</label><input name="peso" type="number" min="0" step="0.01" placeholder="0" inputmode="decimal"></div>
-        <div><label>Prezzo unitario</label><input name="prezzo" required type="number" min="0" step="0.01" placeholder="0,00" inputmode="decimal"></div>
+        <div><label>Colli</label><input name="colli" type="number" min="0" step="1" placeholder="0" inputmode="decimal"></div>
+        <div><label>Peso kg</label><input name="peso" type="number" min="0" step="1" placeholder="0" inputmode="decimal"></div>
+        <div><label>Prezzo unitario</label><input name="prezzo" required type="number" min="0" step="1" placeholder="0,00" inputmode="decimal"></div>
         <div><label>Tipo prezzo</label><div class="price-choice"><label><input name="unita_prezzo" type="radio" value="kg" checked><span>Al kg</span></label><label><input name="unita_prezzo" type="radio" value="collo"><span>A collo</span></label></div></div>
         <div><label>IVA della riga</label><select id="pit-vat-mode" name="iva_modalita"><option value="nessuna" ${currentVatMode === 'nessuna' ? 'selected' : ''}>Senza IVA</option><option value="aggiungi" ${currentVatMode === 'aggiungi' ? 'selected' : ''}>Aggiungi IVA 4%</option><option value="compresa" ${currentVatMode === 'compresa' ? 'selected' : ''}>IVA già compresa</option></select></div>
         <button type="submit" ${!db.lotti.some(lotIsOpen) ? 'disabled' : ''}>+ Aggiungi riga</button>
@@ -1470,11 +1491,15 @@ function clientTicketData(dateKey, clientId) {
     .sort((left, right) => String(left.data || '').localeCompare(String(right.data || '')))
     .map((movement) => {
       const lot = lotById(movement.lotto_id);
+      const quantity = movement.unita_prezzo === 'collo'
+        ? Number(movement.colli || 0)
+        : Number(movement.peso || 0);
       return {
         ...movement,
         articolo: name('prodotti', movement.prodotto_id || lot?.prodotto_id),
         qualita: movement.qualita || lot?.qualita || 'Standard',
         proprietario: movement.proprietario || lot?.proprietario || '',
+        totale_cliente: roundMoney(quantity * Number(movement.prezzo || 0)),
       };
     });
   if (!rows.length) return null;
@@ -1483,9 +1508,7 @@ function clientTicketData(dateKey, clientId) {
     clientId,
     cliente: client,
     rows,
-    imponibile: roundMoney(rows.reduce((sum, row) => sum + Number(row.imponibile ?? row.totale ?? 0), 0)),
-    iva: roundMoney(rows.reduce((sum, row) => sum + Number(row.iva || 0), 0)),
-    totale: roundMoney(rows.reduce((sum, row) => sum + Number(row.totale || 0), 0)),
+    totale: roundMoney(rows.reduce((sum, row) => sum + Number(row.totale_cliente || 0), 0)),
   };
 }
 
@@ -1518,7 +1541,7 @@ function biglietti() {
         <div><p class="eyebrow">BIGLIETTI CLIENTI · ${esc(formatDateKey(date))}</p><h2>Spesa e totale di ogni cliente</h2><p class="muted">Sono già pronti: includono tutti gli articoli acquistati dal cliente nella giornata.</p></div>
         <button type="button" data-print-client-day="${date}" ${clientTickets.length ? '' : 'disabled'}>Stampa tutti i clienti</button>
       </div>
-      ${clientTickets.length ? `<div class="client-ticket-grid">${clientTickets.map((ticket) => `<article class="client-ticket-card"><p class="eyebrow">CLIENTE</p><h3>${esc(ticket.cliente.nome)}</h3><p>${ticket.rows.length} ${ticket.rows.length === 1 ? 'articolo registrato' : 'articoli registrati'}</p><p><b>Totale ${eur(ticket.totale)}</b>${ticket.iva ? ` · IVA ${eur(ticket.iva)}` : ''}</p><button type="button" data-print-client-ticket="${ticket.clientId}" data-ticket-date="${date}">Visualizza / stampa</button></article>`).join('')}</div>` : '<p class="empty">Nessuna vendita cliente registrata in questa giornata.</p>'}
+      ${clientTickets.length ? `<div class="client-ticket-grid">${clientTickets.map((ticket) => `<article class="client-ticket-card"><p class="eyebrow">CLIENTE</p><h3>${esc(ticket.cliente.nome)}</h3><p>${ticket.rows.length} ${ticket.rows.length === 1 ? 'articolo registrato' : 'articoli registrati'}</p><p><b>Totale ${eur(ticket.totale)}</b></p><button type="button" data-print-client-ticket="${ticket.clientId}" data-ticket-date="${date}">Visualizza / stampa</button></article>`).join('')}</div>` : '<p class="empty">Nessuna vendita cliente registrata in questa giornata.</p>'}
     </section>
     <section class="card">
       <div class="section-head">
@@ -1673,6 +1696,14 @@ function registro() {
         ${authorized.map((email) => `<tr><td>${esc(email)}</td><td>${accessConfig.amministratori.includes(email) ? '<b>♛ Amministratore</b>' : 'Operatore'}</td></tr>`).join('')}
       </table></div>
     </section>
+    ${userEmail() === OWNER_EMAIL ? `<section class="card danger-zone">
+      <div class="section-head">
+        <div><p class="eyebrow">RIPARTENZA PULITA</p><h2>Azzera tutti i dati di lavoro</h2></div>
+        <button type="button" data-reset-all>AZZERA TUTTO</button>
+      </div>
+      <p>Elimina clienti, prodotti, scarichi, vendite, rimanenze, biglietti, pagamenti e registro per iniziare da zero.</p>
+      <p class="muted">Non elimina il sito, le funzioni, il tuo account né le persone autorizzate. Il comando richiede di nuovo il codice amministrazione.</p>
+    </section>` : ''}
     <section class="card">
       <div class="section-head"><div><p class="eyebrow">AMMINISTRAZIONE</p><h2>Registro delle modifiche</h2></div><b>${entries.length} attività</b></div>
       <p class="muted">Qui puoi controllare chi ha registrato vendite, scarichi o modificato gli archivi.</p>
@@ -1966,7 +1997,7 @@ function openTicketPreview(tickets) {
       </table>
       <div class="totals">
         <div class="remaining"><span>VENDUTO</span><b>${ticket.hasPackageData ? `${formatQty(ticket.soldTodayPackages)} colli` : `${formatQty(ticket.soldTodayKg)} kg`}</b><small>${ticket.hasWeightData && ticket.hasPackageData ? `${formatQty(ticket.soldTodayKg)} kg` : ''}</small></div>
-        <div class="remaining"><span>RIMANENZA / GAP</span><b>${ticket.hasPackageData ? stockState(ticket.remainingPackages, 'colli') : stockState(ticket.remainingKg, 'kg')}</b><small>${ticket.hasWeightData && ticket.hasPackageData ? stockState(ticket.remainingKg, 'kg') : ''}</small></div>
+        <div class="remaining"><span>RIMANENZA</span><b>${ticket.hasPackageData ? stockState(ticket.remainingPackages, 'colli') : stockState(ticket.remainingKg, 'kg')}</b><small>${ticket.hasWeightData && ticket.hasPackageData ? stockState(ticket.remainingKg, 'kg') : ''}</small></div>
         <dl>
           <dt>Totale lordo</dt><dd>${eur(ticket.gross)}</dd>
           <dt>${Number(ticket.commissionPercent ?? 10) ? `${Number(ticket.commissionPercent ?? 10)}% arrotondato` : 'Nessuna trattenuta'}</dt><dd>− ${eur(ticket.deduction)}</dd>
@@ -2002,18 +2033,15 @@ function openClientTicketPreview(tickets) {
       <div class="client-label">CLIENTE</div>
       <h1>${esc(ticket.cliente.nome)}</h1>
       <table>
-        <thead><tr><th>Colli / kg</th><th>Articolo</th><th>Prezzo</th><th>IVA</th><th>Totale</th></tr></thead>
+        <thead><tr><th>Colli / kg</th><th>Articolo</th><th>Prezzo</th><th>Totale</th></tr></thead>
         <tbody>${ticket.rows.map((row) => `<tr>
           <td>${Number(row.colli || 0) ? `${formatQty(row.colli)} colli` : ''}${Number(row.colli || 0) && Number(row.peso || 0) ? '<br>' : ''}${Number(row.peso || 0) ? `${formatQty(row.peso)} kg` : ''}</td>
           <td><b>${esc(row.articolo)}</b>${row.qualita && row.qualita !== 'Standard' ? `<br><small>${esc(row.qualita)}</small>` : ''}</td>
           <td>${eur(row.prezzo)} / ${row.unita_prezzo === 'collo' ? 'collo' : 'kg'}</td>
-          <td>${esc(vatModeLabel(row.iva_modalita, row.iva_percentuale))}</td>
-          <td><b>${eur(row.totale)}</b></td>
+          <td><b>${eur(row.totale_cliente ?? row.totale)}</b></td>
         </tr>`).join('')}</tbody>
       </table>
       <dl>
-        <dt>Imponibile</dt><dd>${eur(ticket.imponibile)}</dd>
-        ${ticket.iva ? `<dt>IVA</dt><dd>${eur(ticket.iva)}</dd>` : ''}
         <dt class="total">TOTALE</dt><dd class="total">${eur(ticket.totale)}</dd>
       </dl>
       <footer>Biglietto cliente ${index + 1} di ${validTickets.length}</footer>
@@ -2479,12 +2507,12 @@ function bind() {
   if (globalSearch && globalSearchResultsElement) {
     globalSearch.oninput = () => {
       homeSearch = globalSearch.value;
-      globalSearchResultsElement.innerHTML = globalSearchResults(homeSearch);
+      globalSearchResultsElement.innerHTML = homeSearch.trim() ? globalSearchResults(homeSearch) : '';
     };
     $('#clear-global-search').onclick = () => {
       homeSearch = '';
       globalSearch.value = '';
-      globalSearchResultsElement.innerHTML = globalSearchResults('');
+      globalSearchResultsElement.innerHTML = '';
       globalSearch.focus();
     };
     bindGlobalSearchNavigation();
@@ -2752,11 +2780,17 @@ function bind() {
     const productInput = $('#pit-product-search');
     const productResults = $('#pit-product-results');
     const refreshProductResults = () => {
+      if (productInput?.dataset.selectedLotId) {
+        if (productResults) productResults.innerHTML = '';
+        return;
+      }
       if (productResults) productResults.innerHTML = pitProductSearchResults(productInput?.value || '');
     };
     const selectPitLot = (lot) => {
       if (!lot || !productInput) return;
       productInput.value = lotSearchName(lot);
+      productInput.dataset.selectedLotId = lot.id;
+      productInput.setAttribute('aria-expanded', 'false');
       if (productResults) productResults.innerHTML = '';
       pitLineForm.querySelector('[name="colli"]')?.focus();
     };
@@ -2772,8 +2806,17 @@ function bind() {
       controls[index + 1]?.focus();
     };
     if (productInput) {
-      productInput.oninput = refreshProductResults;
+      productInput.oninput = () => {
+        delete productInput.dataset.selectedLotId;
+        productInput.setAttribute('aria-expanded', 'true');
+        refreshProductResults();
+      };
       productInput.onfocus = refreshProductResults;
+      productInput.onblur = () => {
+        window.setTimeout(() => {
+          if (!productResults?.contains(document.activeElement)) productResults.innerHTML = '';
+        }, 120);
+      };
       productInput.onkeydown = (event) => {
         const options = [...(productResults?.querySelectorAll('[data-pick-pit-lot]') || [])];
         if (event.key === 'ArrowDown' && options.length) {
@@ -3231,6 +3274,28 @@ function bind() {
       } catch (error) {
         message.className = 'message error';
         message.textContent = `Errore: ${error.message}`;
+      }
+    };
+  }
+
+  const resetAllButton = $('[data-reset-all]');
+  if (resetAllButton) {
+    resetAllButton.onclick = async () => {
+      resetAllButton.disabled = true;
+      resetAllButton.textContent = 'Azzeramento…';
+      try {
+        if (!(await resetAllBusinessData())) {
+          resetAllButton.disabled = false;
+          resetAllButton.textContent = 'AZZERA TUTTO';
+          return;
+        }
+        current = 'home';
+        render();
+        alert('Dati di lavoro azzerati. Eurofrutta è pronto per iniziare da zero.');
+      } catch (error) {
+        resetAllButton.disabled = false;
+        resetAllButton.textContent = 'AZZERA TUTTO';
+        alert(`Errore: ${error.message}`);
       }
     };
   }
