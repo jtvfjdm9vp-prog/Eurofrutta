@@ -90,6 +90,21 @@ const esc = (value) => String(value ?? '').replace(
   })[character],
 );
 
+function fruitBrandMarkup() {
+  return `<span class="fruit-brand" role="img" aria-label="Eurofrutta">
+    <span class="fruit-symbol fruit-orange" aria-hidden="true"></span>
+    <span class="fruit-symbol fruit-apple" aria-hidden="true"></span>
+    <span class="fruit-symbol fruit-lemon" aria-hidden="true"></span>
+  </span>`;
+}
+
+function enhanceHeaderBrand() {
+  const mark = document.querySelector('header .mark');
+  if (!mark) return;
+  mark.classList.add('fruit-mark');
+  mark.innerHTML = fruitBrandMarkup();
+}
+
 const empty = () => ({ clienti: [], prodotti: [], lotti: [], movimenti: [], biglietti: [], pagamenti: [], chiusure: [], registro: [] });
 
 function ensureAppStyles() {
@@ -108,6 +123,8 @@ function ensureAppStyles() {
     body.eurofrutta-shell #nav .nav-group{margin:14px 13px 2px;color:#81aab4;font-size:9px;font-weight:900;letter-spacing:.18em;text-transform:uppercase}
     body.eurofrutta-shell #nav .nav-group:first-of-type{margin-top:0}
     body.eurofrutta-shell header{position:sticky;top:0;z-index:50;box-shadow:0 7px 24px #10283b0c}
+    .mark.fruit-mark{position:relative;display:grid;place-items:center;flex:0 0 auto;width:58px;height:58px;padding:0;overflow:hidden;border:1px solid #ffffff2e;border-radius:18px;background:radial-gradient(circle at 30% 24%,#2fc58a 0%,#10805d 62%,#0b5e47 100%);box-shadow:inset 0 1px 0 #ffffff42,0 10px 25px #061b292b;color:transparent}
+    .fruit-brand{position:relative;display:block;width:100%;height:100%}.fruit-symbol{position:absolute;left:50%;top:50%;width:29px;height:29px;opacity:0;filter:drop-shadow(0 5px 5px #0622184a);transform:translate(-50%,-47%) scale(.72) rotate(-8deg);animation:fruitSwap 9s ease-in-out infinite}.fruit-symbol::before{content:'';position:absolute;z-index:2;width:12px;height:7px;right:-3px;top:-5px;border-radius:100% 0 100% 0;background:linear-gradient(135deg,#d8ff8f,#56aa3d);transform:rotate(-24deg)}.fruit-symbol::after{content:'';position:absolute;width:8px;height:11px;left:6px;top:4px;border-radius:50%;background:#ffffff5c;transform:rotate(28deg)}.fruit-orange{border-radius:50%;background:radial-gradient(circle at 65% 65%,#e86f12 0 9%,transparent 10%),radial-gradient(circle at 50% 50%,#ffc553,#f28a16 73%);box-shadow:inset -4px -5px 8px #c953153b}.fruit-apple{border-radius:48% 52% 47% 53% / 44% 44% 57% 57%;background:radial-gradient(circle at 38% 28%,#ffdb7f 0 5%,transparent 6%),linear-gradient(145deg,#f45e43,#c82832 78%);box-shadow:inset -4px -5px 8px #7d142e42;animation-delay:3s}.fruit-lemon{width:32px;height:23px;border-radius:55% 45% 55% 45% / 50%;background:linear-gradient(145deg,#fff58a,#f1c515 73%);box-shadow:inset -4px -4px 7px #b58b1438;animation-delay:6s}.fruit-lemon::before{right:0;top:-7px}.fruit-lemon::after{width:11px;height:6px;left:6px;top:4px}.login .mark.fruit-mark{margin-left:auto;margin-right:auto;width:72px;height:72px;border-radius:22px}.login .fruit-symbol{width:35px;height:35px}.login .fruit-lemon{width:39px;height:28px}@keyframes fruitSwap{0%{opacity:0;transform:translate(-50%,-47%) scale(.72) rotate(-8deg)}5%,28%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(0)}33%,100%{opacity:0;transform:translate(-50%,-53%) scale(.84) rotate(7deg)}}
     .pit-simple-title{display:flex;align-items:end;justify-content:space-between;gap:20px;margin:6px 0 22px;padding:4px 2px}
     .pit-simple-title h2{margin:0;font-size:clamp(28px,4vw,44px)}
     .pit-simple-title label{display:block;margin-bottom:6px;color:#637286;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
@@ -163,7 +180,8 @@ function ensureAppStyles() {
       .home-welcome{grid-template-columns:1fr;gap:12px;padding:20px}.home-brand-logo{min-height:0;padding:0}.home-brand-logo img{max-width:360px;max-height:108px}.home-greeting{text-align:center}.home-market-card .home-market-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.home-top-actions{width:100%;justify-content:stretch}.home-compact-search{width:100%;min-width:0}.home-top-actions>button{width:100%}
       .carry-forward-row{grid-template-columns:1fr}.carry-toggle,.carico-check{justify-content:flex-start}.sad-dock{align-items:stretch;flex-direction:column}.sad-button{width:100%}
     }
-    @media(max-width:480px){body.eurofrutta-shell #nav{width:88vw}.ticket-card{padding:14px}.price-choice{grid-template-columns:1fr}.pit-product-row strong{font-size:16px}.home-welcome{padding:16px}.home-brand-logo img{max-height:86px}.home-greeting h1{font-size:29px}.home-market-card{padding:15px!important}.home-market-card .home-market-grid{grid-template-columns:1fr}.presence-user{display:grid;gap:8px}.presence-times{text-align:left;padding-left:23px}}
+    @media(max-width:480px){body.eurofrutta-shell #nav{width:88vw}.ticket-card{padding:14px}.price-choice{grid-template-columns:1fr}.pit-product-row strong{font-size:16px}.home-welcome{padding:16px}.home-brand-logo img{max-height:86px}.home-greeting h1{font-size:29px}.home-market-card{padding:15px!important}.home-market-card .home-market-grid{grid-template-columns:1fr}.presence-user{display:grid;gap:8px}.presence-times{text-align:left;padding-left:23px}.mark.fruit-mark{width:48px;height:48px;border-radius:15px}.fruit-symbol{width:25px;height:25px}.fruit-lemon{width:28px;height:20px}}
+    @media(prefers-reduced-motion:reduce){.fruit-symbol{animation:none}.fruit-symbol:first-child{opacity:1;transform:translate(-50%,-50%) scale(1)}.fruit-symbol:not(:first-child){display:none}}
   `;
   document.head.appendChild(style);
 }
@@ -700,7 +718,7 @@ function login() {
   $('#nav').hidden = true;
   $('#app').innerHTML = `
     <section class="card login">
-      <div class="mark">EF</div>
+      <div class="mark fruit-mark">${fruitBrandMarkup()}</div>
       <p class="eyebrow">EUROFRUTTA ONLINE</p>
       <h2>Accedi al gestionale</h2>
       <p>Usa il tuo account Google personale. Nel gestionale verrà mostrato soltanto il nome utente che sceglierai.</p>
@@ -727,7 +745,7 @@ function usernameSetup() {
   $('#out').onclick = logout;
   $('#app').innerHTML = `
     <section class="card login">
-      <div class="mark">EF</div>
+      <div class="mark fruit-mark">${fruitBrandMarkup()}</div>
       <p class="eyebrow">PRIMO ACCESSO</p>
       <h2>Scegli il tuo nome utente</h2>
       <p>Questo sarà il nome visibile nel gestionale e nel registro delle modifiche. Dopo il salvataggio resterà fisso.</p>
@@ -771,7 +789,7 @@ function accessDenied() {
   $('#out').onclick = logout;
   $('#app').innerHTML = `
     <section class="card login">
-      <div class="mark">EF</div>
+      <div class="mark fruit-mark">${fruitBrandMarkup()}</div>
       <p class="eyebrow">ACCESSO NON AUTORIZZATO</p>
       <h2>Chiedi l’abilitazione</h2>
       <p>Un amministratore deve prima aggiungere il tuo account Google nella sezione Amministrazione.</p>
@@ -1571,7 +1589,7 @@ function caricoRows(tickets) {
     iva: roundMoney(ticket.ivaDifference || 0),
     base: roundMoney(ticket.baseGross ?? ticket.gross ?? 0),
     provvigione: roundMoney(ticket.deduction || 0),
-    netto: roundMoney(ticket.net || 0),
+    netto: roundMoney(Number(ticket.gross || 0) - Number(ticket.deduction || 0)),
   }));
 }
 
@@ -1601,14 +1619,14 @@ function carico() {
     </section>
     <section class="card carico-card">
       <div class="section-head">
-        <div><p class="eyebrow">CARICO · ${esc(formatDateKey(date))}</p><h2>Fatturato, IVA e provvigioni</h2><p class="muted">Una riga per ogni biglietto merce generato. Qui trovi il riepilogo completo della giornata.</p></div>
+        <div><p class="eyebrow">CARICO · ${esc(formatDateKey(date))}</p><h2>Fatturato, IVA e provvigioni</h2><p class="muted">Una riga per ogni biglietto merce. L’IVA resta separata e non viene sottratta dal totale.</p></div>
         <button type="button" data-print-carico="${date}" ${rows.length ? '' : 'disabled'}>Visualizza / stampa Carico</button>
       </div>
       ${rows.length ? `<div class="table-scroll"><table>
-        <tr><th>Articolo</th><th>Totale vendite</th><th>IVA separata</th><th>Base biglietto</th><th>Provvigione</th><th>Netto</th></tr>
+        <tr><th>Articolo</th><th>Totale vendite</th><th>IVA separata</th><th>Base biglietto</th><th>Provvigione</th><th>Totale finale</th></tr>
         ${rows.map((row) => `<tr><td><b>${esc(row.articolo)}</b></td><td>${eur(row.vendita)}</td><td>${row.iva ? eur(row.iva) : '—'}</td><td>${eur(row.base)}</td><td>${row.provvigione ? eur(row.provvigione) : '—'}</td><td><b>${eur(row.netto)}</b></td></tr>`).join('')}
         <tr><th>TOTALI</th><th>${eur(totals.vendita)}</th><th>${eur(totals.iva)}</th><th>${eur(totals.base)}</th><th>${eur(totals.provvigione)}</th><th>${eur(totals.netto)}</th></tr>
-      </table></div><div class="carico-check">${eur(totals.vendita)} − ${eur(totals.iva)} − ${eur(totals.provvigione)} = ${eur(totals.netto)}</div>` : `<div class="empty"><p>Non ci sono ancora dati nel Carico del ${esc(formatDateKey(date))}.</p><button type="button" data-go="biglietti">Apri Biglietti</button></div>`}
+      </table></div><div class="carico-check">${eur(totals.vendita)} − ${eur(totals.provvigione)} = ${eur(totals.netto)}</div>` : `<div class="empty"><p>Non ci sono ancora dati nel Carico del ${esc(formatDateKey(date))}.</p><button type="button" data-go="biglietti">Apri Biglietti</button></div>`}
     </section>`;
 }
 
@@ -2213,12 +2231,12 @@ function openCaricoPreview(dateKey, tickets) {
     @page{size:A4 portrait;margin:12mm}*{box-sizing:border-box}body{margin:0;background:#eef3f1;color:#162b3b;font-family:Arial,sans-serif}.toolbar{position:sticky;top:0;z-index:2;display:flex;justify-content:center;gap:10px;padding:14px;background:#15354b}.toolbar button{border:0;border-radius:9px;padding:11px 18px;font-weight:800;cursor:pointer}.toolbar .print{background:#2fb579;color:#fff}.sheet{width:210mm;min-height:297mm;margin:18px auto;padding:16mm;background:#fff;box-shadow:0 8px 30px #10263824}.head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;padding-bottom:10px;border-bottom:3px solid #173b4d}.eyebrow{margin:0;color:#17805c;font-size:11px;font-weight:900;letter-spacing:.16em}.head h1{margin:4px 0 0;font-size:30px}.date{text-align:right;font-weight:800}table{width:100%;margin-top:22px;border-collapse:collapse;font-size:12px}th,td{border:1px solid #aab9b5;padding:9px 7px;text-align:right;vertical-align:top}th{background:#edf4f1;font-size:10px;text-transform:uppercase;letter-spacing:.05em}th:first-child,td:first-child{text-align:left}.totals th{background:#173b4d;color:#fff}.formula{margin:18px 0 0 auto;padding:13px 16px;border:2px solid #159268;border-radius:12px;background:#eef9f4;text-align:right;font-size:17px;font-weight:900}.note{margin-top:18px;color:#657687;font-size:11px}@media(max-width:760px){.sheet{width:100%;min-height:0;margin:0;padding:18px}.head{display:grid}.date{text-align:left}.scroll{overflow-x:auto}table{min-width:760px}.formula{text-align:left;font-size:14px}}@media print{body{background:#fff}.toolbar{display:none}.sheet{width:auto;min-height:0;margin:0;padding:0;box-shadow:none}}
   </style></head><body><div class="toolbar"><button class="print" onclick="window.print()">Stampa / Salva PDF</button><button onclick="window.close()">Chiudi</button></div><main class="sheet">
     <header class="head"><div><p class="eyebrow">EUROFRUTTA</p><h1>Carico giornaliero</h1></div><div class="date">${esc(formatDateKey(dateKey))}</div></header>
-    <div class="scroll"><table><thead><tr><th>Articolo</th><th>Totale vendite</th><th>IVA separata</th><th>Base biglietto</th><th>Provvigione</th><th>Netto</th></tr></thead><tbody>
+    <div class="scroll"><table><thead><tr><th>Articolo</th><th>Totale vendite</th><th>IVA separata</th><th>Base biglietto</th><th>Provvigione</th><th>Totale finale</th></tr></thead><tbody>
       ${rows.map((row) => `<tr><td><b>${esc(row.articolo)}</b></td><td>${eur(row.vendita)}</td><td>${row.iva ? eur(row.iva) : '—'}</td><td>${eur(row.base)}</td><td>${row.provvigione ? eur(row.provvigione) : '—'}</td><td><b>${eur(row.netto)}</b></td></tr>`).join('')}
       <tr class="totals"><th>TOTALI</th><th>${eur(totals.vendita)}</th><th>${eur(totals.iva)}</th><th>${eur(totals.base)}</th><th>${eur(totals.provvigione)}</th><th>${eur(totals.netto)}</th></tr>
     </tbody></table></div>
-    <div class="formula">${eur(totals.vendita)} − ${eur(totals.iva)} − ${eur(totals.provvigione)} = ${eur(totals.netto)}</div>
-    <p class="note">L’IVA separata è la differenza tra il totale effettivamente venduto nel Pitazzo e la base del biglietto. La provvigione è calcolata sulla base senza IVA quando il biglietto è padronale o quando questa opzione è stata selezionata.</p>
+    <div class="formula">${eur(totals.vendita)} − ${eur(totals.provvigione)} = ${eur(totals.netto)}</div>
+    <p class="note">L’IVA separata è la differenza tra il totale effettivamente venduto nel Pitazzo e la base del biglietto. Rimane un valore informativo nella propria colonna e non viene sottratta dal totale. La provvigione è calcolata sulla base senza IVA quando il biglietto è padronale o quando questa opzione è stata selezionata.</p>
   </main></body></html>`);
   preview.document.close();
   preview.focus();
@@ -3697,6 +3715,7 @@ function startDataSubscription() {
   ensureAppStyles();
   document.body.classList.add('eurofrutta-shell');
   ensureDynamicNav();
+  enhanceHeaderBrand();
   $('#nav').hidden = false;
   $('#user').innerHTML = `<span class="presence-dot" title="Sei online"></span>${isAdmin() ? '<span title="Amministratore">♛</span> ' : ''}<b>${esc(operatorName())}</b>${isAdmin() ? ' · Amministratore' : ' · Operatore'} <button id="out">Esci</button>`;
   $('#out').onclick = logout;
