@@ -46,6 +46,7 @@ let homeSearch = '';
 let expandedHomeProduct = '';
 let editingSaleId = '';
 let editingTicketId = '';
+let returningSaleId = '';
 let pitClientDraft = {
   clienteNome: '',
   statoPagamento: 'credito',
@@ -121,6 +122,7 @@ function ensureAppStyles() {
     .home-search{margin:22px 0;padding:22px;border:1px solid #d9e5e4;border-radius:18px;background:linear-gradient(135deg,#fff 0%,#f4fbf8 100%);box-shadow:0 9px 28px #173b4e0b}.home-search-head{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:13px}.home-search h2{margin:0;font-size:22px}.home-search-box{display:flex;align-items:center;gap:10px;border:2px solid #cbdad8;border-radius:14px;background:#fff;padding:0 12px;transition:border-color .18s ease,box-shadow .18s ease}.home-search-box:focus-within{border-color:#159268;box-shadow:0 0 0 4px #15926818}.home-search-box input{width:100%;border:0;box-shadow:none!important;background:transparent;font-size:17px}.home-search-box button{width:auto;min-width:38px;padding:7px;background:transparent;color:#647586}.search-results-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:15px}.search-result-group{padding:14px;border:1px solid #dce7e5;border-radius:14px;background:#fff}.search-result-group h3{margin:0 0 9px;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:#617386}.search-result{width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;margin:5px 0;padding:10px 11px;border:0;border-radius:10px;background:#f4f8f7;color:#173044;text-align:left}.search-result:hover{background:#e8f6f0}.search-result strong{display:block}.search-result small{display:block;color:#6b7b8d;margin-top:2px}.owner-badge{display:inline-flex;align-items:center;padding:7px 10px;border-radius:9px;background:#edf5f2;color:#154f40;font-weight:850}.inventory-product-name{font-size:16px;color:#142b3c}
     .market-table{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.market-product{overflow:hidden;border:1px solid #dce7e4;border-radius:15px;background:#fff}.market-product>button{width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:17px;border:0;background:#fff;color:#173044;text-align:left}.market-product>button:hover{background:#edf9f4}.market-product>button strong{display:block;font-size:20px}.market-product>button small{display:block;margin-top:4px;color:#718093}.market-lots{padding:0 13px 13px}.market-lot{display:grid;grid-template-columns:1fr auto;gap:8px;padding:10px;border-top:1px solid #e3ebe9}.market-lot b{display:block}.market-lot small{display:block;color:#718093;margin-top:3px}.market-arrival-qty{color:#102d3f;font-size:15px}.home-price-history{margin:4px 13px 13px;padding:12px;border:1px solid #d7e5e1;border-radius:12px;background:#f5faf8}.home-price-history h4{margin:0 0 8px;color:#173044;font-size:13px;text-transform:uppercase;letter-spacing:.07em}.home-price-list{display:grid;gap:7px}.home-price-row{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;padding:8px 9px;border-radius:9px;background:#fff}.home-price-row>strong{color:#0d7252}.home-price-row span,.home-price-row small{min-width:0}.home-price-row span b,.home-price-row span small{display:block}.home-price-row span small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#718093}.home-price-row>small{color:#718093;text-align:right}.stock-low{color:#a76000;font-weight:850}.stock-ended{color:#a63e31;font-weight:850}.stock-ok{color:#11704f;font-weight:850}.edit-sale{margin-top:12px;padding:14px;border:1px solid #cfe1dc;border-radius:13px;background:#f6fbf9}.edit-sale .grid{margin-top:10px}
     .pit-client-ticket{margin-top:15px;border:2px solid #d6e2df;border-radius:16px;background:#fff;overflow:hidden}.pit-client-bar{display:grid;grid-template-columns:minmax(240px,2fr) 1fr 1fr;gap:12px;padding:16px;background:#f3f8f6;border-bottom:1px solid #dce7e4}.pit-client-bar input{font-size:18px;font-weight:800}.pit-client-label-row{display:flex;align-items:center;justify-content:space-between;gap:10px}.pit-client-label-row button{width:auto;min-height:30px;padding:5px 9px;font-size:11px}.pit-line-form{display:grid;grid-template-columns:minmax(210px,2fr) .7fr .7fr .9fr 1.2fr 1.15fr auto;gap:10px;align-items:end;padding:16px}.pit-line-form button{white-space:nowrap}.pit-keyboard-hint{margin:-3px 16px 13px;padding:9px 11px;border-radius:10px;background:#eef7f3;color:#47675e;font-size:12px}.pit-keyboard-hint kbd{display:inline-block;padding:2px 6px;border:1px solid #c6d8d2;border-bottom-width:2px;border-radius:5px;background:#fff;color:#244c40;font:700 11px/1.3 system-ui}.pit-product-search-wrap{position:relative}.pit-product-results{position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:30;max-height:320px;overflow:auto;padding:7px;border:1px solid #cbdad8;border-radius:12px;background:#fff;box-shadow:0 16px 35px #10283b2b}.pit-product-results:empty{display:none}.pit-product-option{width:100%;display:flex;justify-content:space-between;align-items:center;gap:10px;margin:3px 0;padding:10px;border:0;border-radius:9px;background:#f4f8f7;color:#183044;text-align:left}.pit-product-option:hover,.pit-product-option:focus,.pit-product-option:focus-visible{background:#e6f6ef;outline:3px solid #1592683b}.pit-product-option strong,.pit-product-option small{display:block}.pit-product-option small{margin-top:2px;color:#718093}.pit-product-option>span:last-child{color:#0d7252;text-align:right;font-size:11px;font-weight:800}.pit-draft-wrap{padding:0 16px 16px}.pit-draft-table td,.pit-draft-table th{vertical-align:middle}.pit-draft-table button{width:auto;min-width:38px;padding:7px}.pit-ticket-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:15px 16px;border-top:1px solid #dce7e4;background:#fbfdfc}.pit-ticket-footer>div{display:flex;gap:8px;flex-wrap:wrap}.pit-ticket-total{font-size:20px;color:#0e7352}.vat-pill{display:inline-flex;padding:4px 7px;border-radius:999px;background:#edf3ff;color:#365d99;font-size:10px;font-weight:800}.pit-last-ticket{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:14px;padding:14px 16px;border:1px solid #aedcc9;border-radius:13px;background:#eaf8f2}.pit-last-ticket strong,.pit-last-ticket small{display:block}.pit-last-ticket small{margin-top:3px;color:#547065}.pit-last-ticket button{width:auto}.client-ticket-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}.client-ticket-card{padding:15px;border:1px solid #d9e5e2;border-radius:14px;background:#fbfdfc}.client-ticket-card h3{margin:2px 0 5px}.client-ticket-card p{margin:4px 0}.client-ticket-card button{width:100%;margin-top:10px}
+    .return-modal-backdrop{position:fixed;inset:0;z-index:2500;display:grid;place-items:center;padding:20px;background:#071923a8;backdrop-filter:blur(5px)}.return-modal{width:min(720px,100%);max-height:92dvh;overflow:auto;padding:24px;border:1px solid #ffffff78;border-radius:20px;background:#fff;box-shadow:0 28px 90px #06172180}.return-modal h2{margin:3px 0 8px}.return-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:17px 0;padding:14px;border:1px solid #cce2db;border-radius:14px;background:#f1faf6}.return-summary div{min-width:0}.return-summary small,.return-summary b{display:block}.return-summary small{margin-bottom:3px;color:#68798b;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}.return-summary b{overflow:hidden;text-overflow:ellipsis}.return-preview{margin:14px 0;padding:13px;border-radius:12px;background:#eaf8f2;color:#145c47;font-weight:750}.return-preview.error{background:#fff0ed;color:#a23e30}.return-actions{display:flex;justify-content:flex-end;gap:9px;flex-wrap:wrap;margin-top:16px}.return-actions button{width:auto}.return-all{margin-top:8px;width:auto!important}.return-history{margin:10px 0;padding-left:20px;color:#5f7082;font-size:13px}
     @media(max-width:900px){
       body.eurofrutta-shell{padding-left:0;overflow-x:hidden}
       body.eurofrutta-shell.nav-open{overflow:hidden}
@@ -150,7 +152,7 @@ function ensureAppStyles() {
       .ticket-grid{grid-template-columns:1fr}
       .search-results-grid{grid-template-columns:1fr}
       .variant-row{grid-template-columns:1fr 1fr}.variant-row>div:first-child{grid-column:1/-1}.variant-row button{width:100%}
-      .pit-client-bar,.pit-line-form{grid-template-columns:1fr}.pit-line-form>div:first-child{grid-column:1/-1}.pit-product-results{position:static;margin-top:6px;max-height:240px}.pit-ticket-footer,.pit-last-ticket{align-items:stretch;flex-direction:column}.pit-ticket-footer>div,.pit-ticket-footer button,.pit-last-ticket button{width:100%}
+      .pit-client-bar,.pit-line-form{grid-template-columns:1fr}.pit-line-form>div:first-child{grid-column:1/-1}.pit-product-results{position:static;margin-top:6px;max-height:240px}.pit-ticket-footer,.pit-last-ticket{align-items:stretch;flex-direction:column}.pit-ticket-footer>div,.pit-ticket-footer button,.pit-last-ticket button{width:100%}.return-summary{grid-template-columns:1fr}.return-modal{padding:18px}.return-actions{flex-direction:column-reverse}.return-actions button{width:100%}
       .hero{padding:24px 18px!important}.hero-art{display:none!important}.hero-copy h2{font-size:38px!important}
     }
     @media(max-width:480px){body.eurofrutta-shell #nav{width:88vw}.ticket-card{padding:14px}.price-choice{grid-template-columns:1fr}.pit-product-row strong{font-size:16px}.home-search{padding:16px}.home-search-head{align-items:flex-start;flex-direction:column}.home-price-row{grid-template-columns:1fr auto}.home-price-row>strong{grid-column:1/-1}.home-price-row>small{text-align:left}}
@@ -702,7 +704,8 @@ function render() {
   document.querySelectorAll('#nav button').forEach((button) => {
     button.classList.toggle('active', button.dataset.page === current);
   });
-  $('#app').innerHTML = ({ home, pitazzo, movimento, magazzino, prodotti, clienti, vendite, biglietti, conti, chiusura, report, registro })[current]();
+  const page = ({ home, pitazzo, movimento, magazzino, prodotti, clienti, vendite, biglietti, conti, chiusura, report, registro })[current]();
+  $('#app').innerHTML = `${page}${returnSaleDialog()}`;
   bind();
   renderOnlineUsers();
 }
@@ -999,8 +1002,8 @@ function pitazzo() {
             <span class="chevron">›</span>
           </button>
           ${open ? `<div class="pit-buyers"><div class="table-scroll"><table>
-            <tr><th>Descrizione</th><th>Colli</th><th>Kg</th><th>Prezzo</th><th>Importo</th><th>Operatore</th></tr>
-            ${sales.map((sale) => { const saleLot = lotById(sale.lotto_id); return `<tr class="${sale.annullato ? 'returned' : ''}"><td><b>${esc(name('clienti', sale.cliente_id))}</b>${saleLot?.qualita && saleLot.qualita !== 'Standard' ? `<br><small>${esc(saleLot.qualita)}</small>` : ''}${sale.annullato ? '<br><span class="return-badge">RESO</span>' : ''}</td><td>${formatQty(sale.colli)}</td><td>${formatQty(sale.peso)}</td><td>${eur(sale.prezzo)} / ${sale.unita_prezzo === 'collo' ? 'collo' : 'kg'}</td><td><b>${eur(sale.totale)}</b></td><td>${esc(sale.operatore || '—')}</td></tr>`; }).join('')}
+            <tr><th>Descrizione</th><th>Colli</th><th>Kg</th><th>Prezzo</th><th>Importo</th><th>Operatore</th><th>Azione</th></tr>
+            ${sales.map((sale) => { const saleLot = lotById(sale.lotto_id); return `<tr class="${sale.annullato ? 'returned' : ''}"><td><b>${esc(name('clienti', sale.cliente_id))}</b>${saleLot?.qualita && saleLot.qualita !== 'Standard' ? `<br><small>${esc(saleLot.qualita)}</small>` : ''}${saleReturnBadge(sale)}</td><td>${formatQty(sale.colli)}</td><td>${formatQty(sale.peso)}</td><td>${eur(sale.prezzo)} / ${sale.unita_prezzo === 'collo' ? 'collo' : 'kg'}</td><td><b>${eur(sale.totale)}</b></td><td>${esc(sale.operatore || '—')}</td><td>${sale.annullato ? '<span class="return-badge">CHIUSA</span>' : `<button type="button" class="ghost" data-return-sale="${sale.id}">PER / reso</button>`}</td></tr>`; }).join('')}
           </table></div></div>` : ''}
         </article>`;
       }).join('') || '<p class="empty">Nessun articolo registrato nella giornata scelta.</p>'}</div>
@@ -1207,11 +1210,12 @@ function productDetail(product) {
     <section class="card">
       <div class="section-head"><div><p class="eyebrow">VENDITE</p><h2>Storico del prodotto</h2></div><b>${sales.length} righe</b></div>
       <div class="table-scroll"><table>
-        <tr><th>Data</th><th>Cliente</th><th>Proprietario lotto</th><th>Colli</th><th>Kg</th><th>Totale</th><th>Operatore</th></tr>
+        <tr><th>Data</th><th>Cliente</th><th>Proprietario lotto</th><th>Colli</th><th>Kg</th><th>Totale</th><th>Operatore</th><th>Azione</th></tr>
         ${sales.map((movement) => `<tr class="${movement.annullato ? 'returned' : ''}">
           <td>${esc(displayDateOnly(movement.data, movement.dateKey))}</td><td>${esc(name('clienti', movement.cliente_id))}</td><td>${esc(movement.proprietario || lotById(movement.lotto_id)?.proprietario || '—')}</td>
-          <td>${Number(movement.colli || 0)}</td><td>${Number(movement.peso || 0)}</td><td>${eur(movement.totale)}${movement.annullato ? '<br><span class="return-badge">RESO</span>' : ''}</td><td>${esc(movement.operatore || '—')}</td>
-        </tr>`).join('') || '<tr><td colspan="7" class="empty">Nessuna vendita.</td></tr>'}
+          <td>${formatQty(movement.colli)}</td><td>${formatQty(movement.peso)}</td><td>${eur(movement.totale)}${saleReturnBadge(movement)}</td><td>${esc(movement.operatore || '—')}</td>
+          <td>${movement.annullato ? '<span class="return-badge">CHIUSA</span>' : `<button type="button" class="ghost" data-return-sale="${movement.id}">PER / reso</button>`}</td>
+        </tr>`).join('') || '<tr><td colspan="8" class="empty">Nessuna vendita.</td></tr>'}
       </table></div>
     </section>`;
 }
@@ -1252,7 +1256,7 @@ function clientHistory(clientId) {
         <b>${activeHistory.length} vendite attive · ${eur(total)}</b>
       </div>
       <div class="table-scroll"><table>
-        <tr><th>Data</th><th>Articolo</th><th>Proprietario lotto</th><th>Colli</th><th>Kg</th><th>Totale</th></tr>
+        <tr><th>Data</th><th>Articolo</th><th>Proprietario lotto</th><th>Colli</th><th>Kg</th><th>Totale</th><th>Azione</th></tr>
         ${history.map((movement) => {
           const lot = lotById(movement.lotto_id);
           return `<tr class="${movement.annullato ? 'returned' : ''}">
@@ -1261,9 +1265,10 @@ function clientHistory(clientId) {
             <td>${esc(lot?.proprietario || movement.proprietario || '—')}</td>
             <td>${movement.colli}</td>
             <td>${movement.peso}</td>
-            <td>${eur(movement.totale)}${movement.annullato ? '<br><span class="return-badge">RESO</span>' : ''}</td>
+            <td>${eur(movement.totale)}${saleReturnBadge(movement)}</td>
+            <td>${movement.annullato ? '<span class="return-badge">CHIUSA</span>' : `<button type="button" class="ghost" data-return-sale="${movement.id}">PER / reso</button>`}</td>
           </tr>`;
-        }).join('') || '<tr><td colspan="6" class="empty">Nessuna vendita per questo cliente.</td></tr>'}
+        }).join('') || '<tr><td colspan="7" class="empty">Nessuna vendita per questo cliente.</td></tr>'}
       </table></div>
     </section>`;
 }
@@ -1336,7 +1341,7 @@ function clienti() {
           <div><label>&nbsp;</label><button>Registra pagamento</button></div>
         </form><p id="payment-msg"></p>
         <div class="table-scroll"><table><tr><th>Data</th><th>Importo</th><th>Metodo</th><th>Nota</th><th>Operatore</th></tr>
-          ${account.payments.slice().reverse().map((payment) => `<tr><td>${esc(displayDateOnly(payment.data, payment.dateKey))}</td><td><b>${eur(payment.importo)}</b></td><td>${esc(payment.metodo || '—')}</td><td>${esc(payment.note || '—')}</td><td>${esc(payment.operatore || '—')}</td></tr>`).join('') || '<tr><td colspan="5" class="empty">Nessun pagamento registrato.</td></tr>'}
+          ${account.payments.slice().reverse().map((payment) => `<tr><td>${esc(displayDateOnly(payment.data, payment.dateKey))}</td><td><b class="${Number(payment.importo || 0) < 0 ? 'account-negative' : ''}">${Number(payment.importo || 0) < 0 ? `Rimborso ${eur(Math.abs(Number(payment.importo || 0)))}` : eur(payment.importo)}</b></td><td>${esc(payment.metodo || '—')}</td><td>${esc(payment.note || '—')}</td><td>${esc(payment.operatore || '—')}</td></tr>`).join('') || '<tr><td colspan="5" class="empty">Nessun pagamento registrato.</td></tr>'}
         </table></div>
       </section>
       ${clientHistory(client.id)}` : ''}`;
@@ -1361,14 +1366,15 @@ function vendite() {
     <section class="card">
       <div class="section-head"><div><p class="eyebrow">ARCHIVIO</p><h2>Elenco vendite</h2></div><b>${sales.length} righe</b></div>
       <div class="table-scroll"><table>
-        <tr><th>Data</th><th>Prodotto / pezzatura</th><th>Proprietario lotto</th><th>Cliente</th><th>Colli</th><th>Kg</th><th>Prezzo</th><th>Totale</th><th>Operatore</th></tr>
+        <tr><th>Data</th><th>Prodotto / pezzatura</th><th>Proprietario lotto</th><th>Cliente</th><th>Colli</th><th>Kg</th><th>Prezzo</th><th>Totale</th><th>Operatore</th><th>Azione</th></tr>
         ${sales.map((movement) => `<tr class="${movement.annullato ? 'returned' : ''}">
           <td>${esc(displayDateOnly(movement.data, movement.dateKey))}</td>
           <td><button class="ghost" data-open-product="${movement.prodotto_id}"><b>${esc(name('prodotti', movement.prodotto_id))}</b></button>${movement.qualita && movement.qualita !== 'Standard' ? `<br><span class="quality-chip">${esc(movement.qualita)}</span>` : ''}</td>
           <td>${esc(movement.proprietario || lotById(movement.lotto_id)?.proprietario || '—')}</td>
           <td>${esc(name('clienti', movement.cliente_id))}</td>
-          <td>${formatQty(movement.colli)}</td><td>${formatQty(movement.peso)}</td><td>${eur(movement.prezzo)} / ${movement.unita_prezzo === 'collo' ? 'collo' : 'kg'}</td><td><b>${eur(movement.totale)}</b>${movement.annullato ? '<br><span class="return-badge">RESO</span>' : ''}</td><td>${esc(movement.operatore || '—')}</td>
-        </tr>`).join('') || '<tr><td colspan="9" class="empty">Nessuna vendita registrata.</td></tr>'}
+          <td>${formatQty(movement.colli)}</td><td>${formatQty(movement.peso)}</td><td>${eur(movement.prezzo)} / ${movement.unita_prezzo === 'collo' ? 'collo' : 'kg'}</td><td><b>${eur(movement.totale)}</b>${saleReturnBadge(movement)}</td><td>${esc(movement.operatore || '—')}</td>
+          <td>${movement.annullato ? '<span class="return-badge">CHIUSA</span>' : `<button type="button" class="ghost" data-return-sale="${movement.id}">PER / reso</button>`}</td>
+        </tr>`).join('') || '<tr><td colspan="10" class="empty">Nessuna vendita registrata.</td></tr>'}
       </table></div>
     </section>`;
 }
@@ -1473,8 +1479,8 @@ function biglietti() {
             const quantity = Number(sale.colli || 0) ? `${formatQty(sale.colli)} colli` : `${formatQty(sale.peso)} kg`;
             const label = `${index + 1}. ${sale.qualita || lotById(sale.lotto_id)?.qualita || 'Standard'} · ${quantity} · ${eur(sale.prezzo)} / ${sale.unita_prezzo === 'collo' ? 'collo' : 'kg'}`;
             return sale.annullato
-              ? `<span class="return-badge">${esc(label)} · RESO</span>`
-              : `<button type="button" class="ghost" data-edit-sale="${sale.id}">${esc(label)}</button><button type="button" class="ghost" data-return-sale="${sale.id}">Segna reso</button>`;
+              ? `<span class="return-badge">${esc(label)} · PER COMPLETO</span>`
+              : `<button type="button" class="ghost" data-edit-sale="${sale.id}">${esc(label)}</button><button type="button" class="ghost" data-return-sale="${sale.id}">PER / reso</button>${saleReturnBadge(sale)}`;
           }).join('') || '<span class="muted">Nessuna vendita collegata trovata. Premi “Genera / aggiorna” per riallineare questo biglietto.</span>'}</div>
         </details>
         ${openedSale ? saleEditForm(editingSaleId) : ''}
@@ -2186,31 +2192,141 @@ function addWaste(form) {
   audit('Merce lavorata/scartata', `${lotSearchName(lot)} · ${packages ? `${formatQty(packages)} colli` : ''}${packages && weight ? ' · ' : ''}${weight ? `${formatQty(weight)} kg` : ''}`);
 }
 
-function markSaleReturned(movementId) {
-  const movement = db.movimenti.find((item) => item.id === movementId && item.tipo === 'uscita');
-  if (!movement) throw new Error('Vendita non trovata. Rigenera i biglietti e riprova.');
-  if (movement.annullato) throw new Error('Questa vendita è già stata segnata come reso.');
+function saleReturns(movement) {
+  return Array.isArray(movement?.resi) ? movement.resi : [];
+}
+
+function saleReturnLabel(movement) {
+  if (movement?.annullato) return 'PER COMPLETO';
+  const returns = saleReturns(movement);
+  if (!returns.length) return '';
+  const packages = roundQty(returns.reduce((sum, item) => sum + Number(item.colli || 0), 0));
+  const weight = roundQty(returns.reduce((sum, item) => sum + Number(item.peso || 0), 0));
+  const quantities = [packages ? `${formatQty(packages)} colli` : '', weight ? `${formatQty(weight)} kg` : ''].filter(Boolean).join(' · ');
+  return `PER ${quantities || 'parziale'}`;
+}
+
+function saleReturnBadge(movement) {
+  const label = saleReturnLabel(movement);
+  return label ? `<br><span class="return-badge">${esc(label)}</span>` : '';
+}
+
+function calculateSaleReturn(movement, packages, weight) {
+  if (!movement) throw new Error('Vendita non trovata.');
+  const currentPackages = roundQty(Number(movement.colli || 0));
+  const currentWeight = roundQty(Number(movement.peso || 0));
+  const returnedPackages = roundQty(Number(packages || 0));
+  const returnedWeight = roundQty(Number(weight || 0));
+  if (returnedPackages < 0 || returnedWeight < 0) throw new Error('La quantità restituita non può essere negativa.');
+  if (returnedPackages <= 0 && returnedWeight <= 0) throw new Error('Inserisci almeno i colli oppure i kg restituiti.');
+  if (returnedPackages > currentPackages || returnedWeight > currentWeight) throw new Error('Il reso supera la quantità ancora presente nella vendita.');
+  if (currentPackages > 0 && currentWeight > 0 && (returnedPackages <= 0 || returnedWeight <= 0)) {
+    throw new Error('Questa vendita tiene sia colli sia kg: indica entrambe le quantità restituite.');
+  }
+  if (movement.unita_prezzo === 'collo' && returnedPackages <= 0) throw new Error('Per questa vendita devi indicare i colli restituiti.');
+  if (movement.unita_prezzo !== 'collo' && returnedWeight <= 0) throw new Error('Per questa vendita devi indicare i kg restituiti.');
+
+  const remainingPackages = roundQty(currentPackages - returnedPackages);
+  const remainingWeight = roundQty(currentWeight - returnedWeight);
+  const amounts = saleAmounts(
+    movement.prezzo,
+    movement.unita_prezzo === 'collo' ? 'collo' : 'kg',
+    remainingPackages,
+    remainingWeight,
+    normalizeVatMode(movement.iva_modalita, movement.iva_percentuale),
+  );
+  const refund = roundMoney(Number(movement.totale || 0) - amounts.total);
+  const full = remainingPackages <= 0 && remainingWeight <= 0;
+  return { returnedPackages, returnedWeight, remainingPackages, remainingWeight, amounts, refund, full };
+}
+
+function returnSaleDialog() {
+  const movement = db.movimenti.find((item) => item.id === returningSaleId && item.tipo === 'uscita' && !item.annullato);
+  if (!movement) return '';
   const lot = lotById(movement.lotto_id);
-  if (!lot) throw new Error('Il lotto collegato a questa vendita non esiste più.');
+  const linkedPaid = (db.pagamenti || []).some((payment) => payment.movimento_id === movement.id && !payment.annullato && Number(payment.importo || 0) > 0);
+  const previousReturns = saleReturns(movement);
+  return `<div class="return-modal-backdrop" data-return-backdrop>
+    <section class="return-modal" role="dialog" aria-modal="true" aria-labelledby="return-title">
+      <div class="section-head">
+        <div><p class="eyebrow">PER / RESO CLIENTE</p><h2 id="return-title">Restituisci merce e sistema tutto</h2></div>
+        <button type="button" class="ghost" data-cancel-return>Chiudi</button>
+      </div>
+      <p class="muted">Indica soltanto ciò che il cliente riporta. La merce torna nella stessa partita e vendita, conto cliente e biglietti vengono ricalcolati insieme.</p>
+      <div class="return-summary">
+        <div><small>Cliente</small><b>${esc(name('clienti', movement.cliente_id))}</b></div>
+        <div><small>Articolo</small><b>${esc(name('prodotti', movement.prodotto_id))}${movement.qualita && movement.qualita !== 'Standard' ? ` · ${esc(movement.qualita)}` : ''}</b></div>
+        <div><small>Vendita attuale</small><b>${Number(movement.colli || 0) ? `${formatQty(movement.colli)} colli · ` : ''}${Number(movement.peso || 0) ? `${formatQty(movement.peso)} kg · ` : ''}${eur(movement.totale)}</b></div>
+      </div>
+      ${previousReturns.length ? `<p><b>PER già registrati:</b></p><ul class="return-history">${previousReturns.map((item) => `<li>${esc(displayDateOnly(item.data, item.dateKey))} · ${Number(item.colli || 0) ? `${formatQty(item.colli)} colli · ` : ''}${Number(item.peso || 0) ? `${formatQty(item.peso)} kg · ` : ''}${eur(item.importo)}${item.note ? ` · ${esc(item.note)}` : ''}</li>`).join('')}</ul>` : ''}
+      <form id="sale-return-form" data-sale-id="${movement.id}">
+        <div class="grid">
+          <div><label>Data del reso *</label><input name="data_reso" type="date" required value="${today()}"></div>
+          ${Number(movement.colli || 0) > 0 ? `<div><label>Colli restituiti *</label><input name="colli" type="number" min="0" max="${Number(movement.colli || 0)}" step="0.01" placeholder="Massimo ${formatQty(movement.colli)}"></div>` : '<input name="colli" type="hidden" value="0">'}
+          ${Number(movement.peso || 0) > 0 ? `<div><label>Kg restituiti *</label><input name="peso" type="number" min="0" max="${Number(movement.peso || 0)}" step="0.01" placeholder="Massimo ${formatQty(movement.peso)}"></div>` : '<input name="peso" type="hidden" value="0">'}
+          <div><label>Come sistemare il conto</label><select name="gestione_conto"><option value="rimborso" ${linkedPaid ? 'selected' : ''}>Soldi restituiti al cliente</option><option value="credito" ${linkedPaid ? '' : 'selected'}>Scala soltanto dal credito</option></select></div>
+          <div><label>Metodo rimborso</label><select name="metodo"><option>Contanti</option><option>Bonifico</option><option>Carta</option><option>Altro</option></select></div>
+          <div><label>Motivo / nota</label><input name="note" placeholder="Es. merce non gradita"></div>
+        </div>
+        <button type="button" class="ghost return-all" data-return-all>Restituisci tutta la riga</button>
+        <p id="return-preview" class="return-preview">Inserisci la quantità restituita per vedere il rimborso.</p>
+        <div class="return-actions"><button type="button" class="ghost" data-cancel-return>Annulla</button><button type="submit">Registra PER / reso</button></div>
+      </form>
+    </section>
+  </div>`;
+}
 
-  if (Number(lot.colli_iniziali || 0) > 0) {
-    lot.colli_rimanenti = roundQty(Number(lot.colli_rimanenti || 0) + Number(movement.colli || 0));
-  }
-  if (Number(lot.peso_iniziale || 0) > 0) {
-    lot.peso_rimanente = roundQty(Number(lot.peso_rimanente || 0) + Number(movement.peso || 0));
-  }
+function applySaleReturn(form) {
+  const movement = db.movimenti.find((item) => item.id === form.dataset.saleId && item.tipo === 'uscita');
+  if (!movement || movement.annullato) throw new Error('Questa vendita non è più disponibile per un reso.');
+  const lot = lotById(movement.lotto_id);
+  if (!lot) throw new Error('La partita collegata alla vendita non esiste più.');
+  const data = new FormData(form);
+  const result = calculateSaleReturn(movement, data.get('colli'), data.get('peso'));
+  const returnDate = String(data.get('data_reso') || today());
+  const accountAction = data.get('gestione_conto') === 'rimborso' ? 'rimborso' : 'credito';
+  const method = String(data.get('metodo') || 'Contanti');
+  const note = String(data.get('note') || '').trim();
 
-  movement.totaleOriginale = Number(movement.totale || 0);
-  movement.totale = 0;
-  movement.annullato = true;
+  if (movement.colliOriginali === undefined) movement.colliOriginali = Number(movement.colli || 0);
+  if (movement.pesoOriginale === undefined) movement.pesoOriginale = Number(movement.peso || 0);
+  if (movement.totaleOriginale === undefined) movement.totaleOriginale = Number(movement.totale || 0);
+  if (movement.imponibileOriginale === undefined) movement.imponibileOriginale = Number(movement.imponibile || movement.totale || 0);
+  if (movement.ivaOriginale === undefined) movement.ivaOriginale = Number(movement.iva || 0);
+
+  if (Number(lot.colli_iniziali || 0) > 0) lot.colli_rimanenti = roundQty(Number(lot.colli_rimanenti || 0) + result.returnedPackages);
+  if (Number(lot.peso_iniziale || 0) > 0) lot.peso_rimanente = roundQty(Number(lot.peso_rimanente || 0) + result.returnedWeight);
+  if (lotStatus(lot) !== 'terminata') delete lot.terminatoIl;
+
+  movement.colli = result.remainingPackages;
+  movement.peso = result.remainingWeight;
+  movement.imponibile = result.amounts.taxable;
+  movement.iva = result.amounts.vat;
+  movement.totale = result.amounts.total;
+  movement.annullato = result.full;
+  movement.resoParziale = !result.full;
   movement.resoIl = stamp();
-  movement.resoDateKey = today();
+  movement.resoDateKey = returnDate;
   movement.resoDa = operatorName();
-  (db.pagamenti || []).filter((payment) => payment.movimento_id === movementId).forEach((payment) => {
-    payment.annullato = true;
-    payment.annullatoIl = stamp();
+  if (!Array.isArray(movement.resi)) movement.resi = [];
+  movement.resi.push({
+    id: id(), dateKey: returnDate, data: formatDateKey(returnDate), colli: result.returnedPackages,
+    peso: result.returnedWeight, importo: result.refund, gestioneConto: accountAction, metodo: method,
+    note, operatore: operatorName(), operatore_uid: signedUser?.uid || '',
   });
-  audit('Reso registrato', `${name('prodotti', movement.prodotto_id)} · ${name('clienti', movement.cliente_id)} · importo restituito ${eur(movement.totaleOriginale)}`);
+
+  if (accountAction === 'rimborso' && result.refund > 0) {
+    if (!Array.isArray(db.pagamenti)) db.pagamenti = [];
+    db.pagamenti.push({
+      id: id(), cliente_id: movement.cliente_id, reso_movimento_id: movement.id,
+      dateKey: returnDate, data: formatDateKey(returnDate), importo: roundMoney(-result.refund), metodo: method,
+      note: `Rimborso PER / reso · ${name('prodotti', movement.prodotto_id)}${note ? ` · ${note}` : ''}`,
+      operatore: operatorName(), operatore_uid: signedUser?.uid || '',
+    });
+  }
+
+  const returnedText = [result.returnedPackages ? `${formatQty(result.returnedPackages)} colli` : '', result.returnedWeight ? `${formatQty(result.returnedWeight)} kg` : ''].filter(Boolean).join(' · ');
+  audit(result.full ? 'PER / reso completo' : 'PER / reso parziale', `${name('prodotti', movement.prodotto_id)} · cliente ${name('clienti', movement.cliente_id)} · ${returnedText} · ${accountAction === 'rimborso' ? `rimborsati ${eur(result.refund)}` : `credito ridotto di ${eur(result.refund)}`}`);
   return movement.dateKey || today();
 }
 
@@ -2892,20 +3008,73 @@ function bind() {
   }
 
   document.querySelectorAll('[data-return-sale]').forEach((button) => {
-    button.onclick = async () => {
-      if (!confirm('Confermi il reso? L’importo sarà azzerato e colli/kg torneranno in magazzino.')) return;
-      try {
-        const ticketDate = markSaleReturned(button.dataset.returnSale);
-        createTicketRecords(ticketDate);
-        await save();
-        ticketsDate = ticketDate;
-        current = 'biglietti';
-        render();
-      } catch (error) {
-        alert(`Errore: ${error.message}`);
-      }
+    button.onclick = () => {
+      returningSaleId = button.dataset.returnSale;
+      editingSaleId = '';
+      editingTicketId = '';
+      render();
+      $('#sale-return-form input[name="colli"], #sale-return-form input[name="peso"]')?.focus();
     };
   });
+
+  document.querySelectorAll('[data-cancel-return]').forEach((button) => {
+    button.onclick = () => {
+      returningSaleId = '';
+      render();
+    };
+  });
+  $('[data-return-backdrop]')?.addEventListener('click', (event) => {
+    if (event.target !== event.currentTarget) return;
+    returningSaleId = '';
+    render();
+  });
+
+  const saleReturn = $('#sale-return-form');
+  if (saleReturn) {
+    const movement = db.movimenti.find((item) => item.id === saleReturn.dataset.saleId && item.tipo === 'uscita');
+    const preview = $('#return-preview');
+    const updateReturnPreview = () => {
+      try {
+        const data = new FormData(saleReturn);
+        const result = calculateSaleReturn(movement, data.get('colli'), data.get('peso'));
+        preview.className = 'return-preview';
+        const remainingText = [
+          result.remainingPackages ? `${formatQty(result.remainingPackages)} colli` : '',
+          result.remainingWeight ? `${formatQty(result.remainingWeight)} kg` : '',
+        ].filter(Boolean).join(' e ') || 'zero';
+        preview.textContent = `${result.full ? 'Reso completo' : 'Reso parziale'} · importo ${eur(result.refund)} · restano nella vendita ${remainingText}.`;
+      } catch (error) {
+        preview.className = 'return-preview error';
+        preview.textContent = error.message;
+      }
+    };
+    saleReturn.querySelectorAll('input[name="colli"],input[name="peso"]').forEach((input) => input.addEventListener('input', updateReturnPreview));
+    $('[data-return-all]')?.addEventListener('click', () => {
+      const packages = saleReturn.querySelector('input[name="colli"]');
+      const weight = saleReturn.querySelector('input[name="peso"]');
+      if (packages) packages.value = Number(movement?.colli || 0);
+      if (weight) weight.value = Number(movement?.peso || 0);
+      updateReturnPreview();
+    });
+    saleReturn.onsubmit = async (event) => {
+      event.preventDefault();
+      const previousDb = JSON.parse(JSON.stringify(db));
+      try {
+        const ticketDate = applySaleReturn(saleReturn);
+        db.biglietti = db.biglietti.filter((ticket) => ticket.dateKey !== ticketDate);
+        if (dailyTicketData(ticketDate).length) createTicketRecords(ticketDate);
+        await save();
+        returningSaleId = '';
+        ticketsDate = ticketDate;
+        render();
+        alert('PER / reso registrato. Magazzino, totale, conto cliente e biglietti sono stati aggiornati.');
+      } catch (error) {
+        db = previousDb;
+        preview.className = 'return-preview error';
+        preview.textContent = `Errore: ${error.message}`;
+      }
+    };
+  }
 
   const memberForm = $('#member-form');
   if (memberForm) {
