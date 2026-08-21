@@ -47,6 +47,8 @@ let expandedHomeProduct = '';
 let editingSaleId = '';
 let editingTicketId = '';
 let returningSaleId = '';
+let returnsSearch = '';
+let returnsDate = '';
 let pitClientDraft = {
   clienteNome: '',
   statoPagamento: 'credito',
@@ -181,6 +183,7 @@ function ensureDynamicNav() {
     <button data-page="prodotti">◇ <span>Prodotti</span></button>
     <button data-page="clienti">♙ <span>Clienti</span></button>
     <button data-page="vendite">€ <span>Vendite</span></button>
+    <button data-page="resi">↩ <span>Resi</span></button>
     <button data-page="biglietti">▥ <span>Biglietti</span></button>
     <button data-page="conti">◉ <span>Conti clienti</span></button>
     <div class="nav-group">Controllo</div>
@@ -704,7 +707,7 @@ function render() {
   document.querySelectorAll('#nav button').forEach((button) => {
     button.classList.toggle('active', button.dataset.page === current);
   });
-  const page = ({ home, pitazzo, movimento, magazzino, prodotti, clienti, vendite, biglietti, conti, chiusura, report, registro })[current]();
+  const page = ({ home, pitazzo, movimento, magazzino, prodotti, clienti, vendite, resi, biglietti, conti, chiusura, report, registro })[current]();
   $('#app').innerHTML = `${page}${returnSaleDialog()}`;
   bind();
   renderOnlineUsers();
@@ -1007,7 +1010,7 @@ function pitazzo() {
           </button>
           ${open ? `<div class="pit-buyers"><div class="table-scroll"><table>
             <tr><th>Descrizione</th><th>Colli</th><th>Kg</th><th>Prezzo</th><th>Importo</th><th>Operatore</th><th>Azione</th></tr>
-            ${sales.map((sale) => { const saleLot = lotById(sale.lotto_id); if (sale.tipo === 'scarto') return `<tr class="pit-waste-row"><td><b>LAVORATI / SCARTO</b>${saleLot?.qualita && saleLot.qualita !== 'Standard' ? `<br><small>${esc(saleLot.qualita)}</small>` : ''}${sale.note ? `<br><small>${esc(sale.note)}</small>` : ''}</td><td>${formatQty(sale.colli)}</td><td>${formatQty(sale.peso)}</td><td>—</td><td>—</td><td>${esc(sale.operatore || '—')}</td><td><span class="waste-badge">SCARTO</span></td></tr>`; return `<tr class="${sale.annullato ? 'returned' : ''}"><td><b>${esc(name('clienti', sale.cliente_id))}</b>${saleLot?.qualita && saleLot.qualita !== 'Standard' ? `<br><small>${esc(saleLot.qualita)}</small>` : ''}${saleReturnBadge(sale)}</td><td>${formatQty(sale.colli)}</td><td>${formatQty(sale.peso)}</td><td>${eur(sale.prezzo)} / ${sale.unita_prezzo === 'collo' ? 'collo' : 'kg'}</td><td><b>${eur(sale.totale)}</b></td><td>${esc(sale.operatore || '—')}</td><td>${sale.annullato ? '<span class="return-badge">CHIUSA</span>' : `<button type="button" class="ghost" data-return-sale="${sale.id}">PER / reso</button>`}</td></tr>`; }).join('')}
+            ${sales.map((sale) => { const saleLot = lotById(sale.lotto_id); if (sale.tipo === 'scarto') return `<tr class="pit-waste-row"><td><b>LAVORATI / SCARTO</b>${saleLot?.qualita && saleLot.qualita !== 'Standard' ? `<br><small>${esc(saleLot.qualita)}</small>` : ''}${sale.note ? `<br><small>${esc(sale.note)}</small>` : ''}</td><td>${formatQty(sale.colli)}</td><td>${formatQty(sale.peso)}</td><td>—</td><td>—</td><td>${esc(sale.operatore || '—')}</td><td><span class="waste-badge">SCARTO</span></td></tr>`; return `<tr class="${sale.annullato ? 'returned' : ''}"><td><b>${esc(name('clienti', sale.cliente_id))}</b>${saleLot?.qualita && saleLot.qualita !== 'Standard' ? `<br><small>${esc(saleLot.qualita)}</small>` : ''}${saleReturnBadge(sale)}</td><td>${formatQty(sale.colli)}</td><td>${formatQty(sale.peso)}</td><td>${eur(sale.prezzo)} / ${sale.unita_prezzo === 'collo' ? 'collo' : 'kg'}</td><td><b>${eur(sale.totale)}</b></td><td>${esc(sale.operatore || '—')}</td><td>${sale.annullato ? '<span class="return-badge">CHIUSA</span>' : `<button type="button" class="ghost" data-return-sale="${sale.id}">Reso</button>`}</td></tr>`; }).join('')}
           </table></div></div>` : ''}
         </article>`;
       }).join('') || '<p class="empty">Nessun articolo registrato nella giornata scelta.</p>'}</div>
@@ -1218,7 +1221,7 @@ function productDetail(product) {
         ${sales.map((movement) => `<tr class="${movement.annullato ? 'returned' : ''}">
           <td>${esc(displayDateOnly(movement.data, movement.dateKey))}</td><td>${esc(name('clienti', movement.cliente_id))}</td><td>${esc(movement.proprietario || lotById(movement.lotto_id)?.proprietario || '—')}</td>
           <td>${formatQty(movement.colli)}</td><td>${formatQty(movement.peso)}</td><td>${eur(movement.totale)}${saleReturnBadge(movement)}</td><td>${esc(movement.operatore || '—')}</td>
-          <td>${movement.annullato ? '<span class="return-badge">CHIUSA</span>' : `<button type="button" class="ghost" data-return-sale="${movement.id}">PER / reso</button>`}</td>
+          <td>${movement.annullato ? '<span class="return-badge">CHIUSA</span>' : `<button type="button" class="ghost" data-return-sale="${movement.id}">Reso</button>`}</td>
         </tr>`).join('') || '<tr><td colspan="8" class="empty">Nessuna vendita.</td></tr>'}
       </table></div>
     </section>`;
@@ -1270,7 +1273,7 @@ function clientHistory(clientId) {
             <td>${movement.colli}</td>
             <td>${movement.peso}</td>
             <td>${eur(movement.totale)}${saleReturnBadge(movement)}</td>
-            <td>${movement.annullato ? '<span class="return-badge">CHIUSA</span>' : `<button type="button" class="ghost" data-return-sale="${movement.id}">PER / reso</button>`}</td>
+            <td>${movement.annullato ? '<span class="return-badge">CHIUSA</span>' : `<button type="button" class="ghost" data-return-sale="${movement.id}">Reso</button>`}</td>
           </tr>`;
         }).join('') || '<tr><td colspan="7" class="empty">Nessuna vendita per questo cliente.</td></tr>'}
       </table></div>
@@ -1377,8 +1380,87 @@ function vendite() {
           <td>${esc(movement.proprietario || lotById(movement.lotto_id)?.proprietario || '—')}</td>
           <td>${esc(name('clienti', movement.cliente_id))}</td>
           <td>${formatQty(movement.colli)}</td><td>${formatQty(movement.peso)}</td><td>${eur(movement.prezzo)} / ${movement.unita_prezzo === 'collo' ? 'collo' : 'kg'}</td><td><b>${eur(movement.totale)}</b>${saleReturnBadge(movement)}</td><td>${esc(movement.operatore || '—')}</td>
-          <td>${movement.annullato ? '<span class="return-badge">CHIUSA</span>' : `<button type="button" class="ghost" data-return-sale="${movement.id}">PER / reso</button>`}</td>
+          <td>${movement.annullato ? '<span class="return-badge">CHIUSA</span>' : `<button type="button" class="ghost" data-return-sale="${movement.id}">Reso</button>`}</td>
         </tr>`).join('') || '<tr><td colspan="10" class="empty">Nessuna vendita registrata.</td></tr>'}
+      </table></div>
+    </section>`;
+}
+
+function resi() {
+  const query = normalized(returnsSearch);
+  const activeSales = db.movimenti
+    .filter((movement) => movement.tipo === 'uscita' && !movement.annullato)
+    .filter((movement) => !returnsDate || movement.dateKey === returnsDate)
+    .filter((movement) => !query || searchMatches([
+      name('clienti', movement.cliente_id),
+      name('prodotti', movement.prodotto_id),
+      movement.qualita,
+      movement.proprietario,
+      lotById(movement.lotto_id)?.proprietario,
+      movement.note,
+      movement.data,
+    ], query))
+    .slice()
+    .sort((left, right) => String(right.dateKey || right.data || '').localeCompare(String(left.dateKey || left.data || '')));
+
+  const returnHistory = db.movimenti
+    .filter((movement) => movement.tipo === 'uscita')
+    .flatMap((movement) => saleReturns(movement).map((returnRecord) => ({ movement, returnRecord })))
+    .sort((left, right) => String(right.returnRecord.dateKey || right.returnRecord.data || '').localeCompare(String(left.returnRecord.dateKey || left.returnRecord.data || '')));
+  const returnedValue = roundMoney(returnHistory.reduce((sum, item) => sum + Number(item.returnRecord.importo || 0), 0));
+
+  return `
+    <section class="pit-title">
+      <div><p class="eyebrow">RESI</p><h2>Restituzioni clienti</h2><p>Cerca la vendita originale e premi “Registra reso”. Merce, conto cliente, totale e biglietti si sistemano insieme.</p></div>
+      <div class="date"><small>RESI REGISTRATI</small>${returnHistory.length}</div>
+    </section>
+    <section class="card">
+      <div class="section-head"><div><p class="eyebrow">CERCA LA VENDITA</p><h2>Quale merce è stata restituita?</h2></div></div>
+      <form id="returns-filter-form" class="grid">
+        <div><label>Cliente o prodotto</label><input name="ricerca" type="search" value="${esc(returnsSearch)}" placeholder="Es. Simone oppure Cipolle"></div>
+        <div><label>Data della vendita</label><input name="data_vendita" type="date" value="${esc(returnsDate)}"></div>
+        <div><label>&nbsp;</label><button type="submit">Cerca vendita</button></div>
+        <div><label>&nbsp;</label><button id="clear-returns-filter" class="ghost" type="button">Mostra tutte</button></div>
+      </form>
+      <div class="table-scroll"><table>
+        <tr><th>Data vendita</th><th>Cliente</th><th>Prodotto</th><th>Fornitore / pezzatura</th><th>Quantità rimasta nella vendita</th><th>Totale attuale</th><th>Azione</th></tr>
+        ${activeSales.map((movement) => {
+          const lot = lotById(movement.lotto_id);
+          const quantity = [
+            Number(movement.colli || 0) ? `${formatQty(movement.colli)} colli` : '',
+            Number(movement.peso || 0) ? `${formatQty(movement.peso)} kg` : '',
+          ].filter(Boolean).join(' · ') || '—';
+          return `<tr>
+            <td>${esc(displayDateOnly(movement.data, movement.dateKey))}</td>
+            <td><b>${esc(name('clienti', movement.cliente_id))}</b></td>
+            <td><b>${esc(name('prodotti', movement.prodotto_id))}</b>${saleReturnBadge(movement)}</td>
+            <td>${esc(movement.proprietario || lot?.proprietario || '—')}${movement.qualita && movement.qualita !== 'Standard' ? `<br><small>${esc(movement.qualita)}</small>` : ''}</td>
+            <td>${esc(quantity)}</td>
+            <td><b>${eur(movement.totale)}</b></td>
+            <td><button type="button" data-return-sale="${movement.id}">Registra reso</button></td>
+          </tr>`;
+        }).join('') || '<tr><td colspan="7" class="empty">Nessuna vendita trovata. Prova a cancellare i filtri.</td></tr>'}
+      </table></div>
+    </section>
+    <section class="card">
+      <div class="section-head"><div><p class="eyebrow">STORICO RESI</p><h2>Resi già registrati</h2></div><b>${returnHistory.length} resi · ${eur(returnedValue)}</b></div>
+      <div class="table-scroll"><table>
+        <tr><th>Data reso</th><th>Cliente</th><th>Prodotto</th><th>Quantità restituita</th><th>Importo sistemato</th><th>Operatore</th><th>Nota</th></tr>
+        ${returnHistory.map(({ movement, returnRecord }) => {
+          const quantity = [
+            Number(returnRecord.colli || 0) ? `${formatQty(returnRecord.colli)} colli` : '',
+            Number(returnRecord.peso || 0) ? `${formatQty(returnRecord.peso)} kg` : '',
+          ].filter(Boolean).join(' · ') || '—';
+          return `<tr>
+            <td>${esc(displayDateOnly(returnRecord.data, returnRecord.dateKey))}</td>
+            <td>${esc(name('clienti', movement.cliente_id))}</td>
+            <td><b>${esc(name('prodotti', movement.prodotto_id))}</b></td>
+            <td>${esc(quantity)}</td>
+            <td><b>${eur(returnRecord.importo)}</b></td>
+            <td>${esc(returnRecord.operatore || '—')}</td>
+            <td>${esc(returnRecord.note || '—')}</td>
+          </tr>`;
+        }).join('') || '<tr><td colspan="7" class="empty">Non hai ancora registrato nessun reso.</td></tr>'}
       </table></div>
     </section>`;
 }
@@ -1483,8 +1565,8 @@ function biglietti() {
             const quantity = Number(sale.colli || 0) ? `${formatQty(sale.colli)} colli` : `${formatQty(sale.peso)} kg`;
             const label = `${index + 1}. ${sale.qualita || lotById(sale.lotto_id)?.qualita || 'Standard'} · ${quantity} · ${eur(sale.prezzo)} / ${sale.unita_prezzo === 'collo' ? 'collo' : 'kg'}`;
             return sale.annullato
-              ? `<span class="return-badge">${esc(label)} · PER COMPLETO</span>`
-              : `<button type="button" class="ghost" data-edit-sale="${sale.id}">${esc(label)}</button><button type="button" class="ghost" data-return-sale="${sale.id}">PER / reso</button>${saleReturnBadge(sale)}`;
+              ? `<span class="return-badge">${esc(label)} · RESO COMPLETO</span>`
+              : `<button type="button" class="ghost" data-edit-sale="${sale.id}">${esc(label)}</button><button type="button" class="ghost" data-return-sale="${sale.id}">Reso</button>${saleReturnBadge(sale)}`;
           }).join('') || '<span class="muted">Nessuna vendita collegata trovata. Premi “Genera / aggiorna” per riallineare questo biglietto.</span>'}</div>
         </details>
         ${openedSale ? saleEditForm(editingSaleId) : ''}
@@ -2201,13 +2283,13 @@ function saleReturns(movement) {
 }
 
 function saleReturnLabel(movement) {
-  if (movement?.annullato) return 'PER COMPLETO';
+  if (movement?.annullato) return 'RESO COMPLETO';
   const returns = saleReturns(movement);
   if (!returns.length) return '';
   const packages = roundQty(returns.reduce((sum, item) => sum + Number(item.colli || 0), 0));
   const weight = roundQty(returns.reduce((sum, item) => sum + Number(item.peso || 0), 0));
   const quantities = [packages ? `${formatQty(packages)} colli` : '', weight ? `${formatQty(weight)} kg` : ''].filter(Boolean).join(' · ');
-  return `PER ${quantities || 'parziale'}`;
+  return `RESO ${quantities || 'parziale'}`;
 }
 
 function saleReturnBadge(movement) {
@@ -2253,7 +2335,7 @@ function returnSaleDialog() {
   return `<div class="return-modal-backdrop" data-return-backdrop>
     <section class="return-modal" role="dialog" aria-modal="true" aria-labelledby="return-title">
       <div class="section-head">
-        <div><p class="eyebrow">PER / RESO CLIENTE</p><h2 id="return-title">Restituisci merce e sistema tutto</h2></div>
+        <div><p class="eyebrow">RESO CLIENTE</p><h2 id="return-title">Restituisci merce e sistema tutto</h2></div>
         <button type="button" class="ghost" data-cancel-return>Chiudi</button>
       </div>
       <p class="muted">Indica soltanto ciò che il cliente riporta. La merce torna nella stessa partita e vendita, conto cliente e biglietti vengono ricalcolati insieme.</p>
@@ -2262,7 +2344,7 @@ function returnSaleDialog() {
         <div><small>Articolo</small><b>${esc(name('prodotti', movement.prodotto_id))}${movement.qualita && movement.qualita !== 'Standard' ? ` · ${esc(movement.qualita)}` : ''}</b></div>
         <div><small>Vendita attuale</small><b>${Number(movement.colli || 0) ? `${formatQty(movement.colli)} colli · ` : ''}${Number(movement.peso || 0) ? `${formatQty(movement.peso)} kg · ` : ''}${eur(movement.totale)}</b></div>
       </div>
-      ${previousReturns.length ? `<p><b>PER già registrati:</b></p><ul class="return-history">${previousReturns.map((item) => `<li>${esc(displayDateOnly(item.data, item.dateKey))} · ${Number(item.colli || 0) ? `${formatQty(item.colli)} colli · ` : ''}${Number(item.peso || 0) ? `${formatQty(item.peso)} kg · ` : ''}${eur(item.importo)}${item.note ? ` · ${esc(item.note)}` : ''}</li>`).join('')}</ul>` : ''}
+      ${previousReturns.length ? `<p><b>Resi già registrati:</b></p><ul class="return-history">${previousReturns.map((item) => `<li>${esc(displayDateOnly(item.data, item.dateKey))} · ${Number(item.colli || 0) ? `${formatQty(item.colli)} colli · ` : ''}${Number(item.peso || 0) ? `${formatQty(item.peso)} kg · ` : ''}${eur(item.importo)}${item.note ? ` · ${esc(item.note)}` : ''}</li>`).join('')}</ul>` : ''}
       <form id="sale-return-form" data-sale-id="${movement.id}">
         <div class="grid">
           <div><label>Data del reso *</label><input name="data_reso" type="date" required value="${today()}"></div>
@@ -2274,7 +2356,7 @@ function returnSaleDialog() {
         </div>
         <button type="button" class="ghost return-all" data-return-all>Restituisci tutta la riga</button>
         <p id="return-preview" class="return-preview">Inserisci la quantità restituita per vedere il rimborso.</p>
-        <div class="return-actions"><button type="button" class="ghost" data-cancel-return>Annulla</button><button type="submit">Registra PER / reso</button></div>
+        <div class="return-actions"><button type="button" class="ghost" data-cancel-return>Annulla</button><button type="submit">Registra reso</button></div>
       </form>
     </section>
   </div>`;
@@ -2324,13 +2406,13 @@ function applySaleReturn(form) {
     db.pagamenti.push({
       id: id(), cliente_id: movement.cliente_id, reso_movimento_id: movement.id,
       dateKey: returnDate, data: formatDateKey(returnDate), importo: roundMoney(-result.refund), metodo: method,
-      note: `Rimborso PER / reso · ${name('prodotti', movement.prodotto_id)}${note ? ` · ${note}` : ''}`,
+      note: `Rimborso reso · ${name('prodotti', movement.prodotto_id)}${note ? ` · ${note}` : ''}`,
       operatore: operatorName(), operatore_uid: signedUser?.uid || '',
     });
   }
 
   const returnedText = [result.returnedPackages ? `${formatQty(result.returnedPackages)} colli` : '', result.returnedWeight ? `${formatQty(result.returnedWeight)} kg` : ''].filter(Boolean).join(' · ');
-  audit(result.full ? 'PER / reso completo' : 'PER / reso parziale', `${name('prodotti', movement.prodotto_id)} · cliente ${name('clienti', movement.cliente_id)} · ${returnedText} · ${accountAction === 'rimborso' ? `rimborsati ${eur(result.refund)}` : `credito ridotto di ${eur(result.refund)}`}`);
+  audit(result.full ? 'Reso completo' : 'Reso parziale', `${name('prodotti', movement.prodotto_id)} · cliente ${name('clienti', movement.cliente_id)} · ${returnedText} · ${accountAction === 'rimborso' ? `rimborsati ${eur(result.refund)}` : `credito ridotto di ${eur(result.refund)}`}`);
   return movement.dateKey || today();
 }
 
@@ -2410,6 +2492,22 @@ function bind() {
       globalSearch.focus();
     };
     bindGlobalSearchNavigation();
+  }
+
+  const returnsFilterForm = $('#returns-filter-form');
+  if (returnsFilterForm) {
+    returnsFilterForm.onsubmit = (event) => {
+      event.preventDefault();
+      const data = new FormData(returnsFilterForm);
+      returnsSearch = String(data.get('ricerca') || '').trim();
+      returnsDate = String(data.get('data_vendita') || '');
+      render();
+    };
+    $('#clear-returns-filter').onclick = () => {
+      returnsSearch = '';
+      returnsDate = '';
+      render();
+    };
   }
 
   document.querySelectorAll('[data-home-product]').forEach((button) => {
@@ -3071,7 +3169,7 @@ function bind() {
         returningSaleId = '';
         ticketsDate = ticketDate;
         render();
-        alert('PER / reso registrato. Magazzino, totale, conto cliente e biglietti sono stati aggiornati.');
+        alert('Reso registrato. Magazzino, totale, conto cliente e biglietti sono stati aggiornati.');
       } catch (error) {
         db = previousDb;
         preview.className = 'return-preview error';
