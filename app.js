@@ -191,6 +191,7 @@ function ensureDynamicNav() {
     <button data-page="vendite">€ <span>Vendite</span></button>
     <button data-page="resi">↩ <span>Resi</span></button>
     <button data-page="biglietti">▥ <span>Biglietti</span></button>
+    <button data-page="carico">▤ <span>Carico</span></button>
     <button data-page="conti">◉ <span>Conti clienti</span></button>
     <div class="nav-group">Controllo</div>
     <button data-page="chiusura">✓ <span>Chiusura giornata</span></button>
@@ -785,7 +786,7 @@ function render() {
   document.querySelectorAll('#nav button').forEach((button) => {
     button.classList.toggle('active', button.dataset.page === current);
   });
-  const page = ({ home, pitazzo, movimento, magazzino, prodotti, clienti, vendite, resi, biglietti, conti, chiusura, report, registro })[current]();
+  const page = ({ home, pitazzo, movimento, magazzino, prodotti, clienti, vendite, resi, biglietti, carico, conti, chiusura, report, registro })[current]();
   $('#app').innerHTML = `${page}${returnSaleDialog()}`;
   bind();
   renderOnlineUsers();
@@ -1584,6 +1585,33 @@ function caricoTotals(rows) {
   }), { vendita: 0, iva: 0, base: 0, provvigione: 0, netto: 0 });
 }
 
+function carico() {
+  const date = ticketsDate || today();
+  const tickets = (Array.isArray(db.biglietti) ? db.biglietti : [])
+    .filter((ticket) => ticket.dateKey === date)
+    .slice()
+    .sort((a, b) => String(a.prodotto).localeCompare(String(b.prodotto), 'it'));
+  const rows = caricoRows(tickets);
+  const totals = caricoTotals(rows);
+
+  return `
+    <section class="pit-simple-title">
+      <div><p class="eyebrow">FOGLIO GIORNALIERO</p><h2>Carico</h2></div>
+      <div><label>Giornata</label><input id="tickets-date" type="date" value="${date}"></div>
+    </section>
+    <section class="card carico-card">
+      <div class="section-head">
+        <div><p class="eyebrow">CARICO · ${esc(formatDateKey(date))}</p><h2>Fatturato, IVA e provvigioni</h2><p class="muted">Una riga per ogni biglietto merce generato. Qui trovi il riepilogo completo della giornata.</p></div>
+        <button type="button" data-print-carico="${date}" ${rows.length ? '' : 'disabled'}>Visualizza / stampa Carico</button>
+      </div>
+      ${rows.length ? `<div class="table-scroll"><table>
+        <tr><th>Articolo</th><th>Totale vendite</th><th>IVA separata</th><th>Base biglietto</th><th>Provvigione</th><th>Netto</th></tr>
+        ${rows.map((row) => `<tr><td><b>${esc(row.articolo)}</b></td><td>${eur(row.vendita)}</td><td>${row.iva ? eur(row.iva) : '—'}</td><td>${eur(row.base)}</td><td>${row.provvigione ? eur(row.provvigione) : '—'}</td><td><b>${eur(row.netto)}</b></td></tr>`).join('')}
+        <tr><th>TOTALI</th><th>${eur(totals.vendita)}</th><th>${eur(totals.iva)}</th><th>${eur(totals.base)}</th><th>${eur(totals.provvigione)}</th><th>${eur(totals.netto)}</th></tr>
+      </table></div><div class="carico-check">${eur(totals.vendita)} − ${eur(totals.iva)} − ${eur(totals.provvigione)} = ${eur(totals.netto)}</div>` : `<div class="empty"><p>Non ci sono ancora dati nel Carico del ${esc(formatDateKey(date))}.</p><button type="button" data-go="biglietti">Apri Biglietti</button></div>`}
+    </section>`;
+}
+
 function biglietti() {
   const date = ticketsDate || today();
   const tomorrow = shiftDateKey(date, 1);
@@ -1595,8 +1623,6 @@ function biglietti() {
     .sort((a, b) => String(a.prodotto).localeCompare(String(b.prodotto), 'it'));
   const gross = tickets.reduce((sum, ticket) => sum + Number(ticket.gross || 0), 0);
   const net = tickets.reduce((sum, ticket) => sum + Number(ticket.net || 0), 0);
-  const loadRows = caricoRows(tickets);
-  const loadTotals = caricoTotals(loadRows);
 
   return `
     <section class="pit-simple-title">
@@ -1628,17 +1654,6 @@ function biglietti() {
       <p id="ticket-msg"></p>
       ${tickets.length ? `<p class="notice">Totale vendite ${eur(gross)} · Totale netto ${eur(net)}. I biglietti restano salvati e puoi riaprirli quando vuoi.</p>` : '<p class="empty">Non ci sono ancora biglietti per questa data. Premi “Genera / aggiorna”.</p>'}
     </form>
-    <section class="card carico-card">
-      <div class="section-head">
-        <div><p class="eyebrow">CARICO · ${esc(formatDateKey(date))}</p><h2>Fatturato, IVA e provvigioni</h2><p class="muted">Una riga per ogni biglietto generato. L’IVA separata compare soltanto nei padronali o quando scegli tu di separarla.</p></div>
-        <button type="button" class="ghost" data-print-carico="${date}" ${loadRows.length ? '' : 'disabled'}>Visualizza / stampa Carico</button>
-      </div>
-      ${loadRows.length ? `<div class="table-scroll"><table>
-        <tr><th>Articolo</th><th>Totale vendite</th><th>IVA separata</th><th>Base biglietto</th><th>Provvigione</th><th>Netto</th></tr>
-        ${loadRows.map((row) => `<tr><td><b>${esc(row.articolo)}</b></td><td>${eur(row.vendita)}</td><td>${row.iva ? eur(row.iva) : '—'}</td><td>${eur(row.base)}</td><td>${row.provvigione ? eur(row.provvigione) : '—'}</td><td><b>${eur(row.netto)}</b></td></tr>`).join('')}
-        <tr><th>TOTALI</th><th>${eur(loadTotals.vendita)}</th><th>${eur(loadTotals.iva)}</th><th>${eur(loadTotals.base)}</th><th>${eur(loadTotals.provvigione)}</th><th>${eur(loadTotals.netto)}</th></tr>
-      </table></div><div class="carico-check">${eur(loadTotals.vendita)} − ${eur(loadTotals.iva)} − ${eur(loadTotals.provvigione)} = ${eur(loadTotals.netto)}</div>` : '<p class="empty">Il Carico apparirà qui appena generi i biglietti della giornata.</p>'}
-    </section>
     <section class="ticket-grid">${tickets.map((ticket) => {
       const printRows = ticketPrintRows(ticket);
       const linkedSales = ticketLinkedSales(ticket);
