@@ -47,6 +47,7 @@ let expandedHomeProduct = '';
 let editingSaleId = '';
 let editingTicketId = '';
 let pitClientDraft = { clienteNome: '', statoPagamento: 'credito', metodoPagamento: 'Contanti', righe: [] };
+let lastPitClientTicket = null;
 let adminSessionUnlocked = false;
 let signedUser = null;
 let unsubscribe;
@@ -113,7 +114,7 @@ function ensureAppStyles() {
     .presence-dot{display:inline-block;width:9px;height:9px;margin:0 7px;border-radius:50%;background:#38d37a;box-shadow:0 0 0 0 #38d37a99;animation:presencePulse 1.8s infinite;vertical-align:middle}.presence-list{display:grid;gap:9px}.presence-user{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 13px;border:1px solid #dce7e4;border-radius:12px;background:#f8fcfa}.status-ok{color:#11704f;font-weight:800}.status-missing{color:#ad3b2d;font-weight:800}.status-extra{color:#a26108;font-weight:800}.closing-row input{min-width:105px}.account-negative{color:#b23a2c}.account-positive{color:#11704f}@keyframes presencePulse{0%{box-shadow:0 0 0 0 #38d37a99}70%{box-shadow:0 0 0 7px #38d37a00}100%{box-shadow:0 0 0 0 #38d37a00}}
     .home-search{margin:22px 0;padding:22px;border:1px solid #d9e5e4;border-radius:18px;background:linear-gradient(135deg,#fff 0%,#f4fbf8 100%);box-shadow:0 9px 28px #173b4e0b}.home-search-head{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:13px}.home-search h2{margin:0;font-size:22px}.home-search-box{display:flex;align-items:center;gap:10px;border:2px solid #cbdad8;border-radius:14px;background:#fff;padding:0 12px;transition:border-color .18s ease,box-shadow .18s ease}.home-search-box:focus-within{border-color:#159268;box-shadow:0 0 0 4px #15926818}.home-search-box input{width:100%;border:0;box-shadow:none!important;background:transparent;font-size:17px}.home-search-box button{width:auto;min-width:38px;padding:7px;background:transparent;color:#647586}.search-results-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:15px}.search-result-group{padding:14px;border:1px solid #dce7e5;border-radius:14px;background:#fff}.search-result-group h3{margin:0 0 9px;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:#617386}.search-result{width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;margin:5px 0;padding:10px 11px;border:0;border-radius:10px;background:#f4f8f7;color:#173044;text-align:left}.search-result:hover{background:#e8f6f0}.search-result strong{display:block}.search-result small{display:block;color:#6b7b8d;margin-top:2px}.owner-badge{display:inline-flex;align-items:center;padding:7px 10px;border-radius:9px;background:#edf5f2;color:#154f40;font-weight:850}.inventory-product-name{font-size:16px;color:#142b3c}
     .market-table{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.market-product{overflow:hidden;border:1px solid #dce7e4;border-radius:15px;background:#fff}.market-product>button{width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:17px;border:0;background:#fff;color:#173044;text-align:left}.market-product>button:hover{background:#edf9f4}.market-product>button strong{display:block;font-size:20px}.market-product>button small{display:block;margin-top:4px;color:#718093}.market-lots{padding:0 13px 13px}.market-lot{display:grid;grid-template-columns:1fr auto;gap:8px;padding:10px;border-top:1px solid #e3ebe9}.market-lot b{display:block}.market-lot small{display:block;color:#718093;margin-top:3px}.stock-low{color:#a76000;font-weight:850}.stock-ended{color:#a63e31;font-weight:850}.stock-ok{color:#11704f;font-weight:850}.edit-sale{margin-top:12px;padding:14px;border:1px solid #cfe1dc;border-radius:13px;background:#f6fbf9}.edit-sale .grid{margin-top:10px}
-    .pit-client-ticket{margin-top:15px;border:2px solid #d6e2df;border-radius:16px;background:#fff;overflow:hidden}.pit-client-bar{display:grid;grid-template-columns:minmax(240px,2fr) 1fr 1fr;gap:12px;padding:16px;background:#f3f8f6;border-bottom:1px solid #dce7e4}.pit-client-bar input{font-size:18px;font-weight:800}.pit-line-form{display:grid;grid-template-columns:minmax(210px,2fr) .7fr .7fr .9fr 1.2fr 1.15fr auto;gap:10px;align-items:end;padding:16px}.pit-line-form button{white-space:nowrap}.pit-draft-wrap{padding:0 16px 16px}.pit-draft-table td,.pit-draft-table th{vertical-align:middle}.pit-draft-table button{width:auto;min-width:38px;padding:7px}.pit-ticket-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:15px 16px;border-top:1px solid #dce7e4;background:#fbfdfc}.pit-ticket-footer>div{display:flex;gap:8px;flex-wrap:wrap}.pit-ticket-total{font-size:20px;color:#0e7352}.vat-pill{display:inline-flex;padding:4px 7px;border-radius:999px;background:#edf3ff;color:#365d99;font-size:10px;font-weight:800}
+    .pit-client-ticket{margin-top:15px;border:2px solid #d6e2df;border-radius:16px;background:#fff;overflow:hidden}.pit-client-bar{display:grid;grid-template-columns:minmax(240px,2fr) 1fr 1fr;gap:12px;padding:16px;background:#f3f8f6;border-bottom:1px solid #dce7e4}.pit-client-bar input{font-size:18px;font-weight:800}.pit-client-label-row{display:flex;align-items:center;justify-content:space-between;gap:10px}.pit-client-label-row button{width:auto;min-height:30px;padding:5px 9px;font-size:11px}.pit-line-form{display:grid;grid-template-columns:minmax(210px,2fr) .7fr .7fr .9fr 1.2fr 1.15fr auto;gap:10px;align-items:end;padding:16px}.pit-line-form button{white-space:nowrap}.pit-product-search-wrap{position:relative}.pit-product-results{position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:30;max-height:320px;overflow:auto;padding:7px;border:1px solid #cbdad8;border-radius:12px;background:#fff;box-shadow:0 16px 35px #10283b2b}.pit-product-results:empty{display:none}.pit-product-option{width:100%;display:flex;justify-content:space-between;align-items:center;gap:10px;margin:3px 0;padding:10px;border:0;border-radius:9px;background:#f4f8f7;color:#183044;text-align:left}.pit-product-option:hover,.pit-product-option:focus{background:#e6f6ef}.pit-product-option strong,.pit-product-option small{display:block}.pit-product-option small{margin-top:2px;color:#718093}.pit-product-option>span:last-child{color:#0d7252;text-align:right;font-size:11px;font-weight:800}.pit-draft-wrap{padding:0 16px 16px}.pit-draft-table td,.pit-draft-table th{vertical-align:middle}.pit-draft-table button{width:auto;min-width:38px;padding:7px}.pit-ticket-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:15px 16px;border-top:1px solid #dce7e4;background:#fbfdfc}.pit-ticket-footer>div{display:flex;gap:8px;flex-wrap:wrap}.pit-ticket-total{font-size:20px;color:#0e7352}.vat-pill{display:inline-flex;padding:4px 7px;border-radius:999px;background:#edf3ff;color:#365d99;font-size:10px;font-weight:800}.pit-last-ticket{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:14px;padding:14px 16px;border:1px solid #aedcc9;border-radius:13px;background:#eaf8f2}.pit-last-ticket strong,.pit-last-ticket small{display:block}.pit-last-ticket small{margin-top:3px;color:#547065}.pit-last-ticket button{width:auto}.client-ticket-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}.client-ticket-card{padding:15px;border:1px solid #d9e5e2;border-radius:14px;background:#fbfdfc}.client-ticket-card h3{margin:2px 0 5px}.client-ticket-card p{margin:4px 0}.client-ticket-card button{width:100%;margin-top:10px}
     @media(max-width:900px){
       body.eurofrutta-shell{padding-left:0;overflow-x:hidden}
       body.eurofrutta-shell.nav-open{overflow:hidden}
@@ -143,7 +144,7 @@ function ensureAppStyles() {
       .ticket-grid{grid-template-columns:1fr}
       .search-results-grid{grid-template-columns:1fr}
       .variant-row{grid-template-columns:1fr 1fr}.variant-row>div:first-child{grid-column:1/-1}.variant-row button{width:100%}
-      .pit-client-bar,.pit-line-form{grid-template-columns:1fr}.pit-line-form>div:first-child{grid-column:1/-1}.pit-ticket-footer{align-items:stretch;flex-direction:column}.pit-ticket-footer>div,.pit-ticket-footer button{width:100%}
+      .pit-client-bar,.pit-line-form{grid-template-columns:1fr}.pit-line-form>div:first-child{grid-column:1/-1}.pit-product-results{position:static;margin-top:6px;max-height:240px}.pit-ticket-footer,.pit-last-ticket{align-items:stretch;flex-direction:column}.pit-ticket-footer>div,.pit-ticket-footer button,.pit-last-ticket button{width:100%}
       .hero{padding:24px 18px!important}.hero-art{display:none!important}.hero-copy h2{font-size:38px!important}
     }
     @media(max-width:480px){body.eurofrutta-shell #nav{width:88vw}.ticket-card{padding:14px}.price-choice{grid-template-columns:1fr}.pit-product-row strong{font-size:16px}.home-search{padding:16px}.home-search-head{align-items:flex-start;flex-direction:column}}
@@ -288,6 +289,11 @@ function lotStatusHtml(lot) {
   return '<span class="stock-ok">Disponibile</span>';
 }
 
+function lotPrimaryRemaining(lot) {
+  if (Number(lot?.colli_iniziali || 0) > 0) return `R ${formatQty(lot.colli_rimanenti)} colli`;
+  return `R ${formatQty(lot?.peso_rimanente)} kg`;
+}
+
 function findClientByText(value) {
   const query = normalized(value);
   const exact = db.clienti.find((client) => normalized(client.nome) === query);
@@ -298,11 +304,34 @@ function findClientByText(value) {
 
 function findLotByText(value) {
   const query = normalized(value);
+  if (!query) return null;
   const available = db.lotti.filter(lotIsOpen);
   const exact = available.find((lot) => normalized(lotSearchName(lot)) === query);
   if (exact) return exact;
-  const matches = available.filter((lot) => normalized(lotSearchName(lot)).startsWith(query));
+  const matches = matchingLots(value, 20);
   return matches.length === 1 ? matches[0] : null;
+}
+
+function matchingLots(value, limit = 8) {
+  const tokens = normalized(value).split(/\s+/).filter(Boolean);
+  const lots = db.lotti.filter(lotIsOpen);
+  const matches = tokens.length ? lots.filter((lot) => {
+    const searchable = normalized([
+      name('prodotti', lot.prodotto_id),
+      lot.qualita || 'Standard',
+      lot.proprietario || '',
+      partitaLabel(lot),
+      lotSearchName(lot),
+    ].join(' '));
+    return tokens.every((token) => searchable.includes(token));
+  }) : lots;
+  return matches
+    .sort((left, right) => lotSearchName(left).localeCompare(lotSearchName(right), 'it'))
+    .slice(0, limit);
+}
+
+function pitProductSearchResults(value) {
+  return matchingLots(value).map((lot) => `<button type="button" class="pit-product-option" data-pick-pit-lot="${lot.id}"><span><strong>${esc(name('prodotti', lot.prodotto_id))}${lot.qualita && lot.qualita !== 'Standard' ? ` · ${esc(lot.qualita)}` : ''}</strong><small>${esc(lot.proprietario || 'Provenienza non indicata')} · ${esc(partitaLabel(lot))}</small></span><span>${esc(lotPrimaryRemaining(lot))}</span></button>`).join('');
 }
 
 function clientSuggestions() {
@@ -852,6 +881,9 @@ function pitazzo() {
   const activeDaily = daily.filter((movement) => !movement.annullato);
   const draftRows = Array.isArray(pitClientDraft.righe) ? pitClientDraft.righe : [];
   const draftTotal = roundMoney(draftRows.reduce((sum, row) => sum + Number(row.totale || 0), 0));
+  const lastClientTicket = lastPitClientTicket?.dateKey === date
+    ? clientTicketData(date, lastPitClientTicket.clientId)
+    : null;
 
   return `
     <section class="pit-simple-title">
@@ -865,12 +897,12 @@ function pitazzo() {
       </div>
       <div class="pit-client-ticket">
         <div class="pit-client-bar">
-          <div><label>Cliente *</label><input id="pit-client-name" value="${esc(pitClientDraft.clienteNome)}" required list="client-suggestions" autocomplete="off" placeholder="Scrivi il cliente…">${clientSuggestions()}</div>
+          <div><div class="pit-client-label-row"><label>Cliente attivo *</label><button type="button" class="ghost" data-new-pit-client>Cambia cliente</button></div><input id="pit-client-name" value="${esc(pitClientDraft.clienteNome)}" required list="client-suggestions" autocomplete="off" placeholder="Scrivi il cliente…">${clientSuggestions()}</div>
           <div><label>Pagamento</label><select id="pit-payment-status"><option value="credito" ${pitClientDraft.statoPagamento !== 'pagato' ? 'selected' : ''}>Da pagare / a credito</option><option value="pagato" ${pitClientDraft.statoPagamento === 'pagato' ? 'selected' : ''}>Pagato subito</option></select></div>
           <div><label>Metodo</label><select id="pit-payment-method"><option ${pitClientDraft.metodoPagamento === 'Contanti' ? 'selected' : ''}>Contanti</option><option ${pitClientDraft.metodoPagamento === 'Bonifico' ? 'selected' : ''}>Bonifico</option><option ${pitClientDraft.metodoPagamento === 'Carta' ? 'selected' : ''}>Carta</option><option ${pitClientDraft.metodoPagamento === 'Altro' ? 'selected' : ''}>Altro</option></select></div>
         </div>
         <form id="pit-line-form" class="pit-line-form" novalidate>
-        <div><label>Articolo / provenienza</label><input name="lotto_nome" required list="lot-suggestions" autocomplete="off" placeholder="Scrivi l’articolo…">${lotSuggestions()}</div>
+        <div><label>Cerca articolo / provenienza</label><div class="pit-product-search-wrap"><input id="pit-product-search" name="lotto_nome" required autocomplete="off" placeholder="Scrivi prodotto, qualità o fornitore…"><div id="pit-product-results" class="pit-product-results"></div></div></div>
         <div><label>Colli</label><input name="colli" type="number" min="0" step="0.01" placeholder="0" inputmode="decimal"></div>
         <div><label>Peso kg</label><input name="peso" type="number" min="0" step="0.01" placeholder="0" inputmode="decimal"></div>
         <div><label>Prezzo unitario</label><input name="prezzo" required type="number" min="0" step="0.01" placeholder="0,00" inputmode="decimal"></div>
@@ -882,6 +914,7 @@ function pitazzo() {
         <div class="pit-ticket-footer"><b class="pit-ticket-total">Totale biglietto: ${eur(draftTotal)}</b><div><button type="button" class="ghost" data-clear-pit-draft ${draftRows.length ? '' : 'disabled'}>Svuota</button><button type="button" id="save-pit-ticket" ${draftRows.length ? '' : 'disabled'}>Registra tutto sul Pitazzo →</button></div></div>
       </div>
       <p id="pit-msg"></p>
+      ${lastClientTicket ? `<div class="pit-last-ticket"><div><strong>✓ Biglietto di ${esc(lastClientTicket.cliente.nome)} registrato</strong><small>${lastClientTicket.rows.length} ${lastClientTicket.rows.length === 1 ? 'articolo' : 'articoli'} · totale ${eur(lastClientTicket.totale)}. Il cliente resta attivo per inserire altre righe.</small></div><button type="button" data-print-client-ticket="${lastClientTicket.clientId}" data-ticket-date="${date}">Stampa biglietto cliente</button></div>` : ''}
       <p class="muted">Se il cliente non esiste ancora, verrà creato automaticamente con il nome scritto. Potrai completare la sua scheda in seguito.</p>
       ${!db.lotti.some(lotIsOpen) ? '<p class="message error">Non ci sono lotti disponibili. Registra prima uno scarico in Magazzino.</p>' : ''}
       <div class="suggest">
@@ -932,7 +965,7 @@ function addPitDraftRow(form) {
   const priceUnit = form.get('unita_prezzo') === 'collo' ? 'collo' : 'kg';
   const vatMode = normalizeVatMode(form.get('iva_modalita'));
   if (clientName.length < 2) throw new Error('Scrivi prima il nome del cliente in alto.');
-  if (!lot) throw new Error('Scegli l’articolo dai suggerimenti.');
+  if (!lot) throw new Error('Scrivi l’articolo e scegli il risultato corretto. Se ne resta uno solo puoi premere Invio.');
   if (packages < 0 || weight < 0) throw new Error('Colli e kg non possono essere negativi.');
   if (packages <= 0 && weight <= 0) throw new Error('Inserisci i colli venduti, i kg oppure entrambi.');
   if (Number(lot.colli_iniziali || 0) > 0 && packages <= 0) throw new Error('Questa partita richiede anche i colli.');
@@ -988,7 +1021,12 @@ function commitPitClientDraft(dateKey) {
     db = backup;
     throw error;
   }
-  pitClientDraft = { clienteNome: '', statoPagamento: 'credito', metodoPagamento: 'Contanti', righe: [] };
+  pitClientDraft = {
+    clienteNome: pitClientDraft.clienteNome,
+    statoPagamento: pitClientDraft.statoPagamento,
+    metodoPagamento: pitClientDraft.metodoPagamento,
+    righe: [],
+  };
   return results;
 }
 
@@ -1282,8 +1320,46 @@ function vendite() {
     </section>`;
 }
 
+function clientTicketData(dateKey, clientId) {
+  const client = db.clienti.find((item) => item.id === clientId);
+  if (!client) return null;
+  const rows = db.movimenti
+    .filter((movement) => movement.tipo === 'uscita' && movement.dateKey === dateKey && movement.cliente_id === clientId && !movement.annullato)
+    .slice()
+    .sort((left, right) => String(left.data || '').localeCompare(String(right.data || '')))
+    .map((movement) => {
+      const lot = lotById(movement.lotto_id);
+      return {
+        ...movement,
+        articolo: name('prodotti', movement.prodotto_id || lot?.prodotto_id),
+        qualita: movement.qualita || lot?.qualita || 'Standard',
+        proprietario: movement.proprietario || lot?.proprietario || '',
+      };
+    });
+  if (!rows.length) return null;
+  return {
+    dateKey,
+    clientId,
+    cliente: client,
+    rows,
+    imponibile: roundMoney(rows.reduce((sum, row) => sum + Number(row.imponibile ?? row.totale ?? 0), 0)),
+    iva: roundMoney(rows.reduce((sum, row) => sum + Number(row.iva || 0), 0)),
+    totale: roundMoney(rows.reduce((sum, row) => sum + Number(row.totale || 0), 0)),
+  };
+}
+
+function dailyClientTickets(dateKey) {
+  return [...new Set(db.movimenti
+    .filter((movement) => movement.tipo === 'uscita' && movement.dateKey === dateKey && movement.cliente_id && !movement.annullato)
+    .map((movement) => movement.cliente_id))]
+    .map((clientId) => clientTicketData(dateKey, clientId))
+    .filter(Boolean)
+    .sort((left, right) => left.cliente.nome.localeCompare(right.cliente.nome, 'it'));
+}
+
 function biglietti() {
   const date = ticketsDate || today();
+  const clientTickets = dailyClientTickets(date);
   const tickets = (Array.isArray(db.biglietti) ? db.biglietti : [])
     .filter((ticket) => ticket.dateKey === date)
     .slice()
@@ -1298,7 +1374,14 @@ function biglietti() {
     </section>
     <section class="card">
       <div class="section-head">
-        <div><p class="eyebrow">${esc(formatDateKey(date))}</p><h2>${tickets.length} ${tickets.length === 1 ? 'biglietto' : 'biglietti'} salvati</h2></div>
+        <div><p class="eyebrow">BIGLIETTI CLIENTI · ${esc(formatDateKey(date))}</p><h2>Spesa e totale di ogni cliente</h2><p class="muted">Sono già pronti: includono tutti gli articoli acquistati dal cliente nella giornata.</p></div>
+        <button type="button" data-print-client-day="${date}" ${clientTickets.length ? '' : 'disabled'}>Stampa tutti i clienti</button>
+      </div>
+      ${clientTickets.length ? `<div class="client-ticket-grid">${clientTickets.map((ticket) => `<article class="client-ticket-card"><p class="eyebrow">CLIENTE</p><h3>${esc(ticket.cliente.nome)}</h3><p>${ticket.rows.length} ${ticket.rows.length === 1 ? 'articolo registrato' : 'articoli registrati'}</p><p><b>Totale ${eur(ticket.totale)}</b>${ticket.iva ? ` · IVA ${eur(ticket.iva)}` : ''}</p><button type="button" data-print-client-ticket="${ticket.clientId}" data-ticket-date="${date}">Visualizza / stampa</button></article>`).join('')}</div>` : '<p class="empty">Nessuna vendita cliente registrata in questa giornata.</p>'}
+    </section>
+    <section class="card">
+      <div class="section-head">
+        <div><p class="eyebrow">BIGLIETTI MERCE / FORNITORI · ${esc(formatDateKey(date))}</p><h2>${tickets.length} ${tickets.length === 1 ? 'biglietto' : 'biglietti'} salvati</h2></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button type="button" data-generate-day="${date}">Genera / aggiorna</button>
           <button type="button" class="ghost" data-print-day="${date}" ${tickets.length ? '' : 'disabled'}>Visualizza e stampa tutti</button>
@@ -1769,6 +1852,42 @@ function openTicketPreview(tickets) {
   return tickets.length;
 }
 
+function openClientTicketPreview(tickets) {
+  const validTickets = tickets.filter(Boolean);
+  if (!validTickets.length) throw new Error('Non ci sono biglietti cliente da visualizzare.');
+  const ticketHtml = validTickets.map((ticket, index) => `
+    <section class="ticket">
+      <header><b>EUROFRUTTA</b><small>${esc(formatDateKey(ticket.dateKey))}</small></header>
+      <div class="client-label">CLIENTE</div>
+      <h1>${esc(ticket.cliente.nome)}</h1>
+      <table>
+        <thead><tr><th>Colli / kg</th><th>Articolo</th><th>Prezzo</th><th>IVA</th><th>Totale</th></tr></thead>
+        <tbody>${ticket.rows.map((row) => `<tr>
+          <td>${Number(row.colli || 0) ? `${formatQty(row.colli)} colli` : ''}${Number(row.colli || 0) && Number(row.peso || 0) ? '<br>' : ''}${Number(row.peso || 0) ? `${formatQty(row.peso)} kg` : ''}</td>
+          <td><b>${esc(row.articolo)}</b>${row.qualita && row.qualita !== 'Standard' ? `<br><small>${esc(row.qualita)}</small>` : ''}</td>
+          <td>${eur(row.prezzo)} / ${row.unita_prezzo === 'collo' ? 'collo' : 'kg'}</td>
+          <td>${esc(vatModeLabel(row.iva_modalita, row.iva_percentuale))}</td>
+          <td><b>${eur(row.totale)}</b></td>
+        </tr>`).join('')}</tbody>
+      </table>
+      <dl>
+        <dt>Imponibile</dt><dd>${eur(ticket.imponibile)}</dd>
+        ${ticket.iva ? `<dt>IVA</dt><dd>${eur(ticket.iva)}</dd>` : ''}
+        <dt class="total">TOTALE</dt><dd class="total">${eur(ticket.totale)}</dd>
+      </dl>
+      <footer>Biglietto cliente ${index + 1} di ${validTickets.length}</footer>
+    </section>`).join('');
+  const preview = window.open('', '_blank');
+  if (!preview) throw new Error('Il browser ha bloccato la finestra. Consenti i popup e riprova.');
+  preview.document.open();
+  preview.document.write(`<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Biglietti clienti Eurofrutta</title><style>
+    @page{size:A6 portrait;margin:6mm}*{box-sizing:border-box}body{margin:0;background:#eef2f0;color:#172334;font-family:Arial,sans-serif}.toolbar{position:sticky;top:0;z-index:2;display:flex;justify-content:center;gap:10px;padding:14px;background:#15334a}.toolbar button{border:0;border-radius:8px;padding:11px 18px;font-weight:700;cursor:pointer}.toolbar .print{background:#35b779;color:#fff}.ticket{width:105mm;min-height:148mm;margin:18px auto;padding:6mm;background:#fff;box-shadow:0 4px 24px #0002;page-break-after:always;display:flex;flex-direction:column}.ticket:last-child{page-break-after:auto}header{display:flex;justify-content:space-between;gap:12px;border-bottom:2px solid #19374c;padding-bottom:5px;font-size:10px}header small{font-size:8px}.client-label{margin-top:9px;color:#11835c;font-size:7px;font-weight:900;letter-spacing:1.5px}h1{margin:2px 0 9px;font-size:18px}table{width:100%;border-collapse:collapse;font-size:7.5px}th,td{border:1px solid #aab3bc;padding:4px 3px;text-align:left;vertical-align:top}th{background:#eef2f0;text-transform:uppercase;font-size:6.5px}th:nth-child(n+3),td:nth-child(n+3){text-align:right}td small{color:#647386}dl{margin:10px 0 0 auto;width:66%;display:grid;grid-template-columns:1fr auto;gap:3px 10px;border-top:1px solid #aab3bc;padding-top:6px;font-size:9px}dt,dd{margin:0}dd{text-align:right;font-weight:700}.total{margin-top:3px;padding-top:4px;border-top:1px solid #172334;font-size:12px;font-weight:900}footer{margin-top:auto;padding-top:8px;text-align:center;color:#7a8490;font-size:6px}@media(max-width:650px){.ticket{width:100%;min-height:0;margin:0;padding:16px}.toolbar{position:relative}dl{width:100%}}@media print{body{background:#fff}.toolbar{display:none}.ticket{width:auto;min-height:136mm;margin:0;padding:0;box-shadow:none}}
+  </style></head><body><div class="toolbar"><button class="print" onclick="window.print()">Stampa / Salva PDF</button><button onclick="window.close()">Chiudi</button></div>${ticketHtml}</body></html>`);
+  preview.document.close();
+  preview.focus();
+  return validTickets.length;
+}
+
 async function shareTicket(ticket) {
   const quantities = [
     ticket.hasPackageData ? stockState(ticket.remainingPackages, 'colli') : '',
@@ -1871,7 +1990,7 @@ function addSale(form, createClientIfMissing = false) {
   const finished = lotStatus(lot) === 'terminata';
   if (finished) lot.terminatoIl = stamp();
   audit('Vendita registrata', `${name('prodotti', lot.prodotto_id)} · ${lot.proprietario} · ${partitaLabel(lot)} · ${packages ? `${formatQty(packages)} colli` : ''}${packages && weight ? ' · ' : ''}${weight ? `${formatQty(weight)} kg` : ''} · prezzo a ${priceUnit} · ${vatModeLabel(amounts.vatMode)} · cliente ${client.nome}${finished ? ' · PARTITA TERMINATA' : ''}`);
-  return { finished, partita: partitaLabel(lot), dateKey };
+  return { finished, partita: partitaLabel(lot), dateKey, movementId, clientId: client.id };
 }
 
 function addPayment(form, clientId) {
@@ -2363,18 +2482,68 @@ function bind() {
 
   const pitLineForm = $('#pit-line-form');
   if (pitLineForm) {
+    const productInput = $('#pit-product-search');
+    const productResults = $('#pit-product-results');
+    const refreshProductResults = () => {
+      if (productResults) productResults.innerHTML = pitProductSearchResults(productInput?.value || '');
+    };
+    if (productInput) {
+      productInput.oninput = refreshProductResults;
+      productInput.onfocus = refreshProductResults;
+      productInput.onkeydown = (event) => {
+        if (event.key !== 'Enter') return;
+        const matches = matchingLots(productInput.value, 20);
+        if (matches.length !== 1) return;
+        event.preventDefault();
+        productInput.value = lotSearchName(matches[0]);
+        if (productResults) productResults.innerHTML = '';
+        pitLineForm.querySelector('[name="colli"]')?.focus();
+      };
+    }
+    if (productResults) {
+      productResults.onclick = (event) => {
+        const button = event.target.closest('[data-pick-pit-lot]');
+        if (!button) return;
+        const lot = lotById(button.dataset.pickPitLot);
+        if (!lot || !productInput) return;
+        productInput.value = lotSearchName(lot);
+        productResults.innerHTML = '';
+        pitLineForm.querySelector('[name="colli"]')?.focus();
+      };
+    }
     pitLineForm.onsubmit = (event) => {
       event.preventDefault();
       const message = $('#pit-msg');
       try {
         addPitDraftRow(new FormData(pitLineForm));
         render();
+        $('#pit-product-search')?.focus();
       } catch (error) {
         message.className = 'message error';
         message.textContent = `Errore: ${error.message}`;
       }
     };
   }
+
+  const pitClientNameInput = $('#pit-client-name');
+  if (pitClientNameInput) pitClientNameInput.oninput = () => { pitClientDraft.clienteNome = pitClientNameInput.value; };
+  const pitPaymentStatus = $('#pit-payment-status');
+  if (pitPaymentStatus) pitPaymentStatus.onchange = () => { pitClientDraft.statoPagamento = pitPaymentStatus.value === 'pagato' ? 'pagato' : 'credito'; };
+  const pitPaymentMethod = $('#pit-payment-method');
+  if (pitPaymentMethod) pitPaymentMethod.onchange = () => { pitClientDraft.metodoPagamento = pitPaymentMethod.value || 'Contanti'; };
+
+  $('[data-new-pit-client]')?.addEventListener('click', () => {
+    if (pitClientDraft.righe?.length && !confirm('Cambiare cliente e cancellare le righe non ancora registrate?')) return;
+    pitClientDraft = {
+      clienteNome: '',
+      statoPagamento: 'credito',
+      metodoPagamento: 'Contanti',
+      righe: [],
+    };
+    lastPitClientTicket = null;
+    render();
+    $('#pit-client-name')?.focus();
+  });
 
   const savePitTicket = $('#save-pit-ticket');
   if (savePitTicket) {
@@ -2390,6 +2559,7 @@ function bind() {
         message.textContent = 'Registrazione del biglietto…';
         const results = commitPitClientDraft(pitazzoDate || today());
         await save();
+        if (results[0]?.clientId) lastPitClientTicket = { dateKey: results[0].dateKey, clientId: results[0].clientId };
         render();
         const finished = results.filter((result) => result.finished).map((result) => result.partita);
         if (finished.length) alert(`Partita terminata: ${finished.join(', ')}. Ora puoi generare i biglietti della giornata.`);
@@ -2411,7 +2581,12 @@ function bind() {
 
   $('[data-clear-pit-draft]')?.addEventListener('click', () => {
     if (pitClientDraft.righe?.length && !confirm('Svuotare tutte le righe del biglietto cliente?')) return;
-    pitClientDraft = { clienteNome: '', statoPagamento: 'credito', metodoPagamento: 'Contanti', righe: [] };
+    pitClientDraft = {
+      clienteNome: pitClientDraft.clienteNome,
+      statoPagamento: pitClientDraft.statoPagamento,
+      metodoPagamento: pitClientDraft.metodoPagamento,
+      righe: [],
+    };
     render();
   });
 
@@ -2420,6 +2595,8 @@ function bind() {
       const client = db.clienti.find((item) => item.id === button.dataset.client);
       const input = $('#pit-client-name');
       if (client && input) {
+        if (pitClientDraft.righe?.length && normalized(pitClientDraft.clienteNome) !== normalized(client.nome) && !confirm('Cambiare cliente e cancellare le righe non ancora registrate?')) return;
+        if (normalized(pitClientDraft.clienteNome) !== normalized(client.nome)) pitClientDraft.righe = [];
         input.value = client.nome;
         pitClientDraft.clienteNome = client.nome;
       }
@@ -2429,8 +2606,13 @@ function bind() {
   document.querySelectorAll('[data-lot]').forEach((button) => {
     button.onclick = () => {
       const lot = lotById(button.dataset.lot);
-      const input = $('#pit-line-form [name="lotto_nome"]');
-      if (lot && input) input.value = lotSearchName(lot);
+      const input = $('#pit-product-search');
+      if (lot && input) {
+        input.value = lotSearchName(lot);
+        const results = $('#pit-product-results');
+        if (results) results.innerHTML = '';
+        $('#pit-line-form [name="colli"]')?.focus();
+      }
     };
   });
 
@@ -2487,6 +2669,26 @@ function bind() {
     button.onclick = () => {
       const ticket = db.biglietti.find((item) => item.id === button.dataset.printTicket);
       if (ticket) openTicketPreview([ticket]);
+    };
+  });
+
+  document.querySelectorAll('[data-print-client-ticket]').forEach((button) => {
+    button.onclick = () => {
+      try {
+        openClientTicketPreview([clientTicketData(button.dataset.ticketDate || ticketsDate || pitazzoDate || today(), button.dataset.printClientTicket)]);
+      } catch (error) {
+        alert(`Errore: ${error.message}`);
+      }
+    };
+  });
+
+  document.querySelectorAll('[data-print-client-day]').forEach((button) => {
+    button.onclick = () => {
+      try {
+        openClientTicketPreview(dailyClientTickets(button.dataset.printClientDay || ticketsDate || today()));
+      } catch (error) {
+        alert(`Errore: ${error.message}`);
+      }
     };
   });
 
