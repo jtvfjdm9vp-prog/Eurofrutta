@@ -208,12 +208,12 @@ function ensureDynamicNav() {
     <button data-page="clienti">♙ <span>Clienti</span></button>
     <button data-page="vendite">€ <span>Vendite</span></button>
     <button data-page="resi">↩ <span>Resi</span></button>
+    <button data-page="conti">◉ <span>Conti clienti</span></button>
+    <div class="nav-group">Documenti</div>
     <button data-page="biglietti">▥ <span>Biglietti</span></button>
     <button data-page="carico">▤ <span>Carico</span></button>
-    <button data-page="conti">◉ <span>Conti clienti</span></button>
-    <div class="nav-group">Controllo</div>
     <button data-page="chiusura">✓ <span>Chiusura giornata</span></button>
-    <button data-page="report">▥ <span>Riepilogo</span></button>
+    ${isAdmin() ? '<div class="nav-group">Gestione</div>' : ''}
     ${isAdmin() ? '<button data-page="registro">♛ <span>Amministrazione</span></button>' : ''}`;
 
   if (!document.querySelector('#mobile-nav-toggle')) {
@@ -801,10 +801,12 @@ function accessDenied() {
 function render() {
   ensureDynamicNav();
   if (current === 'registro' && (!isAdmin() || !adminSessionUnlocked)) current = 'home';
+  const pages = { home, pitazzo, movimento, magazzino, prodotti, clienti, vendite, resi, biglietti, carico, conti, chiusura, registro };
+  if (!pages[current]) current = 'home';
   document.querySelectorAll('#nav button').forEach((button) => {
     button.classList.toggle('active', button.dataset.page === current);
   });
-  const page = ({ home, pitazzo, movimento, magazzino, prodotti, clienti, vendite, resi, biglietti, carico, conti, chiusura, report, registro })[current]();
+  const page = pages[current]();
   $('#app').innerHTML = `${page}${returnSaleDialog()}`;
   bind();
   renderOnlineUsers();
@@ -840,12 +842,27 @@ function conti() {
   const rows = db.clienti.map((client) => ({ client, account: accountForClient(client.id) }))
     .sort((a, b) => b.account.balance - a.account.balance);
   const totalDue = roundMoney(rows.reduce((sum, row) => sum + Math.max(0, row.account.balance), 0));
+  const selected = db.clienti.find((client) => client.id === selectedClient);
+  const selectedAccount = selected ? accountForClient(selected.id) : null;
   return `
     <section class="pit-title"><div><p class="eyebrow">CONTI CLIENTI</p><h2>Pagamenti e crediti</h2><p>Controlla chi deve ancora pagare e da quanto tempo.</p></div><div class="date"><small>DA INCASSARE</small>${eur(totalDue)}</div></section>
     <section class="card"><div class="table-scroll"><table>
       <tr><th>Cliente</th><th>Acquisti</th><th>Pagamenti</th><th>Situazione</th><th></th></tr>
       ${rows.map(({ client, account }) => `<tr><td><b>${esc(client.nome)}</b></td><td>${eur(account.purchased)}</td><td>${eur(account.paid)}</td><td>${accountBalanceHtml(account)}</td><td><button class="ghost" data-account-client="${client.id}">Apri conto</button></td></tr>`).join('') || '<tr><td colspan="5" class="empty">Nessun cliente registrato.</td></tr>'}
-    </table></div></section>`;
+    </table></div></section>
+    ${selected ? `<section class="card">
+      <div class="section-head"><div><p class="eyebrow">CONTO CLIENTE</p><h2>${esc(selected.nome)}</h2></div><div>${accountBalanceHtml(selectedAccount)} <button type="button" class="ghost" id="close-account">Chiudi conto</button></div></div>
+      <form id="payment-form" data-client-id="${selected.id}" class="grid">
+        <div><label>Data *</label><input name="data_pagamento" type="date" required value="${today()}"></div>
+        <div><label>Importo *</label><input name="importo" type="number" min="0.01" step="0.01" required placeholder="0,00"></div>
+        <div><label>Metodo</label><select name="metodo"><option>Contanti</option><option>Bonifico</option><option>Carta</option><option>Altro</option></select></div>
+        <div><label>Nota</label><input name="note" placeholder="Facoltativa"></div>
+        <div><label>&nbsp;</label><button>Registra pagamento</button></div>
+      </form><p id="payment-msg"></p>
+      <div class="table-scroll"><table><tr><th>Data</th><th>Importo</th><th>Metodo</th><th>Nota</th><th>Operatore</th></tr>
+        ${selectedAccount.payments.slice().reverse().map((payment) => `<tr><td>${esc(displayDateOnly(payment.data, payment.dateKey))}</td><td><b class="${Number(payment.importo || 0) < 0 ? 'account-negative' : ''}">${Number(payment.importo || 0) < 0 ? `Rimborso ${eur(Math.abs(Number(payment.importo || 0)))}` : eur(payment.importo)}</b></td><td>${esc(payment.metodo || '—')}</td><td>${esc(payment.note || '—')}</td><td>${esc(payment.operatore || '—')}</td></tr>`).join('') || '<tr><td colspan="5" class="empty">Nessun pagamento registrato.</td></tr>'}
+      </table></div>
+    </section>` : ''}`;
 }
 
 function closingStatus(diff, unit) {
@@ -948,7 +965,6 @@ function home() {
         <div><p class="eyebrow">TAVOLO MERCE</p><h2>Cosa abbiamo oggi</h2></div>
         <div class="home-top-actions">
           <div class="home-compact-search"><span aria-hidden="true">⌕</span><input id="global-search" type="search" value="${esc(homeSearch)}" placeholder="Cerca prodotto, fornitore, cliente…" autocomplete="off"><button id="clear-global-search" type="button" aria-label="Cancella ricerca">×</button></div>
-          <button class="ghost" data-go="magazzino">Apri magazzino →</button>
         </div>
       </div>
       <div class="market-table home-market-grid">${marketProducts.map(({ product, lots }) => {
@@ -966,7 +982,6 @@ function movimento() {
     <section class="card">
       <div class="section-head">
         <div><p class="eyebrow">VENDITA SINGOLA</p><h2>Registra vendita</h2></div>
-        <button type="button" class="ghost" data-go="magazzino">Devi registrare uno scarico? Apri Magazzino →</button>
       </div>
       <form id="mov-form" class="grid">
         <div><label>Data *</label><input name="data_movimento" required type="date" value="${date}"></div>
@@ -1045,7 +1060,7 @@ function pitazzo() {
         <div class="pit-ticket-footer"><b class="pit-ticket-total">Totale biglietto: ${eur(draftTotal)}</b><div><button type="button" class="ghost" data-clear-pit-draft ${draftRows.length ? '' : 'disabled'}>Svuota</button><button type="button" id="save-pit-ticket" ${draftRows.length ? '' : 'disabled'}>Registra tutto sul Pitazzo →</button></div></div>
       </div>
       <p id="pit-msg"></p>
-      ${lastClientTicket ? `<div class="pit-last-ticket"><div><strong>✓ Biglietto di ${esc(lastClientTicket.cliente.nome)} registrato</strong><small>${lastClientTicket.rows.length} ${lastClientTicket.rows.length === 1 ? 'articolo' : 'articoli'} · totale ${eur(lastClientTicket.totale)}. Il cliente resta attivo per inserire altre righe.</small></div><button type="button" data-print-client-ticket="${lastClientTicket.clientId}" data-ticket-date="${date}">Stampa biglietto cliente</button></div>` : ''}
+      ${lastClientTicket ? `<div class="pit-last-ticket"><div><strong>✓ Biglietto di ${esc(lastClientTicket.cliente.nome)} registrato</strong><small>${lastClientTicket.rows.length} ${lastClientTicket.rows.length === 1 ? 'articolo' : 'articoli'} · totale ${eur(lastClientTicket.totale)}. Il cliente resta attivo per inserire altre righe. Per visualizzare o stampare il documento usa la sezione Biglietti.</small></div></div>` : ''}
       <p class="muted">Se il cliente non esiste ancora, verrà creato automaticamente con il nome scritto. Potrai completare la sua scheda in seguito.</p>
       ${!db.lotti.some(lotIsOpen) ? '<p class="message error">Non ci sono lotti disponibili. Registra prima uno scarico in Magazzino.</p>' : ''}
       <div class="suggest">
@@ -1057,7 +1072,7 @@ function pitazzo() {
     <section class="card">
       <div class="section-head">
         <div><p class="eyebrow">${esc(formatDateKey(date))}</p><h2>Articoli movimentati</h2></div>
-        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><b>${activeDaily.length} vendite · ${eur(activeDaily.reduce((sum, movement) => sum + Number(movement.totale), 0))}${dailyWaste.length ? ` · ${dailyWaste.length} lavorati/scartati` : ''}</b><button type="button" data-generate-day="${date}">Genera biglietti →</button></div>
+        <b>${activeDaily.length} vendite · ${eur(activeDaily.reduce((sum, movement) => sum + Number(movement.totale), 0))}${dailyWaste.length ? ` · ${dailyWaste.length} lavorati/scartati` : ''}</b>
       </div>
       <p id="ticket-msg"></p>
       <div class="pit-product-list">${groupedSales.map(([groupId, sales]) => {
@@ -1082,8 +1097,8 @@ function pitazzo() {
             <span class="chevron">›</span>
           </button>
           ${open ? `<div class="pit-buyers"><div class="table-scroll"><table>
-            <tr><th>Descrizione</th><th>Colli</th><th>Kg</th><th>Prezzo</th><th>Importo</th><th>Operatore</th><th>Azione</th></tr>
-            ${sales.map((sale) => { const saleLot = lotById(sale.lotto_id); if (sale.tipo === 'scarto') return `<tr class="pit-waste-row"><td><b>LAVORATI / SCARTO</b>${saleLot?.qualita && saleLot.qualita !== 'Standard' ? `<br><small>${esc(saleLot.qualita)}</small>` : ''}${sale.note ? `<br><small>${esc(sale.note)}</small>` : ''}</td><td>${formatQty(sale.colli)}</td><td>${formatQty(sale.peso)}</td><td>—</td><td>—</td><td>${esc(sale.operatore || '—')}</td><td><span class="waste-badge">SCARTO</span></td></tr>`; return `<tr class="${sale.annullato ? 'returned' : ''}"><td><b>${esc(name('clienti', sale.cliente_id))}</b>${saleLot?.qualita && saleLot.qualita !== 'Standard' ? `<br><small>${esc(saleLot.qualita)}</small>` : ''}${saleReturnBadge(sale)}</td><td>${formatQty(sale.colli)}</td><td>${formatQty(sale.peso)}</td><td>${eur(sale.prezzo)} / ${sale.unita_prezzo === 'collo' ? 'collo' : 'kg'}</td><td><b>${eur(sale.totale)}</b></td><td>${esc(sale.operatore || '—')}</td><td>${sale.annullato ? '<span class="return-badge">CHIUSA</span>' : `<button type="button" class="ghost" data-return-sale="${sale.id}">Reso</button>`}</td></tr>`; }).join('')}
+            <tr><th>Descrizione</th><th>Colli</th><th>Kg</th><th>Prezzo</th><th>Importo</th><th>Operatore</th><th>Stato</th></tr>
+            ${sales.map((sale) => { const saleLot = lotById(sale.lotto_id); if (sale.tipo === 'scarto') return `<tr class="pit-waste-row"><td><b>LAVORATI / SCARTO</b>${saleLot?.qualita && saleLot.qualita !== 'Standard' ? `<br><small>${esc(saleLot.qualita)}</small>` : ''}${sale.note ? `<br><small>${esc(sale.note)}</small>` : ''}</td><td>${formatQty(sale.colli)}</td><td>${formatQty(sale.peso)}</td><td>—</td><td>—</td><td>${esc(sale.operatore || '—')}</td><td><span class="waste-badge">SCARTO</span></td></tr>`; return `<tr class="${sale.annullato ? 'returned' : ''}"><td><b>${esc(name('clienti', sale.cliente_id))}</b>${saleLot?.qualita && saleLot.qualita !== 'Standard' ? `<br><small>${esc(saleLot.qualita)}</small>` : ''}${saleReturnBadge(sale)}</td><td>${formatQty(sale.colli)}</td><td>${formatQty(sale.peso)}</td><td>${eur(sale.prezzo)} / ${sale.unita_prezzo === 'collo' ? 'collo' : 'kg'}</td><td><b>${eur(sale.totale)}</b></td><td>${esc(sale.operatore || '—')}</td><td>${sale.annullato ? '<span class="return-badge">CHIUSA</span>' : '<span class="quality-chip">ATTIVA</span>'}</td></tr>`; }).join('')}
           </table></div></div>` : ''}
         </article>`;
       }).join('') || '<p class="empty">Nessun articolo registrato nella giornata scelta.</p>'}</div>
@@ -1294,11 +1309,11 @@ function productDetail(product) {
     <section class="card">
       <div class="section-head"><div><p class="eyebrow">VENDITE</p><h2>Storico del prodotto</h2></div><b>${sales.length} righe</b></div>
       <div class="table-scroll"><table>
-        <tr><th>Data</th><th>Cliente</th><th>Proprietario lotto</th><th>Colli</th><th>Kg</th><th>Totale</th><th>Operatore</th><th>Azione</th></tr>
+        <tr><th>Data</th><th>Cliente</th><th>Proprietario lotto</th><th>Colli</th><th>Kg</th><th>Totale</th><th>Operatore</th><th>Stato</th></tr>
         ${sales.map((movement) => `<tr class="${movement.annullato ? 'returned' : ''}">
           <td>${esc(displayDateOnly(movement.data, movement.dateKey))}</td><td>${esc(name('clienti', movement.cliente_id))}</td><td>${esc(movement.proprietario || lotById(movement.lotto_id)?.proprietario || '—')}</td>
           <td>${formatQty(movement.colli)}</td><td>${formatQty(movement.peso)}</td><td>${eur(movement.totale)}${saleReturnBadge(movement)}</td><td>${esc(movement.operatore || '—')}</td>
-          <td>${movement.annullato ? '<span class="return-badge">CHIUSA</span>' : `<button type="button" class="ghost" data-return-sale="${movement.id}">Reso</button>`}</td>
+          <td>${movement.annullato ? '<span class="return-badge">CHIUSA</span>' : '<span class="quality-chip">ATTIVA</span>'}</td>
         </tr>`).join('') || '<tr><td colspan="8" class="empty">Nessuna vendita.</td></tr>'}
       </table></div>
     </section>`;
@@ -1340,7 +1355,7 @@ function clientHistory(clientId) {
         <b>${activeHistory.length} vendite attive · ${eur(total)}</b>
       </div>
       <div class="table-scroll"><table>
-        <tr><th>Data</th><th>Articolo</th><th>Proprietario lotto</th><th>Colli</th><th>Kg</th><th>Totale</th><th>Azione</th></tr>
+        <tr><th>Data</th><th>Articolo</th><th>Proprietario lotto</th><th>Colli</th><th>Kg</th><th>Totale</th><th>Stato</th></tr>
         ${history.map((movement) => {
           const lot = lotById(movement.lotto_id);
           return `<tr class="${movement.annullato ? 'returned' : ''}">
@@ -1350,7 +1365,7 @@ function clientHistory(clientId) {
             <td>${movement.colli}</td>
             <td>${movement.peso}</td>
             <td>${eur(movement.totale)}${saleReturnBadge(movement)}</td>
-            <td>${movement.annullato ? '<span class="return-badge">CHIUSA</span>' : `<button type="button" class="ghost" data-return-sale="${movement.id}">Reso</button>`}</td>
+            <td>${movement.annullato ? '<span class="return-badge">CHIUSA</span>' : '<span class="quality-chip">ATTIVA</span>'}</td>
           </tr>`;
         }).join('') || '<tr><td colspan="7" class="empty">Nessuna vendita per questo cliente.</td></tr>'}
       </table></div>
@@ -1415,19 +1430,6 @@ function clienti() {
         </form>
         <p id="client-msg"></p>
       </section>
-      <section class="card">
-        <div class="section-head"><div><p class="eyebrow">CONTO CLIENTE</p><h2>Registra un pagamento</h2></div>${accountBalanceHtml(account)}</div>
-        <form id="payment-form" data-client-id="${client.id}" class="grid">
-          <div><label>Data *</label><input name="data_pagamento" type="date" required value="${today()}"></div>
-          <div><label>Importo *</label><input name="importo" type="number" min="0.01" step="0.01" required placeholder="0,00"></div>
-          <div><label>Metodo</label><select name="metodo"><option>Contanti</option><option>Bonifico</option><option>Carta</option><option>Altro</option></select></div>
-          <div><label>Nota</label><input name="note" placeholder="Facoltativa"></div>
-          <div><label>&nbsp;</label><button>Registra pagamento</button></div>
-        </form><p id="payment-msg"></p>
-        <div class="table-scroll"><table><tr><th>Data</th><th>Importo</th><th>Metodo</th><th>Nota</th><th>Operatore</th></tr>
-          ${account.payments.slice().reverse().map((payment) => `<tr><td>${esc(displayDateOnly(payment.data, payment.dateKey))}</td><td><b class="${Number(payment.importo || 0) < 0 ? 'account-negative' : ''}">${Number(payment.importo || 0) < 0 ? `Rimborso ${eur(Math.abs(Number(payment.importo || 0)))}` : eur(payment.importo)}</b></td><td>${esc(payment.metodo || '—')}</td><td>${esc(payment.note || '—')}</td><td>${esc(payment.operatore || '—')}</td></tr>`).join('') || '<tr><td colspan="5" class="empty">Nessun pagamento registrato.</td></tr>'}
-        </table></div>
-      </section>
       ${clientHistory(client.id)}` : ''}`;
 }
 
@@ -1450,17 +1452,18 @@ function vendite() {
     <section class="card">
       <div class="section-head"><div><p class="eyebrow">ARCHIVIO</p><h2>Elenco vendite</h2></div><b>${sales.length} righe</b></div>
       <div class="table-scroll"><table>
-        <tr><th>Data</th><th>Prodotto / pezzatura</th><th>Proprietario lotto</th><th>Cliente</th><th>Colli</th><th>Kg</th><th>Prezzo</th><th>Totale</th><th>Operatore</th><th>Azione</th></tr>
+        <tr><th>Data</th><th>Prodotto / pezzatura</th><th>Proprietario lotto</th><th>Cliente</th><th>Colli</th><th>Kg</th><th>Prezzo</th><th>Totale</th><th>Operatore</th><th>Gestione</th></tr>
         ${sales.map((movement) => `<tr class="${movement.annullato ? 'returned' : ''}">
           <td>${esc(displayDateOnly(movement.data, movement.dateKey))}</td>
           <td><button class="ghost" data-open-product="${movement.prodotto_id}"><b>${esc(name('prodotti', movement.prodotto_id))}</b></button>${movement.qualita && movement.qualita !== 'Standard' ? `<br><span class="quality-chip">${esc(movement.qualita)}</span>` : ''}</td>
           <td>${esc(movement.proprietario || lotById(movement.lotto_id)?.proprietario || '—')}</td>
           <td>${esc(name('clienti', movement.cliente_id))}</td>
           <td>${formatQty(movement.colli)}</td><td>${formatQty(movement.peso)}</td><td>${eur(movement.prezzo)} / ${movement.unita_prezzo === 'collo' ? 'collo' : 'kg'}</td><td><b>${eur(movement.totale)}</b>${saleReturnBadge(movement)}</td><td>${esc(movement.operatore || '—')}</td>
-          <td>${movement.annullato ? '<span class="return-badge">CHIUSA</span>' : `<button type="button" class="ghost" data-return-sale="${movement.id}">Reso</button>`}</td>
+          <td>${movement.annullato ? '<span class="return-badge">CHIUSA</span>' : `<button type="button" class="ghost" data-edit-sale="${movement.id}">Modifica</button>`}</td>
         </tr>`).join('') || '<tr><td colspan="10" class="empty">Nessuna vendita registrata.</td></tr>'}
       </table></div>
-    </section>`;
+    </section>
+    ${editingSaleId ? saleEditForm(editingSaleId) : ''}`;
 }
 
 function resi() {
@@ -1626,7 +1629,7 @@ function carico() {
         <tr><th>Articolo</th><th>Totale vendite</th><th>IVA separata</th><th>Base biglietto</th><th>Provvigione</th><th>Totale finale</th></tr>
         ${rows.map((row) => `<tr><td><b>${esc(row.articolo)}</b></td><td>${eur(row.vendita)}</td><td>${row.iva ? eur(row.iva) : '—'}</td><td>${eur(row.base)}</td><td>${row.provvigione ? eur(row.provvigione) : '—'}</td><td><b>${eur(row.netto)}</b></td></tr>`).join('')}
         <tr><th>TOTALI</th><th>${eur(totals.vendita)}</th><th>${eur(totals.iva)}</th><th>${eur(totals.base)}</th><th>${eur(totals.provvigione)}</th><th>${eur(totals.netto)}</th></tr>
-      </table></div><div class="carico-check">${eur(totals.vendita)} − ${eur(totals.provvigione)} = ${eur(totals.netto)}</div>` : `<div class="empty"><p>Non ci sono ancora dati nel Carico del ${esc(formatDateKey(date))}.</p><button type="button" data-go="biglietti">Apri Biglietti</button></div>`}
+      </table></div><div class="carico-check">${eur(totals.vendita)} − ${eur(totals.provvigione)} = ${eur(totals.netto)}</div>` : `<div class="empty"><p>Non ci sono ancora dati nel Carico del ${esc(formatDateKey(date))}.</p><p>Genera prima i documenti dalla sezione Biglietti.</p></div>`}
     </section>`;
 }
 
@@ -1674,8 +1677,6 @@ function biglietti() {
     </form>
     <section class="ticket-grid">${tickets.map((ticket) => {
       const printRows = ticketPrintRows(ticket);
-      const linkedSales = ticketLinkedSales(ticket);
-      const openedSale = linkedSales.some((sale) => sale.id === editingSaleId);
       return `
       <article class="ticket-card">
         <div class="section-head">
@@ -1695,18 +1696,6 @@ function biglietti() {
           <button type="button" class="ghost" data-edit-ticket="${ticket.id}">Tipo, IVA e trattenuta</button>
         </div>
         ${editingTicketId === ticket.id ? ticketSettingsForm(ticket) : ''}
-        <details class="edit-sale" ${openedSale ? 'open' : ''}>
-          <summary><b>Modifica vendite collegate</b></summary>
-          <p class="muted">I nomi dei clienti non compaiono sul biglietto. Da qui puoi correggere anche le vendite dei biglietti passati: il resto si aggiorna automaticamente.</p>
-          <div class="ticket-actions">${linkedSales.map((sale, index) => {
-            const quantity = Number(sale.colli || 0) ? `${formatQty(sale.colli)} colli` : `${formatQty(sale.peso)} kg`;
-            const label = `${index + 1}. ${sale.qualita || lotById(sale.lotto_id)?.qualita || 'Standard'} · ${quantity} · ${eur(sale.prezzo)} / ${sale.unita_prezzo === 'collo' ? 'collo' : 'kg'}`;
-            return sale.annullato
-              ? `<span class="return-badge">${esc(label)} · RESO COMPLETO</span>`
-              : `<button type="button" class="ghost" data-edit-sale="${sale.id}">${esc(label)}</button><button type="button" class="ghost" data-return-sale="${sale.id}">Reso</button>${saleReturnBadge(sale)}`;
-          }).join('') || '<span class="muted">Nessuna vendita collegata trovata. Premi “Genera / aggiorna” per riallineare questo biglietto.</span>'}</div>
-        </details>
-        ${openedSale ? saleEditForm(editingSaleId) : ''}
       </article>`;
     }).join('')}</section>`;
 }
@@ -1850,27 +1839,6 @@ function registro() {
       <div class="table-scroll"><table>
         <tr><th>Data</th><th>Nome utente</th><th>Account</th><th>Azione</th><th>Dettaglio</th></tr>
         ${entries.map((entry) => `<tr><td>${esc(entry.data)}</td><td><b>${esc(entry.operatore || '—')}</b></td><td>${esc(entry.operatore_email || '—')}</td><td>${esc(entry.azione || '—')}</td><td>${esc(entry.dettaglio || '—')}</td></tr>`).join('') || '<tr><td colspan="5" class="empty">Il registro è ancora vuoto.</td></tr>'}
-      </table></div>
-    </section>`;
-}
-
-function report() {
-  const sales = db.movimenti.filter((movement) => movement.tipo === 'uscita' && !movement.annullato);
-  return `
-    <section class="card">
-      <p class="eyebrow">RIEPILOGO</p>
-      <h2>Vendite per articolo</h2>
-      <div class="table-scroll"><table>
-        <tr><th>Articolo</th><th>Colli</th><th>Kg</th><th>Totale</th></tr>
-        ${db.prodotti.map((product) => {
-          const rows = sales.filter((movement) => movement.prodotto_id === product.id);
-          return `<tr>
-            <td><button class="ghost" data-open-product="${product.id}"><b>${esc(product.nome)}</b></button></td>
-            <td>${rows.reduce((sum, movement) => sum + Number(movement.colli), 0)}</td>
-            <td>${rows.reduce((sum, movement) => sum + Number(movement.peso), 0)}</td>
-            <td>${eur(rows.reduce((sum, movement) => sum + Number(movement.totale), 0))}</td>
-          </tr>`;
-        }).join('')}
       </table></div>
     </section>`;
 }
@@ -2310,7 +2278,7 @@ async function shareTicket(ticket) {
     return;
   }
   await navigator.clipboard.writeText(text);
-  alert('Riepilogo copiato. Ora puoi incollarlo su WhatsApp o in un messaggio.');
+  alert('Biglietto copiato. Ora puoi incollarlo su WhatsApp o in un messaggio.');
 }
 
 function addSale(form, createClientIfMissing = false) {
@@ -2716,9 +2684,9 @@ function openClosingPreview(closing) {
 }
 
 function bind() {
-  document.querySelectorAll('[data-page],[data-go]').forEach((button) => {
+  document.querySelectorAll('[data-page]').forEach((button) => {
     button.onclick = async () => {
-      const destination = button.dataset.page || button.dataset.go;
+      const destination = button.dataset.page;
       if (destination === 'registro' && !(await unlockAdministration())) return;
       current = destination;
       closeMobileNav();
@@ -2907,10 +2875,17 @@ function bind() {
   document.querySelectorAll('[data-account-client]').forEach((button) => {
     button.onclick = () => {
       selectedClient = button.dataset.accountClient;
-      current = 'clienti';
       render();
     };
   });
+
+  const closeAccount = $('#close-account');
+  if (closeAccount) {
+    closeAccount.onclick = () => {
+      selectedClient = '';
+      render();
+    };
+  }
 
   const closeClient = $('#close-client');
   if (closeClient) {
