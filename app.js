@@ -46,7 +46,13 @@ let homeSearch = '';
 let expandedHomeProduct = '';
 let editingSaleId = '';
 let editingTicketId = '';
-let pitClientDraft = { clienteNome: '', statoPagamento: 'credito', metodoPagamento: 'Contanti', righe: [] };
+let pitClientDraft = {
+  clienteNome: '',
+  statoPagamento: 'credito',
+  metodoPagamento: 'Contanti',
+  ivaModalita: 'nessuna',
+  righe: [],
+};
 let lastPitClientTicket = null;
 let adminSessionUnlocked = false;
 let signedUser = null;
@@ -113,8 +119,8 @@ function ensureAppStyles() {
     .variant-list{display:grid;gap:10px;margin:15px 0}.variant-row{display:grid;grid-template-columns:1.4fr 1fr 1fr auto;gap:10px;align-items:end;padding:12px;border:1px solid #dce5e7;border-radius:13px;background:#f8fbfa}.variant-row button{width:auto;min-width:44px}.variant-row:first-child [data-remove-variant]{visibility:hidden}.secondary-panel{margin-top:18px;border:1px solid #dce5e7;border-radius:14px;background:#fbfdfc}.secondary-panel summary{padding:16px 18px;cursor:pointer;font-weight:800;color:#116c50}.secondary-panel>div{padding:0 18px 18px}.quality-chip{display:inline-block;margin-top:4px;padding:3px 8px;border-radius:999px;background:#eef6f2;color:#166c51;font-size:11px;font-weight:800}.mobile-nav-toggle,.nav-scrim{display:none}
     .presence-dot{display:inline-block;width:9px;height:9px;margin:0 7px;border-radius:50%;background:#38d37a;box-shadow:0 0 0 0 #38d37a99;animation:presencePulse 1.8s infinite;vertical-align:middle}.presence-list{display:grid;gap:9px}.presence-user{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 13px;border:1px solid #dce7e4;border-radius:12px;background:#f8fcfa}.status-ok{color:#11704f;font-weight:800}.status-missing{color:#ad3b2d;font-weight:800}.status-extra{color:#a26108;font-weight:800}.closing-row input{min-width:105px}.account-negative{color:#b23a2c}.account-positive{color:#11704f}@keyframes presencePulse{0%{box-shadow:0 0 0 0 #38d37a99}70%{box-shadow:0 0 0 7px #38d37a00}100%{box-shadow:0 0 0 0 #38d37a00}}
     .home-search{margin:22px 0;padding:22px;border:1px solid #d9e5e4;border-radius:18px;background:linear-gradient(135deg,#fff 0%,#f4fbf8 100%);box-shadow:0 9px 28px #173b4e0b}.home-search-head{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:13px}.home-search h2{margin:0;font-size:22px}.home-search-box{display:flex;align-items:center;gap:10px;border:2px solid #cbdad8;border-radius:14px;background:#fff;padding:0 12px;transition:border-color .18s ease,box-shadow .18s ease}.home-search-box:focus-within{border-color:#159268;box-shadow:0 0 0 4px #15926818}.home-search-box input{width:100%;border:0;box-shadow:none!important;background:transparent;font-size:17px}.home-search-box button{width:auto;min-width:38px;padding:7px;background:transparent;color:#647586}.search-results-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:15px}.search-result-group{padding:14px;border:1px solid #dce7e5;border-radius:14px;background:#fff}.search-result-group h3{margin:0 0 9px;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:#617386}.search-result{width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;margin:5px 0;padding:10px 11px;border:0;border-radius:10px;background:#f4f8f7;color:#173044;text-align:left}.search-result:hover{background:#e8f6f0}.search-result strong{display:block}.search-result small{display:block;color:#6b7b8d;margin-top:2px}.owner-badge{display:inline-flex;align-items:center;padding:7px 10px;border-radius:9px;background:#edf5f2;color:#154f40;font-weight:850}.inventory-product-name{font-size:16px;color:#142b3c}
-    .market-table{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.market-product{overflow:hidden;border:1px solid #dce7e4;border-radius:15px;background:#fff}.market-product>button{width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:17px;border:0;background:#fff;color:#173044;text-align:left}.market-product>button:hover{background:#edf9f4}.market-product>button strong{display:block;font-size:20px}.market-product>button small{display:block;margin-top:4px;color:#718093}.market-lots{padding:0 13px 13px}.market-lot{display:grid;grid-template-columns:1fr auto;gap:8px;padding:10px;border-top:1px solid #e3ebe9}.market-lot b{display:block}.market-lot small{display:block;color:#718093;margin-top:3px}.stock-low{color:#a76000;font-weight:850}.stock-ended{color:#a63e31;font-weight:850}.stock-ok{color:#11704f;font-weight:850}.edit-sale{margin-top:12px;padding:14px;border:1px solid #cfe1dc;border-radius:13px;background:#f6fbf9}.edit-sale .grid{margin-top:10px}
-    .pit-client-ticket{margin-top:15px;border:2px solid #d6e2df;border-radius:16px;background:#fff;overflow:hidden}.pit-client-bar{display:grid;grid-template-columns:minmax(240px,2fr) 1fr 1fr;gap:12px;padding:16px;background:#f3f8f6;border-bottom:1px solid #dce7e4}.pit-client-bar input{font-size:18px;font-weight:800}.pit-client-label-row{display:flex;align-items:center;justify-content:space-between;gap:10px}.pit-client-label-row button{width:auto;min-height:30px;padding:5px 9px;font-size:11px}.pit-line-form{display:grid;grid-template-columns:minmax(210px,2fr) .7fr .7fr .9fr 1.2fr 1.15fr auto;gap:10px;align-items:end;padding:16px}.pit-line-form button{white-space:nowrap}.pit-product-search-wrap{position:relative}.pit-product-results{position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:30;max-height:320px;overflow:auto;padding:7px;border:1px solid #cbdad8;border-radius:12px;background:#fff;box-shadow:0 16px 35px #10283b2b}.pit-product-results:empty{display:none}.pit-product-option{width:100%;display:flex;justify-content:space-between;align-items:center;gap:10px;margin:3px 0;padding:10px;border:0;border-radius:9px;background:#f4f8f7;color:#183044;text-align:left}.pit-product-option:hover,.pit-product-option:focus{background:#e6f6ef}.pit-product-option strong,.pit-product-option small{display:block}.pit-product-option small{margin-top:2px;color:#718093}.pit-product-option>span:last-child{color:#0d7252;text-align:right;font-size:11px;font-weight:800}.pit-draft-wrap{padding:0 16px 16px}.pit-draft-table td,.pit-draft-table th{vertical-align:middle}.pit-draft-table button{width:auto;min-width:38px;padding:7px}.pit-ticket-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:15px 16px;border-top:1px solid #dce7e4;background:#fbfdfc}.pit-ticket-footer>div{display:flex;gap:8px;flex-wrap:wrap}.pit-ticket-total{font-size:20px;color:#0e7352}.vat-pill{display:inline-flex;padding:4px 7px;border-radius:999px;background:#edf3ff;color:#365d99;font-size:10px;font-weight:800}.pit-last-ticket{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:14px;padding:14px 16px;border:1px solid #aedcc9;border-radius:13px;background:#eaf8f2}.pit-last-ticket strong,.pit-last-ticket small{display:block}.pit-last-ticket small{margin-top:3px;color:#547065}.pit-last-ticket button{width:auto}.client-ticket-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}.client-ticket-card{padding:15px;border:1px solid #d9e5e2;border-radius:14px;background:#fbfdfc}.client-ticket-card h3{margin:2px 0 5px}.client-ticket-card p{margin:4px 0}.client-ticket-card button{width:100%;margin-top:10px}
+    .market-table{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.market-product{overflow:hidden;border:1px solid #dce7e4;border-radius:15px;background:#fff}.market-product>button{width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:17px;border:0;background:#fff;color:#173044;text-align:left}.market-product>button:hover{background:#edf9f4}.market-product>button strong{display:block;font-size:20px}.market-product>button small{display:block;margin-top:4px;color:#718093}.market-lots{padding:0 13px 13px}.market-lot{display:grid;grid-template-columns:1fr auto;gap:8px;padding:10px;border-top:1px solid #e3ebe9}.market-lot b{display:block}.market-lot small{display:block;color:#718093;margin-top:3px}.market-arrival-qty{color:#102d3f;font-size:15px}.home-price-history{margin:4px 13px 13px;padding:12px;border:1px solid #d7e5e1;border-radius:12px;background:#f5faf8}.home-price-history h4{margin:0 0 8px;color:#173044;font-size:13px;text-transform:uppercase;letter-spacing:.07em}.home-price-list{display:grid;gap:7px}.home-price-row{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;padding:8px 9px;border-radius:9px;background:#fff}.home-price-row>strong{color:#0d7252}.home-price-row span,.home-price-row small{min-width:0}.home-price-row span b,.home-price-row span small{display:block}.home-price-row span small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#718093}.home-price-row>small{color:#718093;text-align:right}.stock-low{color:#a76000;font-weight:850}.stock-ended{color:#a63e31;font-weight:850}.stock-ok{color:#11704f;font-weight:850}.edit-sale{margin-top:12px;padding:14px;border:1px solid #cfe1dc;border-radius:13px;background:#f6fbf9}.edit-sale .grid{margin-top:10px}
+    .pit-client-ticket{margin-top:15px;border:2px solid #d6e2df;border-radius:16px;background:#fff;overflow:hidden}.pit-client-bar{display:grid;grid-template-columns:minmax(240px,2fr) 1fr 1fr;gap:12px;padding:16px;background:#f3f8f6;border-bottom:1px solid #dce7e4}.pit-client-bar input{font-size:18px;font-weight:800}.pit-client-label-row{display:flex;align-items:center;justify-content:space-between;gap:10px}.pit-client-label-row button{width:auto;min-height:30px;padding:5px 9px;font-size:11px}.pit-line-form{display:grid;grid-template-columns:minmax(210px,2fr) .7fr .7fr .9fr 1.2fr 1.15fr auto;gap:10px;align-items:end;padding:16px}.pit-line-form button{white-space:nowrap}.pit-keyboard-hint{margin:-3px 16px 13px;padding:9px 11px;border-radius:10px;background:#eef7f3;color:#47675e;font-size:12px}.pit-keyboard-hint kbd{display:inline-block;padding:2px 6px;border:1px solid #c6d8d2;border-bottom-width:2px;border-radius:5px;background:#fff;color:#244c40;font:700 11px/1.3 system-ui}.pit-product-search-wrap{position:relative}.pit-product-results{position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:30;max-height:320px;overflow:auto;padding:7px;border:1px solid #cbdad8;border-radius:12px;background:#fff;box-shadow:0 16px 35px #10283b2b}.pit-product-results:empty{display:none}.pit-product-option{width:100%;display:flex;justify-content:space-between;align-items:center;gap:10px;margin:3px 0;padding:10px;border:0;border-radius:9px;background:#f4f8f7;color:#183044;text-align:left}.pit-product-option:hover,.pit-product-option:focus,.pit-product-option:focus-visible{background:#e6f6ef;outline:3px solid #1592683b}.pit-product-option strong,.pit-product-option small{display:block}.pit-product-option small{margin-top:2px;color:#718093}.pit-product-option>span:last-child{color:#0d7252;text-align:right;font-size:11px;font-weight:800}.pit-draft-wrap{padding:0 16px 16px}.pit-draft-table td,.pit-draft-table th{vertical-align:middle}.pit-draft-table button{width:auto;min-width:38px;padding:7px}.pit-ticket-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:15px 16px;border-top:1px solid #dce7e4;background:#fbfdfc}.pit-ticket-footer>div{display:flex;gap:8px;flex-wrap:wrap}.pit-ticket-total{font-size:20px;color:#0e7352}.vat-pill{display:inline-flex;padding:4px 7px;border-radius:999px;background:#edf3ff;color:#365d99;font-size:10px;font-weight:800}.pit-last-ticket{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:14px;padding:14px 16px;border:1px solid #aedcc9;border-radius:13px;background:#eaf8f2}.pit-last-ticket strong,.pit-last-ticket small{display:block}.pit-last-ticket small{margin-top:3px;color:#547065}.pit-last-ticket button{width:auto}.client-ticket-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}.client-ticket-card{padding:15px;border:1px solid #d9e5e2;border-radius:14px;background:#fbfdfc}.client-ticket-card h3{margin:2px 0 5px}.client-ticket-card p{margin:4px 0}.client-ticket-card button{width:100%;margin-top:10px}
     @media(max-width:900px){
       body.eurofrutta-shell{padding-left:0;overflow-x:hidden}
       body.eurofrutta-shell.nav-open{overflow:hidden}
@@ -147,7 +153,7 @@ function ensureAppStyles() {
       .pit-client-bar,.pit-line-form{grid-template-columns:1fr}.pit-line-form>div:first-child{grid-column:1/-1}.pit-product-results{position:static;margin-top:6px;max-height:240px}.pit-ticket-footer,.pit-last-ticket{align-items:stretch;flex-direction:column}.pit-ticket-footer>div,.pit-ticket-footer button,.pit-last-ticket button{width:100%}
       .hero{padding:24px 18px!important}.hero-art{display:none!important}.hero-copy h2{font-size:38px!important}
     }
-    @media(max-width:480px){body.eurofrutta-shell #nav{width:88vw}.ticket-card{padding:14px}.price-choice{grid-template-columns:1fr}.pit-product-row strong{font-size:16px}.home-search{padding:16px}.home-search-head{align-items:flex-start;flex-direction:column}}
+    @media(max-width:480px){body.eurofrutta-shell #nav{width:88vw}.ticket-card{padding:14px}.price-choice{grid-template-columns:1fr}.pit-product-row strong{font-size:16px}.home-search{padding:16px}.home-search-head{align-items:flex-start;flex-direction:column}.home-price-row{grid-template-columns:1fr auto}.home-price-row>strong{grid-column:1/-1}.home-price-row>small{text-align:left}}
   `;
   document.head.appendChild(style);
 }
@@ -261,15 +267,19 @@ function lotSearchName(lot) {
 }
 
 function partitaLabel(lot) {
-  if (!lot) return 'Scarico';
+  if (!lot) return 'Arrivo';
   const custom = String(lot.partita || '').trim();
-  if (custom && !/^P-\d{8}-[A-Z0-9]{4}$/i.test(custom)) return custom;
+  if (custom && !/^P-\d{8}-[A-Z0-9]{4}$/i.test(custom) && !/^scarico\s+\d+$/i.test(custom)) return custom;
   const groups = [...new Set(db.lotti
-    .filter((item) => item.prodotto_id === lot.prodotto_id && normalized(item.proprietario) === normalized(lot.proprietario))
+    .filter((item) => item.prodotto_id === lot.prodotto_id
+      && normalized(item.proprietario) === normalized(lot.proprietario)
+      && String(item.dateKey || '') === String(lot.dateKey || ''))
     .sort((a, b) => `${a.dateKey || ''}-${a.id}`.localeCompare(`${b.dateKey || ''}-${b.id}`))
     .map((item) => lotGroupId(item)))];
   const position = Math.max(0, groups.indexOf(lotGroupId(lot))) + 1;
-  return `Scarico ${position}`;
+  const date = displayDateOnly(lot.dataCarico, lot.dateKey);
+  const shortDate = date === '—' ? '' : date.replace(/\/(\d{4})$/, '');
+  return `Arrivo${shortDate ? ` ${shortDate}` : ''}${groups.length > 1 ? ` · ${position}°` : ''}`;
 }
 
 function lotStatus(lot) {
@@ -332,6 +342,44 @@ function matchingLots(value, limit = 8) {
 
 function pitProductSearchResults(value) {
   return matchingLots(value).map((lot) => `<button type="button" class="pit-product-option" data-pick-pit-lot="${lot.id}"><span><strong>${esc(name('prodotti', lot.prodotto_id))}${lot.qualita && lot.qualita !== 'Standard' ? ` · ${esc(lot.qualita)}` : ''}</strong><small>${esc(lot.proprietario || 'Provenienza non indicata')} · ${esc(partitaLabel(lot))}</small></span><span>${esc(lotPrimaryRemaining(lot))}</span></button>`).join('');
+}
+
+function homeProductStockSummary(product, lots) {
+  const tracksPackages = lots.some((lot) => Number(lot.colli_iniziali || 0) > 0);
+  const unit = tracksPackages ? 'colli' : 'kg';
+  const initial = roundQty(lots.reduce((sum, lot) => (
+    sum + Number(tracksPackages ? lot.colli_iniziali : lot.peso_iniziale || 0)
+  ), 0));
+  const remaining = roundQty(lots.reduce((sum, lot) => (
+    sum + Number(tracksPackages ? lot.colli_rimanenti : lot.peso_rimanente || 0)
+  ), 0));
+  const groups = new Set(lots.map(lotGroupId)).size;
+  return {
+    headline: tracksPackages
+      ? `${formatQty(initial)} ${product.nome}`
+      : `${formatQty(initial)} kg ${product.nome}`,
+    detail: `${tracksPackages ? 'colli arrivati' : 'arrivo in kg'} · ${stockState(remaining, unit)} · ${groups} ${groups === 1 ? 'arrivo' : 'arrivi'}`,
+  };
+}
+
+function homeProductPrices(productId, limit = 6) {
+  const rows = db.movimenti
+    .filter((movement) => movement.tipo === 'uscita'
+      && movement.prodotto_id === productId
+      && !movement.annullato
+      && Number(movement.prezzo || 0) > 0)
+    .slice()
+    .reverse()
+    .slice(0, limit);
+  if (!rows.length) return '<p class="muted">Nessun prezzo di vendita ancora registrato.</p>';
+  return `<div class="home-price-list">${rows.map((movement) => {
+    const lot = lotById(movement.lotto_id);
+    const quality = lot?.qualita && lot.qualita !== 'Standard' ? lot.qualita : '';
+    const description = [quality, movement.proprietario || lot?.proprietario, name('clienti', movement.cliente_id)]
+      .filter((value) => value && value !== '—')
+      .join(' · ');
+    return `<div class="home-price-row"><strong>${eur(movement.prezzo)} / ${movement.unita_prezzo === 'collo' ? 'collo' : 'kg'}</strong><span><b>${esc(description || 'Vendita registrata')}</b><small>${esc(partitaLabel(lot))}</small></span><small>${esc(displayDateOnly(movement.data, movement.dateKey))}</small></div>`;
+  }).join('')}</div>`;
 }
 
 function clientSuggestions() {
@@ -817,7 +865,8 @@ function home() {
       </div>
       <div class="market-table">${marketProducts.map(({ product, lots }) => {
         const open = expandedHomeProduct === product.id;
-        return `<article class="market-product"><button type="button" data-home-product="${product.id}"><span><strong>${esc(product.nome)}</strong><small>${lots.length} ${lots.length === 1 ? 'partita disponibile' : 'partite disponibili'}</small></span><b>${open ? '⌃' : '⌄'}</b></button>${open ? `<div class="market-lots">${lots.map((lot) => `<div class="market-lot"><span><b>${esc(lot.qualita || 'Standard')} · ${esc(lot.proprietario || '—')}</b><small>${esc(partitaLabel(lot))} · arrivo ${esc(displayDateOnly(lot.dataCarico, lot.dateKey))}</small></span><span>${remainingLotQuantity(lot)}<br>${lotStatusHtml(lot)}</span></div>`).join('')}</div>` : ''}</article>`;
+        const summary = homeProductStockSummary(product, lots);
+        return `<article class="market-product"><button type="button" data-home-product="${product.id}" aria-expanded="${open}"><span><strong>${esc(summary.headline)}</strong><small>${esc(summary.detail)}</small></span><b>${open ? '⌃' : '⌄'}</b></button>${open ? `<div class="market-lots">${lots.map((lot) => `<div class="market-lot"><span><span class="market-arrival-qty">${initialLotQuantity(lot)}</span><b>${esc(lot.qualita || 'Standard')} · ${esc(lot.proprietario || '—')}</b><small>${esc(partitaLabel(lot))}</small></span><span>${remainingLotQuantity(lot)}<br>${lotStatusHtml(lot)}</span></div>`).join('')}</div><div class="home-price-history"><h4>Ultimi prezzi praticati</h4>${homeProductPrices(product.id)}</div>` : ''}</article>`;
       }).join('') || '<p class="empty">Nessuna merce disponibile.</p>'}</div>
     </section>
     <section class="home-search">
@@ -881,6 +930,7 @@ function pitazzo() {
   const activeDaily = daily.filter((movement) => !movement.annullato);
   const draftRows = Array.isArray(pitClientDraft.righe) ? pitClientDraft.righe : [];
   const draftTotal = roundMoney(draftRows.reduce((sum, row) => sum + Number(row.totale || 0), 0));
+  const currentVatMode = normalizeVatMode(pitClientDraft.ivaModalita);
   const lastClientTicket = lastPitClientTicket?.dateKey === date
     ? clientTicketData(date, lastPitClientTicket.clientId)
     : null;
@@ -907,9 +957,10 @@ function pitazzo() {
         <div><label>Peso kg</label><input name="peso" type="number" min="0" step="0.01" placeholder="0" inputmode="decimal"></div>
         <div><label>Prezzo unitario</label><input name="prezzo" required type="number" min="0" step="0.01" placeholder="0,00" inputmode="decimal"></div>
         <div><label>Tipo prezzo</label><div class="price-choice"><label><input name="unita_prezzo" type="radio" value="kg" checked><span>Al kg</span></label><label><input name="unita_prezzo" type="radio" value="collo"><span>A collo</span></label></div></div>
-        <div><label>IVA della riga</label><select name="iva_modalita"><option value="nessuna">Senza IVA</option><option value="aggiungi">Aggiungi IVA 4%</option><option value="compresa">IVA già compresa</option></select></div>
+        <div><label>IVA della riga</label><select id="pit-vat-mode" name="iva_modalita"><option value="nessuna" ${currentVatMode === 'nessuna' ? 'selected' : ''}>Senza IVA</option><option value="aggiungi" ${currentVatMode === 'aggiungi' ? 'selected' : ''}>Aggiungi IVA 4%</option><option value="compresa" ${currentVatMode === 'compresa' ? 'selected' : ''}>IVA già compresa</option></select></div>
         <button type="submit" ${!db.lotti.some(lotIsOpen) ? 'disabled' : ''}>+ Aggiungi riga</button>
         </form>
+        <p class="pit-keyboard-hint"><kbd>Invio</kbd> passa al campo successivo · <kbd>↑</kbd> <kbd>↓</kbd> sceglie l’articolo · <kbd>Spazio</kbd> o <kbd>Invio</kbd> conferma il riquadro selezionato.</p>
         ${draftRows.length ? `<div class="pit-draft-wrap"><div class="table-scroll"><table class="pit-draft-table"><tr><th>Colli / kg</th><th>Articolo</th><th>Prezzo</th><th>IVA</th><th>Totale</th><th></th></tr>${draftRows.map((row) => `<tr><td><b>${row.colli ? `${formatQty(row.colli)} colli` : ''}${row.colli && row.peso ? '<br>' : ''}${row.peso ? `${formatQty(row.peso)} kg` : ''}</b></td><td><b>${esc(row.articolo)}</b><br><small>${esc(row.proprietario)} · ${esc(row.qualita || 'Standard')}</small></td><td>${eur(row.prezzo)} / ${row.unita_prezzo === 'collo' ? 'collo' : 'kg'}</td><td><span class="vat-pill">${esc(vatModeLabel(row.iva_modalita))}</span></td><td><b>${eur(row.totale)}</b></td><td><button type="button" class="ghost" data-remove-pit-row="${row.id}" aria-label="Elimina riga">×</button></td></tr>`).join('')}</table></div></div>` : '<p class="empty" style="margin:12px 16px">Aggiungi il primo articolo al biglietto.</p>'}
         <div class="pit-ticket-footer"><b class="pit-ticket-total">Totale biglietto: ${eur(draftTotal)}</b><div><button type="button" class="ghost" data-clear-pit-draft ${draftRows.length ? '' : 'disabled'}>Svuota</button><button type="button" id="save-pit-ticket" ${draftRows.length ? '' : 'disabled'}>Registra tutto sul Pitazzo →</button></div></div>
       </div>
@@ -977,6 +1028,7 @@ function addPitDraftRow(form) {
     clienteNome: clientName,
     statoPagamento: $('#pit-payment-status')?.value === 'pagato' ? 'pagato' : 'credito',
     metodoPagamento: String($('#pit-payment-method')?.value || 'Contanti'),
+    ivaModalita: vatMode,
     righe: [...(pitClientDraft.righe || []), {
       id: id(),
       lotto_id: lot.id,
@@ -1025,6 +1077,7 @@ function commitPitClientDraft(dateKey) {
     clienteNome: pitClientDraft.clienteNome,
     statoPagamento: pitClientDraft.statoPagamento,
     metodoPagamento: pitClientDraft.metodoPagamento,
+    ivaModalita: normalizeVatMode(pitClientDraft.ivaModalita),
     righe: [],
   };
   return results;
@@ -1042,7 +1095,7 @@ function magazzino() {
       <div>
         <p class="eyebrow">MAGAZZINO</p>
         <h2>Rimanenze sempre aggiornate</h2>
-        <p>Un solo scarico può contenere più pezzature dello stesso articolo.</p>
+        <p>Un solo arrivo può contenere più pezzature dello stesso articolo.</p>
       </div>
     </section>
     <section class="card">
@@ -1053,13 +1106,13 @@ function magazzino() {
         <div><label>Data arrivo *</label><input name="data_carico" required type="date" value="${today()}"></div>
         <div><label>Prodotto *</label><select name="prodotto_id" required>${opts(db.prodotti)}</select></div>
         <div><label>Proprietario / fornitore *</label><input name="proprietario" required list="owners" placeholder="Es. Angelo"><datalist id="owners">${owners.map((owner) => `<option value="${esc(owner)}">`).join('')}</datalist></div>
-        <div><label>Nome dello scarico (facoltativo)</label><input name="partita" placeholder="Es. Porro mattina"></div>
+        <div><label>Nome dell’arrivo (facoltativo)</label><input name="partita" placeholder="Es. Porro mattina"></div>
         <div><label>Tipo di biglietto</label><select name="provvigione_percentuale"><option value="0">Normale · nessuna trattenuta</option><option value="10" selected>Normale · trattenuta 10%</option><option value="12">Padronale · provvigione 12%</option></select></div>
         <div><label>Note generali</label><input name="note" placeholder="Facoltative"></div>
         </div>
         <div class="section-head" style="margin-top:18px"><div><p class="eyebrow">PEZZATURE</p><h3>Colli e peso per descrizione</h3></div><button type="button" class="ghost" data-add-variant>+ Aggiungi pezzatura</button></div>
         <div class="variant-list" id="variant-list">${loadVariantRow()}</div>
-        <button ${!db.prodotti.length ? 'disabled' : ''}>Registra tutto lo scarico</button>
+        <button ${!db.prodotti.length ? 'disabled' : ''}>Registra tutto l’arrivo</button>
       </form>
       <p class="muted">Esempio: Fiorone 200 colli, Prima 20, Doppia prima 30. Rimarranno nello stesso arrivo e nello stesso biglietto.</p>
       <p id="load-msg"></p>
@@ -1765,14 +1818,14 @@ function ticketScaricoLabel(ticket) {
   const lot = lotById(ticket.lotto_id);
   if (lot) return partitaLabel(lot);
   const saved = String(ticket.partita || '').trim();
-  if (saved && !/^P-\d{8}-[A-Z0-9]{4}$/i.test(saved)) return saved;
-  return 'Scarico';
+  if (saved && !/^P-\d{8}-[A-Z0-9]{4}$/i.test(saved) && !/^scarico\s+\d+$/i.test(saved)) return saved;
+  return 'Arrivo';
 }
 
 function ticketSettingsForm(ticket) {
   const percentage = Number(ticket.commissionPercent ?? 10);
   return `<form id="ticket-settings-form" class="edit-sale" data-ticket-id="${ticket.id}">
-    <div class="section-head"><div><p class="eyebrow">TIPO BIGLIETTO</p><h3>Modifica trattenuta</h3><p class="muted">La scelta viene salvata anche nello scarico collegato.</p></div><button type="button" class="ghost" data-cancel-ticket-edit>Annulla</button></div>
+    <div class="section-head"><div><p class="eyebrow">TIPO BIGLIETTO</p><h3>Modifica trattenuta</h3><p class="muted">La scelta viene salvata anche nell’arrivo collegato.</p></div><button type="button" class="ghost" data-cancel-ticket-edit>Annulla</button></div>
     <div class="grid"><div><label>Tipo</label><select name="provvigione_percentuale"><option value="0" ${percentage === 0 ? 'selected' : ''}>Normale · nessuna trattenuta</option><option value="10" ${percentage === 10 ? 'selected' : ''}>Normale · trattenuta 10%</option><option value="12" ${percentage === 12 ? 'selected' : ''}>Padronale · provvigione 12%</option></select></div><div><label>&nbsp;</label><button>Salva e ricalcola</button></div></div>
     <p id="ticket-settings-msg"></p>
   </form>`;
@@ -2097,7 +2150,7 @@ function addLoad(form) {
   });
   const totalPackages = variants.reduce((sum, variant) => sum + variant.colli, 0);
   const totalWeight = variants.reduce((sum, variant) => sum + variant.peso, 0);
-  audit('Scarico registrato', `${name('prodotti', productId)} · ${owner} · ${partita} · trattenuta ${commission}% · ${variants.map((variant) => `${variant.qualita}: ${formatQty(variant.colli)} colli / ${formatQty(variant.peso)} kg`).join(' · ')} · totale ${formatQty(totalPackages)} colli / ${formatQty(totalWeight)} kg`);
+  audit('Arrivo registrato', `${name('prodotti', productId)} · ${owner} · ${partita || formatDateKey(dateKey)} · trattenuta ${commission}% · ${variants.map((variant) => `${variant.qualita}: ${formatQty(variant.colli)} colli / ${formatQty(variant.peso)} kg`).join(' · ')} · totale ${formatQty(totalPackages)} colli / ${formatQty(totalWeight)} kg`);
 }
 
 function addWaste(form) {
@@ -2299,7 +2352,7 @@ function bind() {
       const message = $('#load-msg');
       try {
         message.className = 'message';
-        message.textContent = 'Registrazione scarico…';
+        message.textContent = 'Registrazione arrivo…';
         addLoad(new FormData(loadForm));
         await save();
         render();
@@ -2487,30 +2540,85 @@ function bind() {
     const refreshProductResults = () => {
       if (productResults) productResults.innerHTML = pitProductSearchResults(productInput?.value || '');
     };
+    const selectPitLot = (lot) => {
+      if (!lot || !productInput) return;
+      productInput.value = lotSearchName(lot);
+      if (productResults) productResults.innerHTML = '';
+      pitLineForm.querySelector('[name="colli"]')?.focus();
+    };
+    const moveFormFocus = (target) => {
+      const controls = [...pitLineForm.querySelectorAll('input:not([type="hidden"]), select, button:not([disabled])')]
+        .filter((control) => control.offsetParent !== null && !control.closest('#pit-product-results'));
+      let index = controls.indexOf(target);
+      if (target instanceof HTMLInputElement && target.type === 'radio') {
+        while (controls[index + 1] instanceof HTMLInputElement
+          && controls[index + 1].type === 'radio'
+          && controls[index + 1].name === target.name) index += 1;
+      }
+      controls[index + 1]?.focus();
+    };
     if (productInput) {
       productInput.oninput = refreshProductResults;
       productInput.onfocus = refreshProductResults;
       productInput.onkeydown = (event) => {
+        const options = [...(productResults?.querySelectorAll('[data-pick-pit-lot]') || [])];
+        if (event.key === 'ArrowDown' && options.length) {
+          event.preventDefault();
+          options[0].focus();
+          return;
+        }
+        if (event.key === 'Escape') {
+          if (productResults) productResults.innerHTML = '';
+          return;
+        }
         if (event.key !== 'Enter') return;
         const matches = matchingLots(productInput.value, 20);
-        if (matches.length !== 1) return;
         event.preventDefault();
-        productInput.value = lotSearchName(matches[0]);
-        if (productResults) productResults.innerHTML = '';
-        pitLineForm.querySelector('[name="colli"]')?.focus();
+        if (matches.length === 1) selectPitLot(matches[0]);
+        else options[0]?.focus();
       };
     }
     if (productResults) {
       productResults.onclick = (event) => {
         const button = event.target.closest('[data-pick-pit-lot]');
         if (!button) return;
-        const lot = lotById(button.dataset.pickPitLot);
-        if (!lot || !productInput) return;
-        productInput.value = lotSearchName(lot);
-        productResults.innerHTML = '';
-        pitLineForm.querySelector('[name="colli"]')?.focus();
+        selectPitLot(lotById(button.dataset.pickPitLot));
+      };
+      productResults.onkeydown = (event) => {
+        const button = event.target.closest('[data-pick-pit-lot]');
+        if (!button) return;
+        const options = [...productResults.querySelectorAll('[data-pick-pit-lot]')];
+        const index = options.indexOf(button);
+        if (event.key === 'ArrowDown') {
+          event.preventDefault();
+          options[Math.min(index + 1, options.length - 1)]?.focus();
+        } else if (event.key === 'ArrowUp') {
+          event.preventDefault();
+          if (index <= 0) productInput?.focus();
+          else options[index - 1]?.focus();
+        } else if (event.key === 'Escape') {
+          event.preventDefault();
+          productInput?.focus();
+          productResults.innerHTML = '';
+        }
       };
     }
+    pitLineForm.addEventListener('keydown', (event) => {
+      if (event.defaultPrevented || event.isComposing || event.key !== 'Enter') return;
+      const target = event.target;
+      if (!(target instanceof HTMLElement) || target.tagName === 'BUTTON') return;
+      if (target instanceof HTMLInputElement && target.type === 'radio') {
+        event.preventDefault();
+        target.checked = true;
+        target.dispatchEvent(new Event('change', { bubbles: true }));
+        moveFormFocus(target);
+        return;
+      }
+      if (target.matches('input, select')) {
+        event.preventDefault();
+        moveFormFocus(target);
+      }
+    });
     pitLineForm.onsubmit = (event) => {
       event.preventDefault();
       const message = $('#pit-msg');
@@ -2531,6 +2639,8 @@ function bind() {
   if (pitPaymentStatus) pitPaymentStatus.onchange = () => { pitClientDraft.statoPagamento = pitPaymentStatus.value === 'pagato' ? 'pagato' : 'credito'; };
   const pitPaymentMethod = $('#pit-payment-method');
   if (pitPaymentMethod) pitPaymentMethod.onchange = () => { pitClientDraft.metodoPagamento = pitPaymentMethod.value || 'Contanti'; };
+  const pitVatMode = $('#pit-vat-mode');
+  if (pitVatMode) pitVatMode.onchange = () => { pitClientDraft.ivaModalita = normalizeVatMode(pitVatMode.value); };
 
   $('[data-new-pit-client]')?.addEventListener('click', () => {
     if (pitClientDraft.righe?.length && !confirm('Cambiare cliente e cancellare le righe non ancora registrate?')) return;
@@ -2538,6 +2648,7 @@ function bind() {
       clienteNome: '',
       statoPagamento: 'credito',
       metodoPagamento: 'Contanti',
+      ivaModalita: normalizeVatMode(pitClientDraft.ivaModalita),
       righe: [],
     };
     lastPitClientTicket = null;
@@ -2555,6 +2666,7 @@ function bind() {
         pitClientDraft.clienteNome = String($('#pit-client-name')?.value || pitClientDraft.clienteNome).trim();
         pitClientDraft.statoPagamento = $('#pit-payment-status')?.value === 'pagato' ? 'pagato' : 'credito';
         pitClientDraft.metodoPagamento = String($('#pit-payment-method')?.value || 'Contanti');
+        pitClientDraft.ivaModalita = normalizeVatMode($('#pit-vat-mode')?.value || pitClientDraft.ivaModalita);
         message.className = 'message';
         message.textContent = 'Registrazione del biglietto…';
         const results = commitPitClientDraft(pitazzoDate || today());
@@ -2585,6 +2697,7 @@ function bind() {
       clienteNome: pitClientDraft.clienteNome,
       statoPagamento: pitClientDraft.statoPagamento,
       metodoPagamento: pitClientDraft.metodoPagamento,
+      ivaModalita: normalizeVatMode(pitClientDraft.ivaModalita),
       righe: [],
     };
     render();
