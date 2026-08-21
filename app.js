@@ -129,6 +129,7 @@ function ensureAppStyles() {
     .pit-client-ticket{margin-top:15px;border:2px solid #d6e2df;border-radius:16px;background:#fff;overflow:hidden}.pit-client-bar{display:grid;grid-template-columns:minmax(240px,2fr) 1fr 1fr;gap:12px;padding:16px;background:#f3f8f6;border-bottom:1px solid #dce7e4}.pit-client-bar input{font-size:18px;font-weight:800}.pit-client-label-row{display:flex;align-items:center;justify-content:space-between;gap:10px}.pit-client-label-row button{width:auto;min-height:30px;padding:5px 9px;font-size:11px}.pit-line-form{display:grid;grid-template-columns:minmax(210px,2fr) .7fr .7fr .9fr 1.2fr 1.15fr auto;gap:10px;align-items:end;padding:16px}.pit-line-form button{white-space:nowrap}.pit-keyboard-hint{margin:-3px 16px 13px;padding:9px 11px;border-radius:10px;background:#eef7f3;color:#47675e;font-size:12px}.pit-keyboard-hint kbd{display:inline-block;padding:2px 6px;border:1px solid #c6d8d2;border-bottom-width:2px;border-radius:5px;background:#fff;color:#244c40;font:700 11px/1.3 system-ui}.pit-product-search-wrap{position:relative}.pit-product-results{position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:30;max-height:320px;overflow:auto;padding:7px;border:1px solid #cbdad8;border-radius:12px;background:#fff;box-shadow:0 16px 35px #10283b2b}.pit-product-results:empty{display:none}.pit-product-option{width:100%;display:flex;justify-content:space-between;align-items:center;gap:10px;margin:3px 0;padding:10px;border:0;border-radius:9px;background:#f4f8f7;color:#183044;text-align:left}.pit-product-option:hover,.pit-product-option:focus,.pit-product-option:focus-visible{background:#e6f6ef;outline:3px solid #1592683b}.pit-product-option strong,.pit-product-option small{display:block}.pit-product-option small{margin-top:2px;color:#718093}.pit-product-option>span:last-child{color:#0d7252;text-align:right;font-size:11px;font-weight:800}.pit-draft-wrap{padding:0 16px 16px}.pit-draft-table td,.pit-draft-table th{vertical-align:middle}.pit-draft-table button{width:auto;min-width:38px;padding:7px}.pit-ticket-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:15px 16px;border-top:1px solid #dce7e4;background:#fbfdfc}.pit-ticket-footer>div{display:flex;gap:8px;flex-wrap:wrap}.pit-ticket-total{font-size:20px;color:#0e7352}.vat-pill{display:inline-flex;padding:4px 7px;border-radius:999px;background:#edf3ff;color:#365d99;font-size:10px;font-weight:800}.pit-last-ticket{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:14px;padding:14px 16px;border:1px solid #aedcc9;border-radius:13px;background:#eaf8f2}.pit-last-ticket strong,.pit-last-ticket small{display:block}.pit-last-ticket small{margin-top:3px;color:#547065}.pit-last-ticket button{width:auto}.client-ticket-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}.client-ticket-card{padding:15px;border:1px solid #d9e5e2;border-radius:14px;background:#fbfdfc}.client-ticket-card h3{margin:2px 0 5px}.client-ticket-card p{margin:4px 0}.client-ticket-card button{width:100%;margin-top:10px}.danger-zone{border-color:#efb6ad!important;background:linear-gradient(135deg,#fffafa,#fff4f1)!important}.danger-zone button{background:#b43227}.danger-zone button:hover{background:#92271f}
     .carry-forward-list{display:grid;gap:9px;margin:15px 0}.carry-forward-row{display:grid;grid-template-columns:minmax(220px,1fr) auto;align-items:center;gap:14px;padding:13px 15px;border:1px solid #d8e5e1;border-radius:13px;background:#f8fcfa}.carry-forward-row strong,.carry-forward-row small{display:block}.carry-forward-row small{margin-top:3px;color:#718093}.carry-toggle{display:flex;align-items:center;gap:9px;margin:0;padding:8px 10px;border:1px solid #cddbd7;border-radius:10px;background:#fff;color:#234638;font-weight:800;cursor:pointer}.carry-toggle input{width:19px;height:19px;min-height:0;accent-color:#13845e}.carico-card{border-color:#c9dfd7!important;background:linear-gradient(145deg,#fff,#f1faf6)!important}.carico-check{display:flex;justify-content:flex-end;margin-top:12px;color:#126f51;font-size:14px;font-weight:850}.owner-action{width:auto!important;padding:8px 11px!important;background:#b43227!important;color:#fff!important}.iva-choice{display:flex;align-items:center;gap:9px;margin:0;padding:11px;border:1px solid #cddbd7;border-radius:10px;background:#fff;font-weight:750}.iva-choice input{width:18px;height:18px;min-height:0;accent-color:#13845e}
     .return-modal-backdrop{position:fixed;inset:0;z-index:2500;display:grid;place-items:center;padding:20px;background:#071923a8;backdrop-filter:blur(5px)}.return-modal{width:min(720px,100%);max-height:92dvh;overflow:auto;padding:24px;border:1px solid #ffffff78;border-radius:20px;background:#fff;box-shadow:0 28px 90px #06172180}.return-modal h2{margin:3px 0 8px}.return-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:17px 0;padding:14px;border:1px solid #cce2db;border-radius:14px;background:#f1faf6}.return-summary div{min-width:0}.return-summary small,.return-summary b{display:block}.return-summary small{margin-bottom:3px;color:#68798b;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}.return-summary b{overflow:hidden;text-overflow:ellipsis}.return-preview{margin:14px 0;padding:13px;border-radius:12px;background:#eaf8f2;color:#145c47;font-weight:750}.return-preview.error{background:#fff0ed;color:#a23e30}.return-actions{display:flex;justify-content:flex-end;gap:9px;flex-wrap:wrap;margin-top:16px}.return-actions button{width:auto}.return-all{margin-top:8px;width:auto!important}.return-history{margin:10px 0;padding-left:20px;color:#5f7082;font-size:13px}
+    .sad-dock{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-top:18px;padding:22px 24px;border:1px solid #c8ded6;border-radius:18px;background:linear-gradient(135deg,#f8fcfa,#e8f7f1);box-shadow:0 10px 28px #173b4e0d}.sad-dock h2{margin:2px 0 4px}.sad-dock p{margin:0;color:#66788a}.sad-dock .eyebrow{color:#0e7856}.sad-button{display:grid;grid-template-columns:auto auto;align-items:center;gap:3px 14px;width:auto;min-width:215px;padding:16px 19px;border:0;border-radius:15px;background:linear-gradient(135deg,#14364a,#0d7655);color:#fff;text-align:left;box-shadow:0 9px 24px #0c564039}.sad-button span{grid-row:1/3;font-size:27px;font-weight:950;letter-spacing:.08em}.sad-button strong{font-size:21px;text-align:right}.sad-button small{color:#d8f4e8;text-align:right}
     @media(max-width:900px){
       body.eurofrutta-shell{padding-left:0;overflow-x:hidden}
       body.eurofrutta-shell.nav-open{overflow:hidden}
@@ -160,7 +161,7 @@ function ensureAppStyles() {
       .variant-row{grid-template-columns:1fr 1fr}.variant-row>div:first-child{grid-column:1/-1}.variant-row button{width:100%}
       .pit-client-bar,.pit-line-form{grid-template-columns:1fr}.pit-line-form>div:first-child{grid-column:1/-1}.pit-product-results{position:static;margin-top:6px;max-height:240px}.pit-ticket-footer,.pit-last-ticket{align-items:stretch;flex-direction:column}.pit-ticket-footer>div,.pit-ticket-footer button,.pit-last-ticket button{width:100%}.return-summary{grid-template-columns:1fr}.return-modal{padding:18px}.return-actions{flex-direction:column-reverse}.return-actions button{width:100%}.presence-user{align-items:flex-start}.presence-times{text-align:right}
       .home-welcome{grid-template-columns:1fr;gap:12px;padding:20px}.home-brand-logo{min-height:0;padding:0}.home-brand-logo img{max-width:360px;max-height:108px}.home-greeting{text-align:center}.home-market-card .home-market-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.home-top-actions{width:100%;justify-content:stretch}.home-compact-search{width:100%;min-width:0}.home-top-actions>button{width:100%}
-      .carry-forward-row{grid-template-columns:1fr}.carry-toggle,.carico-check{justify-content:flex-start}
+      .carry-forward-row{grid-template-columns:1fr}.carry-toggle,.carico-check{justify-content:flex-start}.sad-dock{align-items:stretch;flex-direction:column}.sad-button{width:100%}
     }
     @media(max-width:480px){body.eurofrutta-shell #nav{width:88vw}.ticket-card{padding:14px}.price-choice{grid-template-columns:1fr}.pit-product-row strong{font-size:16px}.home-welcome{padding:16px}.home-brand-logo img{max-height:86px}.home-greeting h1{font-size:29px}.home-market-card{padding:15px!important}.home-market-card .home-market-grid{grid-template-columns:1fr}.presence-user{display:grid;gap:8px}.presence-times{text-align:left;padding-left:23px}}
   `;
@@ -514,6 +515,20 @@ function shiftDateKey(dateKey, days = 1) {
 
 function ticketDateKey(movement) {
   return String(movement?.biglietto_date || movement?.dateKey || '');
+}
+
+function sadData(dateKey) {
+  const movements = db.movimenti.filter((movement) => (
+    movement.tipo === 'uscita'
+    && !movement.annullato
+    && String(movement.riportato_da || '') === String(dateKey || '')
+  ));
+  return {
+    dateKey: String(dateKey || ''),
+    tomorrow: shiftDateKey(dateKey, 1),
+    movements,
+    total: roundMoney(movements.reduce((sum, movement) => sum + Number(movement.totale || 0), 0)),
+  };
 }
 
 function displayDateOnly(value, dateKey = '') {
@@ -953,6 +968,7 @@ function movimento() {
 
 function pitazzo() {
   const date = pitazzoDate || today();
+  const sad = sadData(date);
   const daily = db.movimenti.filter((movement) => ['uscita', 'scarto'].includes(movement.tipo) && movement.dateKey === date);
   const recentClients = [...new Set(db.movimenti.slice().reverse().map((movement) => movement.cliente_id).filter(Boolean))].slice(0, 5);
   const recentLots = [...new Set(db.movimenti.slice().reverse().map((movement) => movement.lotto_id).filter(Boolean))]
@@ -1052,7 +1068,11 @@ function pitazzo() {
           </table></div></div>` : ''}
         </article>`;
       }).join('') || '<p class="empty">Nessun articolo registrato nella giornata scelta.</p>'}</div>
-    </section>`;
+    </section>
+    ${sad.movements.length ? `<section class="sad-dock">
+      <div><p class="eyebrow">RIPORTATO AL ${esc(formatDateKey(sad.tomorrow))}</p><h2>Soldi a domani</h2><p>Totale della merce che hai scelto di riportare.</p></div>
+      <button type="button" class="sad-button" data-open-sad="${esc(date)}"><span>S.A.D</span><strong>${eur(sad.total)}</strong><small>Apri il foglietto →</small></button>
+    </section>` : ''}`;
 }
 
 function addPitDraftRow(form) {
@@ -2190,6 +2210,24 @@ function openCaricoPreview(dateKey, tickets) {
   return rows.length;
 }
 
+function openSadPreview(dateKey) {
+  const sad = sadData(dateKey);
+  if (!sad.movements.length) throw new Error('Non ci sono soldi riportati a domani per questa giornata.');
+  const preview = window.open('', '_blank');
+  if (!preview) throw new Error('Il browser ha bloccato la finestra. Consenti i popup e riprova.');
+  preview.document.open();
+  preview.document.write(`<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>S.A.D Eurofrutta ${esc(formatDateKey(dateKey))}</title><style>
+    @page{size:A6 portrait;margin:7mm}*{box-sizing:border-box}body{margin:0;background:#edf3f0;color:#142a3a;font-family:Arial,sans-serif}.toolbar{position:sticky;top:0;display:flex;justify-content:center;gap:9px;padding:13px;background:#15354b}.toolbar button{border:0;border-radius:8px;padding:10px 15px;font-weight:800;cursor:pointer}.toolbar .print{background:#2fb579;color:#fff}.sheet{width:105mm;min-height:148mm;margin:18px auto;padding:11mm 9mm;background:#fff;box-shadow:0 7px 28px #10263825;display:flex;flex-direction:column}.brand{display:flex;justify-content:space-between;gap:10px;padding-bottom:7px;border-bottom:2px solid #173b4d;font-size:9px;font-weight:900;letter-spacing:.09em}.date{color:#647485}.sad{margin:auto 0;text-align:center}.sad h1{margin:0;color:#0d7655;font-size:43px;letter-spacing:.12em}.sad p{margin:8px 0 22px;color:#667789;font-size:10px;font-weight:800;letter-spacing:.13em}.sad strong{display:block;padding:18px 10px;border:3px solid #173b4d;border-radius:13px;font-size:31px}.tomorrow{margin-top:13px;color:#667789;font-size:9px;line-height:1.4;text-align:center}.footer{margin-top:auto;padding-top:8px;border-top:1px solid #cbd5d2;color:#72808e;font-size:7px;text-align:center}@media(max-width:520px){.sheet{width:100%;min-height:calc(100dvh - 70px);margin:0;box-shadow:none}}@media print{body{background:#fff}.toolbar{display:none}.sheet{width:auto;min-height:134mm;margin:0;padding:0;box-shadow:none}}
+  </style></head><body><div class="toolbar"><button class="print" onclick="window.print()">Stampa / Salva PDF</button><button onclick="window.close()">Chiudi</button></div><main class="sheet">
+    <header class="brand"><span>EUROFRUTTA</span><span class="date">${esc(formatDateKey(dateKey))}</span></header>
+    <section class="sad"><h1>S.A.D</h1><p>SOLDI A DOMANI</p><strong>${eur(sad.total)}</strong><div class="tomorrow">Totale della merce riportata al<br><b>${esc(formatDateKey(sad.tomorrow))}</b></div></section>
+    <footer class="footer">Pitazzo Eurofrutta</footer>
+  </main></body></html>`);
+  preview.document.close();
+  preview.focus();
+  return sad.total;
+}
+
 function openClientTicketPreview(tickets) {
   const validTickets = tickets.filter(Boolean);
   if (!validTickets.length) throw new Error('Non ci sono biglietti cliente da visualizzare.');
@@ -3261,6 +3299,16 @@ function bind() {
       const tickets = db.biglietti.filter((ticket) => ticket.dateKey === dateKey);
       try {
         openCaricoPreview(dateKey, tickets);
+      } catch (error) {
+        alert(`Errore: ${error.message}`);
+      }
+    };
+  });
+
+  document.querySelectorAll('[data-open-sad]').forEach((button) => {
+    button.onclick = () => {
+      try {
+        openSadPreview(button.dataset.openSad || pitazzoDate || today());
       } catch (error) {
         alert(`Errore: ${error.message}`);
       }
